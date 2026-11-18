@@ -12,7 +12,7 @@ import { Icon } from '../components/Icon';
 import { PetAvatar, QrArt } from '../components/PetArt';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, type } from '../theme';
+import { colors, radius, shadow, type } from '../theme';
 import type { BillItem, PayAccount } from '../types';
 import { BILL, billBalance, billPaid, billState, billTotal, diff, fmtD, fmtDY, money } from '../utils/format';
 
@@ -103,14 +103,14 @@ export function PayBill() {
     act.submitProof(b.id, acc.kind, f.ref.trim(), f.proof); nav.goBack();
   };
   return (
-    <Screen title="Pay Bill" footer={<Btn label="Submit Payment Proof" style={{ flex: 1 }} onPress={submit} />}>
+    <Screen title="Pay bill" sub="Pay with an e-wallet or bank transfer, then send your proof of payment." footer={<Btn label="Submit payment proof" icon="upload" style={{ flex: 1 }} onPress={submit} />}>
       <View style={bl.amount}>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={[type.small, { color: 'rgba(255,255,255,0.72)' }]}>Amount due</Text>
-          <Text style={{ fontSize: 30, fontWeight: '700', color: '#fff', letterSpacing: -0.8 }}>{money(bal)}</Text>
-          <Text style={[type.small, { color: 'rgba(255,255,255,0.72)' }]}>{sel.pet(db, b.petId)!.name} · visit on {fmtD(b.date)}</Text>
+          <Text style={type.small}>Amount due</Text>
+          <Text style={{ fontSize: 30, lineHeight: 36, fontWeight: '700', color: colors.accentDeep, letterSpacing: -0.8 }}>{money(bal)}</Text>
+          <Text style={type.small}>{sel.pet(db, b.petId)!.name} · visit on {fmtD(b.date)}</Text>
         </View>
-        <View style={bl.amountIcon}><Icon name="wallet" size={24} color="#fff" /></View>
+        <View style={bl.amountIcon}><Icon name="wallet" size={22} color={colors.accentDeep} /></View>
       </View>
       <Section title="Payment method">
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -118,7 +118,7 @@ export function PayBill() {
             <Pressable key={x.id} onPress={() => { setAccId(x.id); setF({ ...f, proof: '' }); }} style={[bl.method, on && bl.methodOn]} accessibilityRole="radio" accessibilityLabel={x.provider} accessibilityState={{ selected: on }}>
               {on && <View style={bl.methodCheck}><Icon name="check" size={10} color={colors.accentDeep} strokeWidth={3.2} /></View>}
               <Icon name={KIND_ICON[x.kind]} size={24} color={on ? '#fff' : colors.accentDeep} />
-              <Text style={[type.h3, { fontSize: 13.5, textAlign: 'center' }, on && { color: '#fff' }]} numberOfLines={1}>{x.kind === 'Bank transfer' ? 'Bank Transfer' : x.provider}</Text>
+              <Text style={[type.h3, { fontSize: 13.5, textAlign: 'center' }, on && { color: '#fff' }]} numberOfLines={1}>{x.kind === 'Bank transfer' ? 'Bank transfer' : x.provider}</Text>
             </Pressable>
           ); })}
         </View>
@@ -136,7 +136,7 @@ export function PayBill() {
         </Pressable>
       </View>}
       <Section title="How to pay">
-        <View style={[bl.steps, { backgroundColor: colors.subtle, borderColor: colors.accentSoft }]}>
+        <View style={bl.steps}>
           {[bank ? 'Open your bank app and transfer to the account above.' : `Open ${acc?.provider || 'your e-wallet'} and scan the QR, or send to the number.`, `Send exactly ${money(bal)}, then take a screenshot.`, 'Enter the reference number and upload the screenshot below.'].map((t, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}><View style={bl.step}><Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>{i + 1}</Text></View><Text style={[type.body, { flex: 1, fontSize: 14, lineHeight: 20 }]}>{t}</Text></View>
           ))}
@@ -149,7 +149,7 @@ export function PayBill() {
           <Text style={type.h3}>{f.proof || 'Upload payment screenshot'}</Text>
           <T.Small>{f.proof ? 'Click to choose another' : 'JPEG or PNG, up to 10 MB'}</T.Small>
         </Pressable>
-        {err.proof && <T.Small color={colors.bad}>{err.proof}</T.Small>}
+        {!!err.proof && <T.Small color={colors.bad}>{err.proof}</T.Small>}
       </Section>
       <Banner icon="info" title="Paying does not confirm it in the app" sub="The clinic checks its own account, then confirms your payment and issues a receipt." />
     </Screen>
@@ -268,13 +268,13 @@ const bl = StyleSheet.create({
   proof: { width: '100%', height: 140, borderRadius: radius.lg, backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center', gap: 6 },
   chip: { paddingHorizontal: 12, height: 34, justifyContent: 'center', borderRadius: 17, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
   qrBox: { padding: 10, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: '#fff' },
-  amount: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.accentDeep, borderRadius: 20, padding: 20 },
-  amountIcon: { width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(220,235,250,0.22)', alignItems: 'center', justifyContent: 'center' },
-  payCard: { alignItems: 'center', gap: 10, padding: 16, backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.line },
+  amount: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: 20, ...shadow },
+  amountIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  payCard: { alignItems: 'center', gap: 10, padding: 16, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, ...shadow },
   bankIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
   copy: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 34, borderRadius: radius.md, backgroundColor: colors.accentSoft },
-  steps: { gap: 12, padding: 14, borderRadius: radius.xl, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
-  method: { flex: 1, height: 78, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, padding: 8, gap: 6, alignItems: 'center', justifyContent: 'center' },
+  steps: { gap: 12, padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
+  method: { flex: 1, height: 80, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, padding: 8, gap: 6, alignItems: 'center', justifyContent: 'center', ...shadow },
   methodCheck: { position: 'absolute', top: 6, right: 6, width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   methodOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
   step: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center', marginTop: -1 },
