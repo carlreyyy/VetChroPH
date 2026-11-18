@@ -2,7 +2,7 @@
 // mobile < 768 px (phones), tablet 768–1199 px (collapsed sidebar), desktop >= 1200 px (full sidebar).
 import React from 'react';
 import { Platform, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle, useWindowDimensions } from 'react-native';
-import { colors } from '../theme';
+import { colors, shadow } from '../theme';
 import { Icon } from './Icon';
 
 export type BP = 'mobile' | 'tablet' | 'desktop';
@@ -13,9 +13,31 @@ export function useBP() {
   return { bp, width, mobile: bp === 'mobile', tablet: bp === 'tablet', desktop: bp === 'desktop', wide: bp !== 'mobile' };
 }
 
+/** Horizontal page padding per breakpoint. Shared by pages and the owner navbar so their edges line up. */
+export const pagePad = (bp: BP) => (bp === 'desktop' ? 40 : bp === 'tablet' ? 28 : 16);
+/** Page max width (padding included). Wide pages are dashboards and lists; narrow pages are details and forms. */
+export const pageMax = (bp: BP, wide: boolean) => (bp === 'desktop' ? (wide ? 1240 : 880) : bp === 'tablet' ? (wide ? 1100 : 760) : undefined);
+
 /** Web-only pressable state (RN-web adds `hovered`). */
 export type PState = { pressed: boolean; hovered?: boolean; focused?: boolean };
-export const hoverBg = (st: PState, base?: string) => (st.pressed ? colors.subtle : st.hovered ? '#F4F7FB' : base);
+export const hoverBg = (st: PState, base?: string) => (st.pressed ? colors.subtle : st.hovered ? colors.hover : base);
+
+/**
+ * Responsive card grid: fits as many columns as `min` allows and gives every item the same width,
+ * so a short last row does not stretch.
+ */
+export function AutoGrid({ children, min = 240, gap = 16, max }: { children: React.ReactNode; min?: number; gap?: number; max?: number }) {
+  const [w, setW] = React.useState(0);
+  const items = React.Children.toArray(children).filter(Boolean);
+  let cols = w ? Math.max(1, Math.floor((w + gap) / (min + gap))) : 1;
+  if (max) cols = Math.min(cols, max);
+  const itemW = w ? (w - gap * (cols - 1)) / cols : undefined;
+  return (
+    <View onLayout={e => setW(Math.floor(e.nativeEvent.layout.width))} style={{ flexDirection: 'row', flexWrap: 'wrap', gap }}>
+      {w > 0 && items.map((c, i) => <View key={i} style={{ width: itemW }}>{c}</View>)}
+    </View>
+  );
+}
 
 /**
  * Two (or three) columns on wide screens, stacked on phones. `ratio` gives flex weights;
@@ -92,10 +114,10 @@ export const Cell = ({ title, sub, left }: { title: string; sub?: string; left?:
 );
 
 const t = StyleSheet.create({
-  wrap: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, height: 42, backgroundColor: '#F8FAFC', borderBottomWidth: 1, borderBottomColor: colors.line },
+  wrap: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, height: 44, backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.line },
   th: { fontSize: 12, fontWeight: '600', color: colors.ink2, letterSpacing: 0.3, textTransform: 'uppercase' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, minHeight: 60, paddingVertical: 10 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, minHeight: 64, paddingVertical: 10 },
   rowLine: { borderTopWidth: 1, borderTopColor: colors.line },
   td: { fontSize: 14, color: colors.ink },
   sub: { fontSize: 12.5, color: colors.ink2, marginTop: 2 },

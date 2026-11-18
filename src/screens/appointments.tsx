@@ -3,12 +3,12 @@
 // time, cancel with a reason, check the client in, or mark a no-show (which adds a note to the owner record, D10).
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Avatar, Banner, Btn, Card, Chips, Divider, Empty, Field, Group, KV, Pill, Row, Screen, Section, Seg, Stack, T } from '../components/ui';
+import { Avatar, Banner, Btn, Card, Chips, Divider, Empty, Field, FieldError, Group, Hint, IconTile, KV, Pill, Row, Screen, Section, Seg, Stack, T } from '../components/ui';
 import { Sheet, useConfirm } from '../components/overlays';
 import { PetAvatar } from '../components/PetArt';
-import { Cols, useBP } from '../components/responsive';
+import { Cols, PState, useBP } from '../components/responsive';
 import { ScheduleTable } from './clinic';
-import { Icon } from '../components/Icon';
+import { Icon, IconName } from '../components/Icon';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
 import { colors, radius, shadow, space, type } from '../theme';
@@ -126,14 +126,45 @@ export function Book() {
 
   const matches = q.trim().length >= 2 ? db.owners.filter(o => o.name.toLowerCase().includes(q.toLowerCase()) || normPhone(o.phone).replace(/\s/g, '').includes(q.replace(/\D/g, '') || '¤')) : [];
   const owner = ownerId ? sel.owner(db, ownerId) : undefined;
-  return (
-    <Screen title={resched ? 'Change time' : clinic ? 'New appointment' : 'Book an appointment'}
-      footer={<>
-        {step > (clinic && presetOwner && !resched ? 1 : 0) && <Btn label="Back" kind="line" style={{ flex: 1 }} onPress={() => { setErr({}); setStep(step - 1); }} />}
-        <Btn label={last ? (resched ? 'Move appointment' : 'Confirm Appointment') : 'Next'} iconRight={last ? undefined : 'chevR'} style={{ flex: 2 }} onPress={next} />
-      </>}>
-      <Stepper steps={steps} at={step} />
+  const bp = useBP();
+  const canBack = step > (clinic && presetOwner && !resched ? 1 : 0);
+  const back = () => { setErr({}); setStep(step - 1); };
+  const nextLabel = last ? (resched ? 'Move appointment' : 'Confirm appointment') : 'Continue';
+  const actions = <>
+    {canBack && <Btn label="Back" kind="line" style={{ flex: 1 }} onPress={back} />}
+    <Btn label={nextLabel} iconRight={last ? undefined : 'chevR'} icon={last ? 'check' : undefined} style={{ flex: 2 }} onPress={next} />
+  </>;
 
+  const facts: [IconName, string, string | undefined, string | undefined][] = [
+    ...(clinic ? [['user', 'Client', owner?.name, owner?.phone] as [IconName, string, string | undefined, string | undefined]] : []),
+    ['paw', 'Pet', pet?.name, pet?.breed],
+    ['steth', 'Service', service?.name, service ? `${money(service.price)} · about ${service.minutes} min` : undefined],
+    ['calendar', 'Date and time', f.date ? `${fmtD(f.date)}${f.time ? ` · ${t12(f.time)}` : ''}` : undefined, f.date ? rel(f.date) : undefined],
+    ['pin', 'Clinic', db.clinic.name, undefined],
+  ];
+  const summary = (
+    <Card style={{ gap: 16 }}>
+      <Text style={type.h2}>{resched ? 'Moving this visit' : clinic ? 'New appointment' : 'Your booking'}</Text>
+      {facts.map(([i, l, v, sub]) => (
+        <View key={l} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+          <IconTile name={i} size={34} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[type.small, { fontSize: 12.5 }]}>{l}</Text>
+            <Text style={[type.h3, { fontSize: 14.5 }, !v && { color: colors.ink3, fontWeight: '500' }]} numberOfLines={1}>{v || 'Not chosen yet'}</Text>
+            {!!sub && v && <Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={1}>{sub}</Text>}
+          </View>
+        </View>
+      ))}
+      <View style={{ height: 1, backgroundColor: colors.line }} />
+      <View style={{ gap: 10 }}>
+        <Btn label={nextLabel} iconRight={last ? undefined : 'chevR'} icon={last ? 'check' : undefined} full onPress={next} />
+        {canBack && <Btn label="Back" kind="line" full onPress={back} />}
+      </View>
+      <Hint icon="shield">{clinic ? 'Confirmed right away. The owner is notified.' : 'Open times are confirmed right away. Reminders go out 1 day and 2 hours before.'}</Hint>
+    </Card>
+  );
+
+  const body = <>
       {name === 'Client' && <Section title="Find the client">
         {owner ? (
           <Group><Row left={<Avatar name={owner.name} />} title={owner.name} sub={owner.phone} right={<Btn label="Change" small kind="line" onPress={() => { setOwnerId(''); setF({ ...f, petId: '' }); }} />} /></Group>
@@ -146,11 +177,11 @@ export function Book() {
       </Section>}
 
       {name === 'Service' && <>
-        <Section title="Which pet?">
-          {pets.length === 0 ? <Empty icon="paw" title="No active pets" action={<Btn label="Add a pet" small onPress={() => nav.navigate('PetForm', { ownerId })} />} /> : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.lg, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: space.lg, gap: 10 }}>
+        <Section title="Which pet is this for?">
+          {pets.length === 0 ? <Card><Empty icon="paw" title="No active pets" sub="Add a pet first, then come back to book." action={<Btn label="Add a pet" icon="plus" small onPress={() => nav.navigate('PetForm', { ownerId })} />} /></Card> : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.lg, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: space.lg, gap: 10, paddingVertical: 2 }}>
               {pets.map(x => { const on = f.petId === x.id; return (
-                <Pressable key={x.id} onPress={() => { setF({ ...f, petId: x.id }); setErr({ ...err, petId: '' }); }} accessibilityRole="radio" accessibilityLabel={x.name} accessibilityState={{ selected: on }} style={[bk.petChip, on && bk.petChipOn]}>
+                <Pressable key={x.id} onPress={() => { setF({ ...f, petId: x.id }); setErr({ ...err, petId: '' }); }} accessibilityRole="radio" accessibilityLabel={x.name} accessibilityState={{ selected: on }} style={(st: PState) => [bk.petChip, on ? bk.petChipOn : st.hovered ? { borderColor: colors.lineStrong } : null]}>
                   <PetAvatar pet={x} size={36} />
                   <View><Text style={[type.h3, { fontSize: 14 }]}>{x.name}</Text><Text style={[type.small, { fontSize: 12 }]} numberOfLines={1}>{x.breed}</Text></View>
                   {on && <View style={bk.tick}><Icon name="check" size={12} color="#fff" strokeWidth={3} /></View>}
@@ -158,50 +189,63 @@ export function Book() {
               ); })}
             </ScrollView>
           )}
-          {err.petId && <T.Small color={colors.bad}>{err.petId}</T.Small>}
+          {!!err.petId && <FieldError text={err.petId} />}
         </Section>
-        <Text style={bk.title}>Select Service</Text>
-        {err.service && <T.Small color={colors.bad}>{err.service}</T.Small>}
-        <View style={{ gap: 10, marginTop: -8 }}>
-          {db.services.filter(x => x.active).map(x => { const on = f.service === x.name; return (
-            <Pressable key={x.id} onPress={() => { setF({ ...f, service: x.name }); setErr({ ...err, service: '' }); }} accessibilityRole="radio" accessibilityLabel={x.name} accessibilityState={{ selected: on }} style={({ pressed }) => [bk.svc, on && bk.svcOn, pressed && !on && { backgroundColor: colors.subtle }]}>
-              <View style={[bk.svcIcon, on && { backgroundColor: '#fff' }]}><Icon name={SVC_ICON[x.category] || 'steth'} size={19} color={colors.accentDeep} strokeWidth={2.1} /></View>
-              <View style={{ flex: 1 }}><Text style={[type.h3, { fontWeight: '700' }]}>{x.name}</Text><Text style={type.small}>{x.category} · {money(x.price)} · {x.minutes} min</Text></View>
-              {on && <View style={bk.radioOn}><Icon name="check" size={13} color="#fff" strokeWidth={3} /></View>}
-            </Pressable>
-          ); })}
-        </View>
-        <View style={bk.tip}>
-          <View style={bk.tipIcon}><Icon name="shield" size={20} color="#fff" /></View>
-          <Text style={[type.small, { flex: 1, color: colors.accentDeep, fontSize: 13.5, lineHeight: 19 }]}>Regular check-ups help your pet live a longer, healthier life.</Text>
-        </View>
+        <Section title="Service">
+          {!!err.service && <FieldError text={err.service} />}
+          <View style={{ gap: 10 }}>
+            {db.services.filter(x => x.active).map(x => { const on = f.service === x.name; return (
+              <Pressable key={x.id} onPress={() => { setF({ ...f, service: x.name }); setErr({ ...err, service: '' }); }} accessibilityRole="radio" accessibilityLabel={x.name} accessibilityState={{ selected: on }} style={(st: PState) => [bk.svc, on ? bk.svcOn : st.hovered ? { borderColor: colors.lineStrong } : null]}>
+                <View style={[bk.svcIcon, on && { backgroundColor: '#fff' }]}><Icon name={SVC_ICON[x.category] || 'steth'} size={19} color={colors.accentDeep} strokeWidth={2.1} /></View>
+                <View style={{ flex: 1, minWidth: 0 }}><Text style={type.h3}>{x.name}</Text><Text style={type.small}>{x.category} · about {x.minutes} min</Text></View>
+                <Text style={[type.h3, { fontSize: 14 }]}>{money(x.price)}</Text>
+                <View style={[bk.radio, on && bk.radioOn]}>{on && <Icon name="check" size={13} color="#fff" strokeWidth={3} />}</View>
+              </Pressable>
+            ); })}
+          </View>
+        </Section>
       </>}
 
-      {name === 'Schedule' && <>
-        <Text style={bk.title}>Choose Date & Time</Text>
-        <Section title="Date">
-          {f.date && f.time ? <View style={bk.picked}><Icon name="calendar" size={16} color={colors.accentDeep} /><Text style={[type.h3, { fontSize: 14 }]}>{fmtD(f.date)} · {t12(f.time)}</Text></View> : null}
-          <MonthCalendar value={f.date || D(0)} onChange={d => { setF(x => ({ ...x, date: d, time: '' })); setErr({}); }} dots={false} selected={!!f.date}
-            disabled={d => diff(d) < 0 || d > maxD || !db.settings.days[parseD(d).getDay()]?.open} />
-        </Section>
-        <Section title="Available Time Slots">
-          <TimeGrid date={f.date} time={f.time} onTime={t => { setF(x => ({ ...x, time: t })); setErr({}); }} exceptId={resched?.id} />
-          {err.slot && <T.Small color={colors.bad}>{err.slot}</T.Small>}
-        </Section>
-      </>}
+      {name === 'Schedule' && (() => {
+        const cal = (
+          <Section title="Date">
+            <MonthCalendar value={f.date || D(0)} onChange={d => { setF(x => ({ ...x, date: d, time: '' })); setErr({}); }} dots={false} selected={!!f.date}
+              disabled={d => diff(d) < 0 || d > maxD || !db.settings.days[parseD(d).getDay()]?.open} />
+          </Section>
+        );
+        const times = (
+          <Section title="Available times" sub={f.date ? fmtD(f.date) : undefined}>
+            <TimeGrid date={f.date} time={f.time} onTime={t => { setF(x => ({ ...x, time: t })); setErr({}); }} exceptId={resched?.id} />
+            {!!err.slot && <FieldError text={err.slot} />}
+          </Section>
+        );
+        return bp.desktop ? <Cols ratio={[1, 1]}>{cal}{times}</Cols> : <>{cal}{times}</>;
+      })()}
 
       {name === 'Confirm' && pet && <>
-        <Section title="Review">
+        <Section title="Review your booking">
           <Group>
             <Row left={<PetAvatar pet={pet} size={44} />} title={pet.name} sub={`${pet.breed} · ${owner?.name || ''}`} />
             <Row icon={SVC_ICON[service?.category || ''] || 'steth'} title={f.service} sub={service ? `About ${service.minutes} min` : undefined} right={<Text style={[type.h3, { fontSize: 14 }]}>{service ? money(service.price) : ''}</Text>} />
-            <Row icon="calendar" title={fmtD(f.date)} sub={`${t12(f.time)} · ${rel(f.date)}`} onPress={() => setStep(steps.indexOf('Schedule'))} right={<Text style={{ color: colors.accentDeep, fontWeight: '600' }}>Edit</Text>} />
+            <Row icon="calendar" title={fmtD(f.date)} sub={`${t12(f.time)} · ${rel(f.date)}`} onPress={() => setStep(steps.indexOf('Schedule'))} right={<Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>Change</Text>} />
             <Row icon="pin" title={db.clinic.name} sub={db.clinic.address} />
           </Group>
         </Section>
         {!resched && <Field label="Note for the clinic (optional)" multiline placeholder="e.g. Scratching his left ear for 3 days" value={f.reason} onChangeText={v => setF({ ...f, reason: v })} />}
-        <T.Small>{clinic ? 'The booking is confirmed right away and the owner is notified.' : `Open times are confirmed right away. You can cancel or change it up to ${db.settings.cancelCutoffHours} hours before. Reminders are sent 1 day and 2 hours before.`}</T.Small>
+        <Hint icon="clock">{clinic ? 'The booking is confirmed right away and the owner is notified.' : `Open times are confirmed right away. You can cancel or change it up to ${db.settings.cancelCutoffHours} hours before. Reminders are sent 1 day and 2 hours before.`}</Hint>
       </>}
+  </>;
+
+  return (
+    <Screen title={resched ? 'Change time' : clinic ? 'New appointment' : 'Book an appointment'} wide={bp.desktop}
+      sub={resched ? 'Pick a new date and time for this visit.' : clinic ? 'Book for a phone or walk-in client.' : 'Choose a service and an open time. It is confirmed right away.'}
+      footer={bp.desktop ? undefined : actions}>
+      {bp.desktop ? (
+        <Cols ratio={[1, 340]} gap={32}>
+          <><Stepper steps={steps} at={step} />{body}</>
+          {summary}
+        </Cols>
+      ) : <><Stepper steps={steps} at={step} />{body}</>}
     </Screen>
   );
 }
@@ -212,12 +256,12 @@ export function BookSuccess() {
   const a = sel.appt(db, id!)!; const pet = sel.pet(db, a.petId)!;
   return (
     <Screen hideHeader wide={false} centerFooter footer={<View style={{ flex: 1, gap: 10 }}>
-      <Btn label="View Appointment" full onPress={() => nav.replace('ApptDetail', { id: a.id })} />
-      <Btn label={user!.role === 'owner' ? 'Back to Home' : 'Back to Schedule'} kind="line" full onPress={() => nav.goBack()} />
+      <Btn label="View appointment" full onPress={() => nav.replace('ApptDetail', { id: a.id })} />
+      <Btn label={user!.role === 'owner' ? 'Back to home' : 'Back to schedule'} kind="line" full onPress={() => nav.goBack()} />
     </View>}>
       <View style={{ alignItems: 'center', gap: 8, paddingTop: 40, paddingBottom: 4 }}>
         <View style={bk.halo}><View style={bk.success}><Icon name="check" size={32} color="#fff" strokeWidth={2.8} /></View></View>
-        <Text style={[type.display, { fontSize: 24, fontWeight: '800', textAlign: 'center' }]}>Appointment Confirmed!</Text>
+        <Text style={[type.display, { fontSize: 24, fontWeight: '800', textAlign: 'center' }]}>Appointment confirmed</Text>
         <Text style={[type.body, { color: colors.ink2, textAlign: 'center', maxWidth: 300 }]}>{user!.role === 'owner' ? 'Your booking is confirmed. We will remind you 1 day and 2 hours before.' : 'The booking is confirmed and the owner was notified.'}</Text>
       </View>
       <View style={bk.summary}>

@@ -4,7 +4,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Avatar, Empty, Field, Group, Row, Screen, T, useWide } from '../components/ui';
+import { Avatar, Empty, Field, Group, Row, Screen, T, TAB_BAR_H, useWide } from '../components/ui';
 import { BrandTile } from '../components/Brand';
 import { useBP, hoverBg, PState } from '../components/responsive';
 import { Icon } from '../components/Icon';
@@ -49,7 +49,7 @@ function Thread({ ownerId, tabbed }: { ownerId: string; tabbed?: boolean }) {
           );
         })}
       </ScrollView>
-      <View style={[ms.bar, { paddingBottom: tabbed && mobile ? 70 + insets.bottom : Math.max(insets.bottom, 12) }]}>
+      <View style={[ms.bar, { paddingBottom: tabbed && mobile ? TAB_BAR_H + Math.max(insets.bottom, 8) + 10 : Math.max(insets.bottom, 12) }]}>
         <TextInput value={text} onChangeText={setText} placeholder={mine === 'owner' ? 'Message the clinic' : 'Write a message'} placeholderTextColor={colors.ink3} style={[ms.input, { outlineStyle: 'none' } as never]} multiline numberOfLines={1} onSubmitEditing={send} accessibilityLabel="Message" />
         <Pressable onPress={send} disabled={!text.trim()} accessibilityRole="button" accessibilityLabel="Send" style={[ms.send, !text.trim() && { opacity: 0.4 }]}>
           <Icon name="send" size={19} color="#fff" />
@@ -61,19 +61,21 @@ function Thread({ ownerId, tabbed }: { ownerId: string; tabbed?: boolean }) {
 
 /** Pet owner's Messages tab: one conversation with the clinic. */
 export function OwnerChat() {
-  const { db, user } = useApp(); const h = db.settings.days[new Date().getDay()]; const hr = new Date().getHours();
+  const { db, user } = useApp(); const { wide } = useBP(); const h = db.settings.days[new Date().getDay()]; const hr = new Date().getHours();
   const open = !!h?.open && hr >= h.from && hr < h.to;
   return (
-    <Screen title="Messages" back={false} big scroll={false} wide={false} sub="Your conversation with the clinic.">
-      <View style={ms.who}>
-        <BrandTile size={40} />
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={type.h3} numberOfLines={1}>{db.clinic.name}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><View style={[ms.online, !open && { backgroundColor: colors.ink3 }]} /><Text style={[type.small, { fontSize: 12.5 }]}>{open ? 'Open now · replies during clinic hours' : 'Closed · we reply when the clinic opens'}</Text></View>
+    <Screen title="Messages" back={false} big scroll={false} wide={false} bleed sub="Your conversation with the clinic. Staff and the veterinarian reply here.">
+      <View style={wide ? ms.frame : { flex: 1 }}>
+        <View style={[ms.who, wide && { paddingTop: 14 }]}>
+          <BrandTile size={40} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={type.h3} numberOfLines={1}>{db.clinic.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><View style={[ms.online, !open && { backgroundColor: colors.ink3 }]} /><Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={1}>{open ? 'Open now · replies during clinic hours' : 'Closed · we reply when the clinic opens'}</Text></View>
+          </View>
+          <Pressable onPress={() => Linking.openURL(`tel:${db.clinic.mobile.replace(/\s/g, '')}`)} accessibilityRole="button" accessibilityLabel="Call the clinic" style={(st: PState) => [ms.call, st.hovered && { backgroundColor: '#DCE9F7' }]}><Icon name="phone" size={18} color={colors.accentDeep} /></Pressable>
         </View>
-        <Pressable onPress={() => Linking.openURL(`tel:${db.clinic.mobile.replace(/\s/g, '')}`)} accessibilityRole="button" accessibilityLabel="Call the clinic" style={ms.call}><Icon name="phone" size={18} color={colors.accentDeep} /></Pressable>
+        <Thread ownerId={user!.ownerId!} tabbed />
       </View>
-      <Thread ownerId={user!.ownerId!} tabbed />
     </Screen>
   );
 }
@@ -168,22 +170,23 @@ export function Inbox() {
 }
 
 const ms = StyleSheet.create({
-  who: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.lineStrong },
+  who: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.line, backgroundColor: colors.surface },
+  frame: { flex: 1, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line, borderRadius: 16, overflow: 'hidden', marginBottom: 24 },
   clinicTag: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   online: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.ok },
   bubbleWrap: { gap: 3 },
   sender: { fontSize: 12, fontWeight: '600', color: colors.ink2, marginLeft: 2 },
   dayPill: { alignSelf: 'center', backgroundColor: colors.subtle, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginTop: 14, marginBottom: 2 },
   dayText: { fontSize: 11.5, fontWeight: '600', color: colors.ink2 },
-  call: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  bubble: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16 },
+  call: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  bubble: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18 },
   own: { backgroundColor: colors.accentDeep, borderBottomRightRadius: 4 },
   other: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderBottomLeftRadius: 4 },
   time: { fontSize: 11, color: colors.ink3, marginHorizontal: 2 },
-  bar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.lineStrong, backgroundColor: colors.surface },
-  input: { flex: 1, minHeight: 44, maxHeight: 110, borderRadius: 22, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.bg, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, fontSize: 15, color: colors.ink },
+  bar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.surface },
+  input: { flex: 1, minHeight: 44, maxHeight: 110, borderRadius: 22, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.subtle, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, fontSize: 15, color: colors.ink },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
-  split: { flex: 1, flexDirection: 'row', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 12, overflow: 'hidden', marginBottom: 24 },
+  split: { flex: 1, flexDirection: 'row', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 16, overflow: 'hidden', marginBottom: 24 },
   list: { width: 340, borderRightWidth: 1, borderRightColor: colors.line },
   thread: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.line },
   link: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },

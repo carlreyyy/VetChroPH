@@ -4,7 +4,7 @@
 //   staff  - edits pet details, enters the reason for visit only (no weight), sets due dates, uploads documents
 //   admin  - the vet owner/manager: full consultation records (edits logged), progress notes, follow-ups and due dates
 // Vaccines and deworming are not a separate module: their next due dates are follow-ups that drive reminders.
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Icon } from '../components/Icon';
 import { PET_COVERS } from '../data/photos';
@@ -12,7 +12,7 @@ import { Cols, useBP } from '../components/responsive';
 import { pickFile, fileSize } from '../utils/files';
 import { SexMark } from './owner';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Banner, Btn, Card, Chips, Empty, Field, Group, IconBtn, Pill, Row, Screen, Section, Seg, T, Tabs, useWide } from '../components/ui';
+import { Banner, Btn, Card, Chips, Empty, Field, Group, Hint, IconBtn, Pill, Row, Screen, Section, Seg, T, Tabs, useWide } from '../components/ui';
 import { Sheet, useConfirm } from '../components/overlays';
 import { PetArt, PetAvatar, coatsFor } from '../components/PetArt';
 import { useApp, sel } from '../store/AppStore';
@@ -47,14 +47,10 @@ export function PetDetail() {
   const canEdit = role === 'owner' ? pet.ownerId === user!.ownerId : true;
   const infoBlock = <>
           <View style={bp.wide ? pd.infoFlat : pd.info}>
-            {([['paw', 'Species', cap(pet.species)], ['tag', 'Breed', pet.breed], ['user', 'Sex', pet.sex], ['calendar', 'Birthday', `${fmtDY(pet.birth)} (${ageOf(pet.birth)})`], ['scale', 'Weight', `${pet.weight} kg`], ['heart', 'Status', pet.status === 'active' ? 'Active' : pet.status === 'deceased' ? 'Deceased' : 'Inactive']] as const).map(([i, k, v], idx) => (
-              <View key={k} style={[pd.infoRow, idx > 0 && { borderTopWidth: 1, borderTopColor: colors.line }]}>
-                <Icon name={i} size={21} color={colors.accentDeep} strokeWidth={2.1} />
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[type.h3, { fontWeight: '700', fontSize: 14.5 }]}>{k}</Text>
-                  <Text style={[type.small, { fontSize: 14 }]}>{v}</Text>
-                </View>
-                {k === 'Status' && <Pill text={v} tone={pet.status === 'active' ? 'ok' : ''} />}
+            {([['Species', cap(pet.species)], ['Breed', pet.breed], ['Sex', pet.sex], ['Weight', `${pet.weight} kg`], ['Birthday', fmtDY(pet.birth)], ['Age', ageOf(pet.birth)]] as const).map(([k, v], idx) => (
+              <View key={k} style={[pd.fact, idx % 2 === 1 && { paddingLeft: 16 }, idx >= 2 && { borderTopWidth: 1, borderTopColor: colors.line }]}>
+                <Text style={[type.small, { fontSize: 12.5 }]}>{k}</Text>
+                <Text style={[type.h3, { fontSize: 14.5 }]} numberOfLines={1}>{v}</Text>
               </View>
             ))}
           </View>
@@ -91,7 +87,7 @@ export function PetDetail() {
           </Section>
 </>;
   const followBlock = <>
-          <Banner icon="bell" title="Reminders go out automatically" sub="Owners are reminded before each due date, including vaccines and deworming." />
+          <Hint icon="bell">{clinic ? 'Owners are reminded automatically before each due date, including vaccines and deworming.' : 'You get a reminder before each due date, including vaccines and deworming.'}</Hint>
           <Section title="Coming up" action={clinic && pet.status === 'active' ? 'Set date' : undefined} onAction={() => setSheet('follow')}>
             {openF.length === 0 ? <Empty icon="check" title="Nothing due" sub="Return visits and vaccine or deworming due dates appear here." /> : (
               <Group>{openF.map(f => { const st = followStatus(f); return (
@@ -135,10 +131,11 @@ export function PetDetail() {
             <View style={{ padding: 18, gap: 4 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Text style={[pd.name, { fontSize: 22 }]}>{pet.name}</Text><SexMark sex={pet.sex} size={18} /></View>
               <Text style={type.small}>{pet.breed} · {ageOf(pet.birth)} · {pet.weight} kg</Text>
+              <View style={{ marginTop: 8 }}><Pill chip text={pet.status === 'active' ? 'Active' : pet.status === 'deceased' ? 'Deceased' : 'Inactive'} tone={pet.status === 'active' ? 'ok' : ''} /></View>
             </View>
             <View style={{ paddingHorizontal: 18, paddingBottom: 18, gap: 16 }}>
               {infoBlock}
-              {footer && <View style={{ gap: 10 }}>{footer}</View>}
+              {footer && <View style={{ flexDirection: 'row', gap: 10 }}>{footer}</View>}
             </View>
           </View>
           <>
@@ -242,7 +239,7 @@ function DocSheet({ visible, onClose, petId }: { visible: boolean; onClose: () =
 }
 
 export function PetForm() {
-  const nav = useNav(); const { db, act, user } = useApp(); const p = useParams<{ id: string; ownerId: string }>();
+  const nav = useNav(); const { db, act, user } = useApp(); const p = useParams<{ id: string; ownerId: string }>(); const bp = useBP();
   const existing = p.id ? sel.pet(db, p.id) : undefined;
   const [f, setF] = useState({
     name: existing?.name || '', species: (existing?.species || 'dog') as Species, breed: existing?.breed || '', sex: existing?.sex || 'Male',
@@ -264,21 +261,37 @@ export function PetForm() {
     const saved = act.savePet({ id: existing?.id, ownerId: p.ownerId!, name: f.name.trim(), species: f.species, breed: f.breed.trim() || 'Mixed breed', sex: f.sex as Pet['sex'], birth, weight: Number(f.weight), coat: f.coat });
     if (existing) nav.goBack(); else nav.replace('PetDetail', { id: saved.id });
   };
+  const pair = (a: React.ReactNode, b: React.ReactNode) => bp.wide
+    ? <View style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start' }}><View style={{ flex: 1 }}>{a}</View><View style={{ flex: 1 }}>{b}</View></View>
+    : <>{a}{b}</>;
   return (
-    <Screen title={existing ? `Edit ${existing.name}` : 'Add a pet'} footer={<Btn label={existing ? 'Save changes' : 'Save pet'} style={{ flex: 1 }} onPress={save} />}>
-      <View style={{ alignItems: 'center' }}><PetAvatar pet={{ id: existing?.id, species: f.species }} size={88} /></View>
+    <Screen title={existing ? `Edit ${existing.name}` : 'Add a pet'} sub={existing ? 'Update your pet’s details. Medical records are kept by the clinic.' : 'Add your pet to book visits and keep their records in one place.'}
+      footer={<Btn label={existing ? 'Save changes' : 'Save pet'} style={{ flex: 1 }} onPress={save} />}>
       {user!.role !== 'owner' && !existing && <Banner icon="user" title={`Owner: ${sel.owner(db, p.ownerId!)?.name}`} />}
-      <Field label="Pet name" placeholder="e.g. Bingo" value={f.name} onChangeText={v => set('name', v)} error={err.name} hint={dup ? 'This owner already has a pet with this name. You can still save.' : undefined} />
-      <Seg label="Species" options={[['dog', 'Dog'], ['cat', 'Cat']]} value={f.species} onChange={v => setF({ ...f, species: v, coat: coatsFor(v)[0] || '' })} />
-      <T.Small>The clinic currently accepts dogs and cats.</T.Small>
-      <Field label="Breed" placeholder="e.g. Aspin, Puspin, Shih Tzu" value={f.breed} onChangeText={v => set('breed', v)} />
-      <Seg label="Sex" options={[['Male', 'Male'], ['Female', 'Female']]} value={f.sex} onChange={v => set('sex', v)} />
-      {!unknownBirth
-        ? <Field label="Birthdate" placeholder="YYYY-MM-DD" value={f.birth} onChangeText={v => set('birth', v)} error={err.birth} />
-        : <Field label="Estimated age (years)" keyboardType="decimal-pad" value={f.ageYears} onChangeText={v => set('ageYears', v)} error={err.ageYears} />}
-      <Pressable onPress={() => setUnknownBirth(x => !x)}><Text style={{ color: colors.accentDeep, fontWeight: '600' }}>{unknownBirth ? 'I know the birthdate' : "I don't know the exact birthdate"}</Text></Pressable>
-      <Field label="Weight (kg)" keyboardType="decimal-pad" placeholder="e.g. 8.5" value={f.weight} onChangeText={v => set('weight', v)} error={err.weight} />
-      <T.Small>Prototype: pet photos come from the sample data. The real app lets you take or choose a photo.</T.Small>
+      <Card style={{ gap: 18 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <PetAvatar pet={{ id: existing?.id, species: f.species }} size={64} square />
+          <View style={{ flex: 1 }}><Text style={type.h2}>{f.name.trim() || (existing ? existing.name : 'New pet')}</Text><T.Small>The clinic currently accepts dogs and cats.</T.Small></View>
+        </View>
+        {pair(
+          <Field label="Pet name" placeholder="e.g. Bingo" value={f.name} onChangeText={v => set('name', v)} error={err.name} hint={dup ? 'This owner already has a pet with this name. You can still save.' : undefined} />,
+          <Field label="Breed" placeholder="e.g. Aspin, Puspin, Shih Tzu" value={f.breed} onChangeText={v => set('breed', v)} />,
+        )}
+        {pair(
+          <Seg label="Species" options={[['dog', 'Dog'], ['cat', 'Cat']]} value={f.species} onChange={v => setF({ ...f, species: v, coat: coatsFor(v)[0] || '' })} />,
+          <Seg label="Sex" options={[['Male', 'Male'], ['Female', 'Female']]} value={f.sex} onChange={v => set('sex', v)} />,
+        )}
+        {pair(
+          <View style={{ gap: 8 }}>
+            {!unknownBirth
+              ? <Field label="Birthdate" placeholder="YYYY-MM-DD" value={f.birth} onChangeText={v => set('birth', v)} error={err.birth} />
+              : <Field label="Estimated age (years)" keyboardType="decimal-pad" value={f.ageYears} onChangeText={v => set('ageYears', v)} error={err.ageYears} />}
+            <Pressable onPress={() => setUnknownBirth(x => !x)} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'flex-start' }}><Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>{unknownBirth ? 'I know the birthdate' : "I don't know the exact birthdate"}</Text></Pressable>
+          </View>,
+          <Field label="Weight (kg)" keyboardType="decimal-pad" placeholder="e.g. 8.5" value={f.weight} onChangeText={v => set('weight', v)} error={err.weight} />,
+        )}
+      </Card>
+      <Hint icon="camera">Prototype: pet photos come from the sample data. The real app lets you take or choose a photo.</Hint>
     </Screen>
   );
 }
@@ -371,11 +384,11 @@ const pd = StyleSheet.create({
   sheet: { marginTop: -26, borderTopLeftRadius: 26, borderTopRightRadius: 26, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 22, gap: 18 },
   nameCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, paddingVertical: 14 },
   name: { fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: colors.ink },
-  info: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, ...shadow },
-  infoFlat: { borderTopWidth: 1, borderTopColor: colors.line },
-  side: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
+  info: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, ...shadow },
+  infoFlat: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: colors.line },
+  fact: { width: '50%', paddingVertical: 12, gap: 2 },
+  side: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   sideImg: { width: '100%', height: 230 },
-  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 11 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
   cell: { width: '50%', flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 13 },
   cellIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },

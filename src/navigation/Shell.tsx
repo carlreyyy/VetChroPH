@@ -1,6 +1,8 @@
-// Signed-in app frame for tablets and desktops: a left sidebar beside the page.
-// Desktop (>= 1200 px) shows a full sidebar with labels; tablets (768–1199 px) show a compact icon rail.
-// Phones keep the bottom tab bar from RootNavigator, so this frame renders the page alone there.
+// Signed-in app frame.
+// Pet owners: top navbar (OwnerNav) on every breakpoint.
+// Staff and administrator on tablets and desktops: a left sidebar beside the page. Desktop (>= 1200 px) shows a full
+// sidebar with labels; tablets (768–1199 px) show a compact icon rail. Phones keep the bottom tab bar from
+// RootNavigator, so this frame renders the page alone there.
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { NavigationContainerRefWithCurrent, StackActions } from '@react-navigation/native';
@@ -14,6 +16,7 @@ import { colors } from '../theme';
 import { billState } from '../utils/format';
 import type { Role } from '../types';
 import type { RootList } from './linking';
+import { OwnerFrame } from './OwnerNav';
 
 type Item = { key: string; label: string; icon: IconName; tab?: boolean; badge?: number; short?: string };
 
@@ -29,17 +32,6 @@ function useItems(role: Role): [string, Item[]][] {
   const { db, user } = useApp();
   const unread = sel.unreadMsgs(db, user!);
   const verify = db.bills.filter(b => billState(b) === 'pending').length;
-  if (role === 'owner') {
-    const unpaid = db.bills.filter(b => b.ownerId === user!.ownerId && billState(b) === 'unpaid').length;
-    return [['', [
-      { key: 'Home', label: 'Home', icon: 'home', tab: true },
-      { key: 'Pets', label: 'My pets', icon: 'paw', tab: true },
-      { key: 'Appointments', label: 'Appointments', icon: 'calendar', tab: true },
-      { key: 'Messages', label: 'Messages', icon: 'chat', tab: true, badge: unread },
-      { key: 'OwnerBills', label: 'Bills', icon: 'receipt', badge: unpaid },
-      { key: 'ClinicInfo', label: 'Clinic info', icon: 'pin' },
-    ]]];
-  }
   if (role === 'staff') return [['', [
     { key: 'Home', label: 'Today', icon: 'home', tab: true },
     { key: 'Appointments', label: 'Schedule', icon: 'calendar', tab: true },
@@ -68,6 +60,7 @@ function useItems(role: Role): [string, Item[]][] {
 
 export function Shell({ children, route, navRef }: { children: React.ReactNode; route: string; navRef: NavigationContainerRefWithCurrent<RootList> }) {
   const { user } = useApp(); const { bp } = useBP();
+  if (user?.role === 'owner') return <OwnerFrame route={route} navRef={navRef}>{children}</OwnerFrame>;
   if (!user || bp === 'mobile') return <>{children}</>;
   return (
     <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
@@ -83,12 +76,10 @@ function Sidebar({ route, navRef, compact }: { route: string; navRef: Navigation
   const all = groups.flatMap(g => g[1]);
   const keys = all.map(i => i.key);
   // Admins reach Messages and Billing as stack screens; map the shared tab names onto them.
-  const alias: Record<string, string> = user!.role === 'admin' ? { Messages: 'Inbox', Billing: 'BillingList', Pets: 'Patients' }
-    : user!.role === 'owner' ? { Billing: 'OwnerBills' } : { Pets: 'Patients' };
+  const alias: Record<string, string> = user!.role === 'admin' ? { Messages: 'Inbox', Billing: 'BillingList', Pets: 'Patients' } : { Pets: 'Patients' };
   const norm = (r: string) => alias[r] || r;
   const lastRef = React.useRef(route && keys.includes(norm(PARENT[route] || route)) ? norm(PARENT[route] || route) : 'Home');
   let active = keys.includes(norm(route)) ? norm(route) : keys.includes(norm(PARENT[route] || '')) ? norm(PARENT[route]) : '';
-  if (!active && route === 'Patients' && user!.role === 'owner') active = 'Pets';
   if (active) lastRef.current = active; else if (route !== 'Notifications' && route !== 'Profile') active = lastRef.current;
   const unreadNotifs = (db.notifs[act.inboxKey()] || []).filter(n => n.unread).length;
 
