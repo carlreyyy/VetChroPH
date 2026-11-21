@@ -72,10 +72,10 @@ export function StaffHome() {
         action={<Btn label="New appointment" icon="plus" onPress={() => nav.navigate('Book', { staff: '1' })} />} />
       <Greeting sub={`${today.length} appointments today${waiting.length ? `, ${waiting.length} checked in` : ''}.`} />
       <StatGrid>
-        <Stat value={today.length} label="Appointments today" icon="calendar" dark onPress={() => nav.navigate('Main', { screen: 'Appointments' } as never)} />
-        <Stat value={verify.length} label="Payments to verify" icon="wallet" alert={verify.length > 0} onPress={() => nav.navigate('Main', { screen: 'Billing' } as never)} />
-        <Stat value={due.overdue.length} label="Overdue follow-ups" icon="alert" alert={due.overdue.length > 0} onPress={() => nav.navigate('CareMonitor')} />
-        <Stat value={unread} label="Unread messages" icon="chat" alert={unread > 0} onPress={() => nav.navigate('Main', { screen: 'Messages' } as never)} />
+        <Stat value={today.length} label="Appointments today" icon="calendar" tileColor={colors.teal} tileBg={colors.tileTeal} onPress={() => nav.navigate('Main', { screen: 'Appointments' } as never)} />
+        <Stat value={verify.length} label="Payments to verify" icon="wallet" tileColor={verify.length > 0 ? undefined : colors.warmOrange} tileBg={verify.length > 0 ? undefined : colors.tileOrange} alert={verify.length > 0} onPress={() => nav.navigate('Main', { screen: 'Billing' } as never)} />
+        <Stat value={due.overdue.length} label="Overdue follow-ups" icon="alert" tileColor={due.overdue.length > 0 ? undefined : colors.violet} tileBg={due.overdue.length > 0 ? undefined : colors.tileViolet} alert={due.overdue.length > 0} onPress={() => nav.navigate('CareMonitor')} />
+        <Stat value={unread} label="Unread messages" icon="chat" tileColor={unread > 0 ? undefined : colors.emerald} tileBg={unread > 0 ? undefined : colors.tileEmerald} alert={unread > 0} onPress={() => nav.navigate('Main', { screen: 'Messages' } as never)} />
       </StatGrid>
       {wide ? (
         <Cols ratio={[2, 1]} stackBelow="desktop">

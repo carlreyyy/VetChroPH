@@ -67,10 +67,10 @@ export function AdminHome() {
       <HomeHeader sub={`Administrator · ${fmtD(D(0))}`} action={<Btn label="View reports" icon="chart" kind="line" onPress={() => nav.navigate('Main', { screen: 'Reports' } as never)} />} />
       <Greeting sub="Here is how the clinic is doing today." />
       <StatGrid>
-        <Stat value={today.length} label="Appointments today" icon="calendar" dark onPress={() => nav.navigate('Main', { screen: 'Appointments' } as never)} />
-        <Stat value={verify.length} label="Payments to verify" icon="wallet" alert={verify.length > 0} onPress={() => nav.navigate('BillingList')} />
-        <Stat value={due.overdue.length} label="Overdue follow-ups" icon="alert" alert={due.overdue.length > 0} onPress={() => nav.navigate('CareMonitor')} />
-        <Stat value={unread} label="Unread messages" icon="chat" alert={unread > 0} onPress={() => nav.navigate('Inbox')} />
+        <Stat value={today.length} label="Appointments today" icon="calendar" tileColor={colors.teal} tileBg={colors.tileTeal} onPress={() => nav.navigate('Main', { screen: 'Appointments' } as never)} />
+        <Stat value={verify.length} label="Payments to verify" icon="wallet" tileColor={verify.length > 0 ? undefined : colors.warmOrange} tileBg={verify.length > 0 ? undefined : colors.tileOrange} alert={verify.length > 0} onPress={() => nav.navigate('BillingList')} />
+        <Stat value={due.overdue.length} label="Overdue follow-ups" icon="alert" tileColor={due.overdue.length > 0 ? undefined : colors.violet} tileBg={due.overdue.length > 0 ? undefined : colors.tileViolet} alert={due.overdue.length > 0} onPress={() => nav.navigate('CareMonitor')} />
+        <Stat value={unread} label="Unread messages" icon="chat" tileColor={unread > 0 ? undefined : colors.emerald} tileBg={unread > 0 ? undefined : colors.tileEmerald} alert={unread > 0} onPress={() => nav.navigate('Inbox')} />
       </StatGrid>
       {wide ? (
         <Cols ratio={[2, 1]} stackBelow="desktop">
@@ -139,10 +139,10 @@ export function Reports() {
         </View>
       </View>
       <StatGrid>
-        <Stat value={appts.filter(a => a.status === 'completed').length} label={daily ? 'Visits completed today' : 'Visits completed this month'} icon="check" />
-        <Stat value={appts.filter(a => ['cancelled', 'missed'].includes(a.status)).length} label="Cancelled or missed" icon="x" />
-        <Stat value={vax.length} label="Vaccines and deworming due" icon="syringe" alert={vax.some(x => x.s.key === 'overdue')} onPress={() => nav.navigate('CareMonitor')} />
-        <Stat value={money(unpaidBills.reduce((s2, b) => s2 + billBalance(b), 0))} label={`Unpaid in ${unpaidBills.length} bill${unpaidBills.length === 1 ? '' : 's'}`} icon="receipt" onPress={() => nav.navigate('BillingList')} />
+        <Stat value={appts.filter(a => a.status === 'completed').length} label={daily ? 'Visits completed today' : 'Visits completed this month'} icon="check" tileColor={colors.emerald} tileBg={colors.tileEmerald} />
+        <Stat value={appts.filter(a => ['cancelled', 'missed'].includes(a.status)).length} label="Cancelled or missed" icon="x" tileColor={colors.ink2} tileBg={colors.subtle} />
+        <Stat value={vax.length} label="Vaccines and deworming due" icon="syringe" tileColor={vax.some(x => x.s.key === 'overdue') ? undefined : colors.violet} tileBg={vax.some(x => x.s.key === 'overdue') ? undefined : colors.tileViolet} alert={vax.some(x => x.s.key === 'overdue')} onPress={() => nav.navigate('CareMonitor')} />
+        <Stat value={money(unpaidBills.reduce((s2, b) => s2 + billBalance(b), 0))} label={`Unpaid in ${unpaidBills.length} bill${unpaidBills.length === 1 ? '' : 's'}`} icon="receipt" tileColor={colors.warmOrange} tileBg={colors.tileOrange} onPress={() => nav.navigate('BillingList')} />
       </StatGrid>
       <Cols ratio={[1, 1]} stackBelow="desktop">
       <Section title="Due and overdue vaccines and deworming" action="All follow-ups" onAction={() => nav.navigate('CareMonitor')}>

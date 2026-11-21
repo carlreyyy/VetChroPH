@@ -28,6 +28,14 @@ export const colors = {
   badBg: '#FEF2F2',  bad: '#DC2626',
   infoBg: '#EFF6FF', info: '#1D4ED8',
 
+  // ── Vibrant accent tones (stat tiles, variety) ────────────────────────────
+  warmOrange: '#F97316',  tileOrange: '#FFF4ED',
+  teal: '#0891B2',        tileTeal: '#E9F8FC',
+  violet: '#7C3AED',      tileViolet: '#F3F0FF',
+  emerald: '#059669',     tileEmerald: '#ECFDF5',
+  rose: '#E11D48',        tileRose: '#FFF1F2',
+  sky: '#0284C7',         tileSky: '#E0F2FE',
+
   // ── Misc ──────────────────────────────────────────────────────────────────
   dot: '#EF4444',
   scrim: 'rgba(10,20,40,0.52)',

@@ -263,8 +263,8 @@ export const CountBadge = ({ n, tone = 'dot' }: { n: number; tone?: 'dot' | 'nav
   ? <View style={[s.count, tone === 'navy' && { backgroundColor: colors.accentDeep }]}><Text style={s.countText}>{n > 99 ? '99+' : n}</Text></View>
   : null;
 
-/** One metric inside a StatGrid. */
-export function Stat({ value, label, onPress, alert, dark, icon }: { value: string | number; label: string; onPress?: () => void; alert?: boolean; dark?: boolean; icon?: IconName }) {
+/** One metric inside a StatGrid. tileColor accepts a hex for vibrant accent tiles. */
+export function Stat({ value, label, onPress, alert, dark, icon, tileColor, tileBg }: { value: string | number; label: string; onPress?: () => void; alert?: boolean; dark?: boolean; icon?: IconName; tileColor?: string; tileBg?: string }) {
   if (dark) return (
     <Pressable disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}`}
       style={(st: PState) => [s.stat, s.statCard, s.statDark, onPress && st.hovered && { backgroundColor: '#214080' }]}>
@@ -275,12 +275,14 @@ export function Stat({ value, label, onPress, alert, dark, icon }: { value: stri
       </View>
     </Pressable>
   );
+  const ic = alert ? colors.bad : tileColor || colors.accent;
+  const ibg = alert ? colors.badBg : tileBg || colors.accentSoft;
   return (
     <Pressable disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}`}
       style={(st: PState) => [s.stat, s.statCard, onPress && st.hovered && { borderColor: colors.lineStrong, backgroundColor: colors.subtle }]}>
-      {icon && <View style={[s.statIcon, alert && { backgroundColor: colors.badBg }]}><Icon name={icon} size={16} color={alert ? colors.bad : colors.accent} strokeWidth={1.8} /></View>}
+      {icon && <View style={[s.statIcon, { backgroundColor: ibg }]}><Icon name={icon} size={16} color={ic} strokeWidth={1.8} /></View>}
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={[s.statValue, alert && { color: colors.bad }]} numberOfLines={1}>{value}</Text>
+        <Text style={[s.statValue, { color: alert ? colors.bad : tileColor || colors.ink }]} numberOfLines={1}>{value}</Text>
         <Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={2}>{label}</Text>
       </View>
     </Pressable>

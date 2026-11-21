@@ -94,7 +94,7 @@ function AddPetCard({ onPress, compact }: { onPress: () => void; compact?: boole
 }
 
 /* ---------- home ---------- */
-type Action = { label: string; short: string; icon: IconName; sub: string; onPress: () => void; badge?: number; primary?: boolean };
+type Action = { label: string; short: string; icon: IconName; sub: string; onPress: () => void; badge?: number; primary?: boolean; iconColor?: string; iconBg?: string };
 
 function HeroGreeting({ name, next, onBook }: { name: string; next?: typeof undefined | ReturnType<typeof Object>; onBook: () => void }) {
   const { wide } = useBP();
@@ -114,8 +114,8 @@ function HeroGreeting({ name, next, onBook }: { name: string; next?: typeof unde
           </Text>
         )}
         <Pressable onPress={onBook} accessibilityRole="button" accessibilityLabel="Book an appointment"
-          style={({ pressed }) => [o.heroBtn, pressed && { opacity: 0.88 }]}>
-          <Icon name="calendar" size={15} color={colors.accentDeep} strokeWidth={2.2} />
+          style={({ pressed }) => [o.heroBtn, pressed && { opacity: 0.75 }]}>
+          <Icon name="calendar" size={15} color="#fff" strokeWidth={2.2} />
           <Text style={o.heroBtnText}>Book an appointment</Text>
         </Pressable>
       </View>
@@ -137,8 +137,8 @@ function ActionStrip({ items }: { items: Action[] }) {
         <Pressable key={a.label} onPress={a.onPress} accessibilityRole="button" accessibilityLabel={a.badge ? `${a.label}, ${a.badge}` : a.label}
           style={({ pressed }) => [o.qa, pressed && { opacity: 0.75 }]}>
           <View style={{ position: 'relative' }}>
-            <View style={o.qaIcon}>
-              <Icon name={a.icon} size={20} color={colors.accent} strokeWidth={2} />
+            <View style={[o.qaIcon, a.iconBg ? { backgroundColor: a.iconBg } : undefined]}>
+              <Icon name={a.icon} size={20} color={a.iconColor || colors.accent} strokeWidth={2} />
             </View>
             {!!a.badge && <View style={o.qaBadge}><CountBadge n={a.badge} /></View>}
           </View>
@@ -155,8 +155,8 @@ function ActionStrip({ items }: { items: Action[] }) {
             st.hovered && { borderColor: colors.accentMid, backgroundColor: colors.hover },
             st.pressed && { opacity: 0.88 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <View style={o.actionIcon}>
-              <Icon name={a.icon} size={18} color={colors.accent} strokeWidth={2} />
+            <View style={[o.actionIcon, a.iconBg ? { backgroundColor: a.iconBg } : undefined]}>
+              <Icon name={a.icon} size={18} color={a.iconColor || colors.accent} strokeWidth={2} />
             </View>
             {a.badge ? <CountBadge n={a.badge} /> : <Icon name="chevR" size={15} color={colors.ink3} />}
           </View>
@@ -262,10 +262,10 @@ export function OwnerHome() {
   const addPet = () => nav.navigate('PetForm', { ownerId: oid });
 
   const actions: Action[] = [
-    { label: 'Book a visit', short: 'Book', icon: 'calendar', sub: 'Open times are confirmed right away', onPress: () => nav.navigate('Book'), primary: true },
-    { label: 'Message the clinic', short: 'Message', icon: 'chat', sub: unread ? `${unread} unread ${unread === 1 ? 'message' : 'messages'}` : 'Ask about a pet, booking or bill', onPress: () => tab('Messages'), badge: unread },
-    { label: 'Pay a bill', short: 'Pay', icon: 'wallet', sub: unpaid.length ? `${money(due)} to pay` : 'Nothing to pay right now', onPress: () => tab('Bills'), badge: unpaid.length },
-    { label: 'Clinic info', short: 'Clinic', icon: 'pin', sub: today?.open ? `Open today until ${hourLabel(today.to)}` : 'Closed today', onPress: () => nav.navigate('ClinicInfo') },
+    { label: 'Book a visit', short: 'Book', icon: 'calendar', sub: 'Open times are confirmed right away', onPress: () => nav.navigate('Book'), primary: true, iconColor: colors.teal, iconBg: colors.tileTeal },
+    { label: 'Message the clinic', short: 'Message', icon: 'chat', sub: unread ? `${unread} unread ${unread === 1 ? 'message' : 'messages'}` : 'Ask about a pet, booking or bill', onPress: () => tab('Messages'), badge: unread, iconColor: colors.emerald, iconBg: colors.tileEmerald },
+    { label: 'Pay a bill', short: 'Pay', icon: 'wallet', sub: unpaid.length ? `${money(due)} to pay` : 'Nothing to pay right now', onPress: () => tab('Bills'), badge: unpaid.length, iconColor: colors.warmOrange, iconBg: colors.tileOrange },
+    { label: 'Clinic info', short: 'Clinic', icon: 'pin', sub: today?.open ? `Open today until ${hourLabel(today.to)}` : 'Closed today', onPress: () => nav.navigate('ClinicInfo'), iconColor: colors.violet, iconBg: colors.tileViolet },
   ];
 
   const attention = offers.length > 0 ? (
@@ -520,15 +520,15 @@ export function ClinicInfo() {
 
 const o = StyleSheet.create({
   // Hero greeting banner
-  hero: { backgroundColor: colors.accentDeep, borderRadius: radius.xl, padding: 24, minHeight: 160, overflow: 'hidden', justifyContent: 'flex-end' },
-  heroBlob1: { position: 'absolute', right: -30, top: -30, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(47,125,225,0.28)' },
-  heroBlob2: { position: 'absolute', right: 100, top: -50, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(126,200,245,0.14)' },
-  heroBlob3: { position: 'absolute', left: -20, bottom: -40, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(47,125,225,0.18)' },
+  hero: { backgroundColor: '#1A3775', borderRadius: radius.xl, padding: 24, minHeight: 168, overflow: 'hidden', justifyContent: 'flex-end' },
+  heroBlob1: { position: 'absolute', right: -20, top: -40, width: 240, height: 240, borderRadius: 120, backgroundColor: 'rgba(8,145,178,0.38)' },
+  heroBlob2: { position: 'absolute', right: 110, top: -30, width: 150, height: 150, borderRadius: 75, backgroundColor: 'rgba(249,115,22,0.22)' },
+  heroBlob3: { position: 'absolute', left: -30, bottom: -50, width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(124,58,237,0.20)' },
   heroGreeting: { fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '700', color: '#fff', letterSpacing: -0.4 },
   heroTagline: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: 'rgba(255,255,255,0.72)' },
   heroNext: { fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.52)', marginTop: -2 },
-  heroBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 14, height: 36, alignSelf: 'flex-start', marginTop: 4 },
-  heroBtnText: { fontFamily: FONT, fontSize: 13.5, fontWeight: '600', color: colors.accentDeep },
+  heroBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)', paddingHorizontal: 16, height: 38, alignSelf: 'flex-start', marginTop: 6 },
+  heroBtnText: { fontFamily: FONT, fontSize: 13.5, fontWeight: '600', color: '#fff' },
 
   // Action cards
   action: { flex: 1, minWidth: 0, gap: 12, padding: 14, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
