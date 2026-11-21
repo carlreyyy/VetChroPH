@@ -6,7 +6,7 @@
 // Vaccines and deworming are not a separate module: their next due dates are follow-ups that drive reminders.
 import React, { useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Icon } from '../components/Icon';
+import { Icon, IconName } from '../components/Icon';
 import { PET_COVERS } from '../data/photos';
 import { Cols, useBP } from '../components/responsive';
 import { pickFile, fileSize } from '../utils/files';
@@ -45,12 +45,25 @@ export function PetDetail() {
   ) : null;
   const src = PET_COVERS[pet.id];
   const canEdit = role === 'owner' ? pet.ownerId === user!.ownerId : true;
+  const INFO_FACTS: [IconName, string, string][] = [
+    ['paw', 'Species', cap(pet.species)],
+    [pet.sex === 'Male' ? 'male' : 'female', 'Sex', pet.sex],
+    ['scale', 'Weight', `${pet.weight} kg`],
+    ['calendar', 'Birthday', fmtDY(pet.birth)],
+    ['clock', 'Age', ageOf(pet.birth)],
+    ['info', 'Breed', pet.breed],
+  ];
   const infoBlock = <>
           <View style={bp.wide ? pd.infoFlat : pd.info}>
-            {([['Species', cap(pet.species)], ['Breed', pet.breed], ['Sex', pet.sex], ['Weight', `${pet.weight} kg`], ['Birthday', fmtDY(pet.birth)], ['Age', ageOf(pet.birth)]] as const).map(([k, v], idx) => (
-              <View key={k} style={[pd.fact, idx % 2 === 1 && { paddingLeft: 16 }, idx >= 2 && { borderTopWidth: 1, borderTopColor: colors.line }]}>
-                <Text style={[type.small, { fontSize: 12.5 }]}>{k}</Text>
-                <Text style={[type.h3, { fontSize: 14.5 }]} numberOfLines={1}>{v}</Text>
+            {INFO_FACTS.map(([icon, label, value], idx) => (
+              <View key={label} style={[pd.factRow, idx === 0 && { borderTopWidth: 0 }]}>
+                <View style={pd.factIcon}>
+                  <Icon name={icon} size={14} color={colors.accentDeep} strokeWidth={2.2} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: FONT, fontSize: 11.5, color: colors.ink3 }}>{label}</Text>
+                  <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: colors.ink }} numberOfLines={1}>{value}</Text>
+                </View>
               </View>
             ))}
           </View>
@@ -384,9 +397,11 @@ const pd = StyleSheet.create({
   sheet: { marginTop: -26, borderTopLeftRadius: 26, borderTopRightRadius: 26, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 22, gap: 18 },
   nameCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, paddingVertical: 14 },
   name: { fontFamily: FONT, fontSize: 26, fontWeight: '700', letterSpacing: -0.6, color: colors.ink },
-  info: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, ...shadow },
-  infoFlat: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: colors.line },
+  info: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, ...shadow },
+  infoFlat: { borderTopWidth: 1, borderTopColor: colors.line },
   fact: { width: '50%', paddingVertical: 12, gap: 2 },
+  factRow:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line },
+  factIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   side: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   sideImg: { width: '100%', height: 230 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },

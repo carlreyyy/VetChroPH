@@ -30,14 +30,25 @@ export function AdminHome() {
   const staffActs = db.activity.filter(a => db.users.some(u => u.name === a.who && u.role === 'staff')).slice(0, 4);
   const loading = useFirstLoad('adminHome'); const { wide } = useBP();
   const money_ = (
-    <Card onPress={() => nav.navigate('Main', { screen: 'Reports' } as never)} style={{ gap: 12 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <View><T.Small>Collected today</T.Small><Text style={{ fontFamily: FONT, fontSize: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 }}>{money(paidIn(db, d => diff(d) === 0))}</Text></View>
-        <View style={{ alignItems: 'flex-end' }}><T.Small>This month</T.Small><Text style={{ fontFamily: FONT, fontSize: 18, fontWeight: '700', color: colors.ink, marginTop: 4 }}>{money(paidIn(db, d => sameMonth(d)))}</Text></View>
+    <Pressable onPress={() => nav.navigate('Main', { screen: 'Reports' } as never)} accessibilityRole="button" accessibilityLabel="Revenue — view reports"
+      style={({ pressed }: any) => [{ borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: colors.accentDeep, opacity: pressed ? 0.9 : 1 }]}>
+      {/* Navy revenue header */}
+      <View style={{ backgroundColor: colors.accentDeep, padding: 18, flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.58)', textTransform: 'uppercase', letterSpacing: 0.7 }}>Collected today</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 28, fontWeight: '700', color: '#fff', letterSpacing: -0.8, marginTop: 2 }}>{money(paidIn(db, d => diff(d) === 0))}</Text>
+        </View>
+        <View style={{ alignItems: 'flex-end', paddingTop: 2 }}>
+          <Text style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,0.58)' }}>This month</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 20, fontWeight: '700', color: 'rgba(255,255,255,0.88)', marginTop: 3 }}>{money(paidIn(db, d => sameMonth(d)))}</Text>
+        </View>
       </View>
-      <View style={{ height: 1, backgroundColor: colors.line }} />
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><T.Small>Unpaid bills</T.Small><Text style={[type.h3, { color: colors.bad }]}>{money(unpaid)}</Text></View>
-    </Card>
+      {/* Unpaid row */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 12, backgroundColor: colors.surface }}>
+        <Text style={type.small}>Unpaid bills</Text>
+        <Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '700', color: unpaid > 0 ? colors.bad : colors.ok }}>{money(unpaid)}</Text>
+      </View>
+    </Pressable>
   );
   const shortcuts = <QuickActions items={[
     ['Messages', 'chat', () => nav.navigate('Inbox'), unread],

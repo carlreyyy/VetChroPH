@@ -259,10 +259,17 @@ export function BookSuccess() {
       <Btn label="View appointment" full onPress={() => nav.replace('ApptDetail', { id: a.id })} />
       <Btn label={user!.role === 'owner' ? 'Back to home' : 'Back to schedule'} kind="line" full onPress={() => nav.goBack()} />
     </View>}>
-      <View style={{ alignItems: 'center', gap: 8, paddingTop: 40, paddingBottom: 4 }}>
-        <View style={bk.halo}><View style={bk.success}><Icon name="check" size={32} color="#fff" strokeWidth={2.8} /></View></View>
-        <Text style={[type.display, { fontSize: 24, fontWeight: '700', textAlign: 'center' }]}>Appointment confirmed</Text>
-        <Text style={[type.body, { color: colors.ink2, textAlign: 'center', maxWidth: 300 }]}>{user!.role === 'owner' ? 'Your booking is confirmed. We will remind you 1 day and 2 hours before.' : 'The booking is confirmed and the owner was notified.'}</Text>
+      <View style={{ alignItems: 'center', gap: 10, paddingTop: 40, paddingBottom: 4 }}>
+        {/* Triple-ring celebration halo */}
+        <View style={bk.ring2}>
+          <View style={bk.halo}>
+            <View style={bk.success}><Icon name="check" size={34} color="#fff" strokeWidth={2.8} /></View>
+          </View>
+        </View>
+        <View style={{ alignItems: 'center', gap: 6, marginTop: 4 }}>
+          <Text style={{ fontFamily: FONT, fontSize: 24, fontWeight: '700', color: colors.ink, letterSpacing: -0.5, textAlign: 'center' }}>Appointment confirmed</Text>
+          <Text style={[type.body, { color: colors.ink2, textAlign: 'center', maxWidth: 300, lineHeight: 22 }]}>{user!.role === 'owner' ? 'Your booking is confirmed. We will remind you 1 day and 2 hours before.' : 'The booking is confirmed and the owner was notified.'}</Text>
+        </View>
       </View>
       <View style={bk.summary}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, backgroundColor: colors.subtle }}>
@@ -310,13 +317,26 @@ export function ApptDetail() {
   return (
     <Screen title="Appointment" footer={footer}>
       {p.fresh && <Banner tone="ok" icon="check" title="Appointment confirmed" sub={clinic ? 'The owner was notified.' : `The time was open, so it is confirmed. You will get reminders 1 day and 2 hours before.`} />}
-      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-        <PetAvatar pet={pet} size={60} square />
-        <View style={{ flex: 1, gap: 4 }}>
-          <T.H1>{pet.name}</T.H1>
-          <T.Small>{a.service}</T.Small>
+      {/* Premium hero card: navy date/service band + white pet row */}
+      <View style={ad.hero}>
+        <View style={ad.heroTop}>
+          <View style={ad.dateTile}>
+            <Text style={ad.dateMon}>{MON[parseD(a.date).getMonth()]}</Text>
+            <Text style={ad.dateDay}>{parseD(a.date).getDate()}</Text>
+          </View>
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={ad.heroSvc} numberOfLines={1}>{a.service}</Text>
+            <Text style={ad.heroTime}>{t12(a.time)} · {rel(a.date)}</Text>
+          </View>
+          <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge />
         </View>
-        <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge />
+        <View style={ad.heroPet}>
+          <PetAvatar pet={pet} size={48} square />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={type.h3}>{pet.name}</Text>
+            <Text style={type.small} numberOfLines={1}>{pet.breed}{clinic ? ` · ${owner.name}` : a.reason ? ` · ${a.reason}` : ''}</Text>
+          </View>
+        </View>
       </View>
       {a.status === 'resched' && a.offer && <Banner tone="info" icon="calendar" title="New time suggested" sub={`${fmtD(a.offer.date)} at ${t12(a.offer.time)}. ${clinic ? 'Waiting for the owner.' : 'Accept it or decline below.'}`} />}
       {a.status === 'cancelled' && a.note && <Banner icon="info" title="Cancelled" sub={a.note} />}
@@ -517,8 +537,9 @@ const bk = StyleSheet.create({
   tick: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center', marginLeft: 2 },
   picked: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: colors.accentSoft, alignSelf: 'flex-start' },
   svcIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center' },
-  halo: { width: 96, height: 96, borderRadius: 48, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  success: { width: 68, height: 68, borderRadius: 34, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
+  ring2:   { width: 128, height: 128, borderRadius: 64, borderWidth: 2, borderColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  halo: { width: 100, height: 100, borderRadius: 50, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  success: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
   summary: { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   sumRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line },
   sumIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
@@ -540,4 +561,14 @@ const ca = StyleSheet.create({
   time: { width: 46, alignItems: 'flex-start' },
   ampm: { fontFamily: FONT, fontSize: 11, color: colors.ink3, fontWeight: '500' },
   timeText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: colors.ink },
+});
+const ad = StyleSheet.create({
+  hero:     { borderRadius: 16, overflow: 'hidden', ...shadow },
+  heroTop:  { backgroundColor: colors.accentDeep, padding: 16, flexDirection: 'row', gap: 14, alignItems: 'center' },
+  dateTile: { width: 52, height: 58, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center', gap: 1 },
+  dateMon:  { fontFamily: FONT, fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' },
+  dateDay:  { fontFamily: FONT, fontSize: 22, fontWeight: '700', color: '#fff' },
+  heroSvc:  { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: -0.3 },
+  heroTime: { fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.7)' },
+  heroPet:  { backgroundColor: colors.surface, padding: 14, flexDirection: 'row', gap: 12, alignItems: 'center' },
 });

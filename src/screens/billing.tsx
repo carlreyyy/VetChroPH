@@ -35,10 +35,28 @@ export function BillDetail() {
 
   return (
     <Screen title="Bill" footer={footer}>
-      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-        <PetAvatar pet={pet} size={52} />
-        <View style={{ flex: 1 }}><T.H2>{pet.name}</T.H2><T.Small>{fmtDY(b.date)}{clinic ? ` · ${owner.name}` : ''}</T.Small></View>
-        <Pill text={BILL[st][0]} tone={BILL[st][1]} badge />
+      {/* Premium bill hero card */}
+      <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
+        <View style={{ backgroundColor: colors.accentDeep, padding: 16, flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="receipt" size={24} color="#fff" strokeWidth={1.9} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ fontFamily: FONT, fontSize: 24, fontWeight: '700', color: '#fff', letterSpacing: -0.6 }}>{money(billTotal(b))}</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.68)' }}>{fmtDY(b.date)}{clinic ? ` · ${owner.name}` : ''}</Text>
+          </View>
+          <Pill text={BILL[st][0]} tone={BILL[st][1]} badge />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', padding: 14, backgroundColor: colors.surface }}>
+          <PetAvatar pet={pet} size={40} />
+          <View style={{ flex: 1, gap: 1 }}>
+            <Text style={type.h3}>{pet.name}</Text>
+            <Text style={type.small} numberOfLines={1}>{pet.breed}</Text>
+          </View>
+          <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '700', color: bal > 0 ? colors.bad : colors.ok }}>
+            {bal > 0 ? `Due: ${money(bal)}` : 'Paid in full'}
+          </Text>
+        </View>
       </View>
       {clinic && pending && <Banner tone="warn" icon="shield" title="Check the clinic account first" sub={`Open the clinic's ${pending.method} account and look for reference ${pending.ref} for ${money(pending.amount)}. Screenshots can be edited, so always check the real account.`} />}
       {!clinic && pending && <Banner tone="warn" icon="clock" title="Payment proof sent" sub="The clinic is checking its account. You will get a notification when it is confirmed." />}
