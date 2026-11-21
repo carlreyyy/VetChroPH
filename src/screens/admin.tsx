@@ -13,7 +13,7 @@ import { DashSkeleton, ScheduleTable, useDueList } from './clinic';
 import { Cell, Cols, DataTable, useBP } from '../components/responsive';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, type, FONT } from '../theme';
+import { colors, radius, shadow, type, FONT } from '../theme';
 import type { DayHours, PayAccount, Role, Service } from '../types';
 import { APPT, D, DOWL, MON, ago, billBalance, billState, billTotal, byDateTime, diff, fmtD, fmtDS, hourLabel, isEmail, isPhone, money, parseD, t12 } from '../utils/format';
 
@@ -120,19 +120,24 @@ export function Reports() {
   return (
     <Screen title="Reports" back={false} big tabbed sub="Collections, visits, due vaccines and unpaid bills.">
       <View style={{ maxWidth: 360 }}><Tabs options={[['daily', 'Daily'], ['monthly', 'Monthly']]} value={range} onChange={setRange} /></View>
-      <Card style={{ gap: 14 }}>
-        <View><T.Small>{daily ? 'Collected today' : `Collected in ${MON[parseD(D(0)).getMonth()]}`}</T.Small><Text style={{ fontFamily: FONT, fontSize: 30, fontWeight: '700', color: colors.ink, letterSpacing: -1 }}>{money(headline)}</Text></View>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 132, gap: 8 }}>
-          {bars.map((v, i) => (
-            <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 6, height: '100%' }}>
-              <Text style={{ fontFamily: FONT, fontSize: 10.5, color: colors.ink2, fontWeight: '700' }}>{v ? `${(v / 1000).toFixed(1)}k` : ''}</Text>
-              <View style={{ width: '100%', maxWidth: 30, height: Math.max(4, (v / max) * 92), borderRadius: 7, backgroundColor: i === bars.length - 1 ? colors.accentDeep : '#C5D2E8' }} />
-              <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink2 }}>{labels[i]}</Text>
-            </View>
-          ))}
+      <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
+        <View style={{ backgroundColor: colors.accentDeep, paddingHorizontal: 18, paddingVertical: 16 }}>
+          <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.58)', textTransform: 'uppercase', letterSpacing: 0.7 }}>{daily ? 'Collected today' : `Collected in ${MON[parseD(D(0)).getMonth()]}`}</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 30, fontWeight: '700', color: '#fff', letterSpacing: -1, marginTop: 2 }}>{money(headline)}</Text>
         </View>
-        <T.Small>{daily ? 'Last 7 days' : 'Last 6 months'} · confirmed payments only</T.Small>
-      </Card>
+        <View style={{ backgroundColor: colors.surface, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 12, gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 132, gap: 8 }}>
+            {bars.map((v, i) => (
+              <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 6, height: '100%' }}>
+                <Text style={{ fontFamily: FONT, fontSize: 10.5, color: colors.ink2, fontWeight: '700' }}>{v ? `${(v / 1000).toFixed(1)}k` : ''}</Text>
+                <View style={{ width: '100%', maxWidth: 30, height: Math.max(4, (v / max) * 92), borderRadius: 7, backgroundColor: i === bars.length - 1 ? colors.accentDeep : '#C5D2E8' }} />
+                <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink2 }}>{labels[i]}</Text>
+              </View>
+            ))}
+          </View>
+          <T.Small>{daily ? 'Last 7 days' : 'Last 6 months'} · confirmed payments only</T.Small>
+        </View>
+      </View>
       <StatGrid>
         <Stat value={appts.filter(a => a.status === 'completed').length} label={daily ? 'Visits completed today' : 'Visits completed this month'} icon="check" />
         <Stat value={appts.filter(a => ['cancelled', 'missed'].includes(a.status)).length} label="Cancelled or missed" icon="x" />
