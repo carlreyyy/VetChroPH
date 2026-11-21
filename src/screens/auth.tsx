@@ -24,20 +24,18 @@ const DEMO: [string, string, string, IconName][] = [
 function AuthLeftPanel() {
   return (
     <View style={a.panel}>
-      {/* Full-bleed pet photo */}
-      <Image
-        source={SCENES.welcomePets}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-        resizeMode="cover"
-        accessibilityIgnoresInvertColors
-      />
-      {/* Primary dark overlay */}
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#091729', opacity: 0.62 }} />
-      {/* Bottom darkening so headline text pops */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '55%', backgroundColor: '#091729', opacity: 0.38 }} />
+      {/* Photo at reduced opacity — panel's dark #091729 bg shows through uniformly, no overlay seams */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.45 }}>
+        <Image
+          source={SCENES.welcomePets}
+          style={{ width: '100%', height: '100%' }}
+          resizeMode="cover"
+          accessibilityIgnoresInvertColors
+        />
+      </View>
 
-      {/* Content layer */}
-      <View style={{ flex: 1, zIndex: 1, justifyContent: 'space-between' }}>
+      {/* Content layer: use absolute positioning so text always gets panel_width − 2×padding */}
+      <View style={{ position: 'absolute', top: 48, left: 48, right: 48, bottom: 48, zIndex: 1, justifyContent: 'space-between' }}>
         {/* Brand top-left */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <BrandMark size={28} white />
@@ -46,10 +44,10 @@ function AuthLeftPanel() {
 
         {/* Headline + trust bottom */}
         <View style={{ gap: 22 }}>
-          <View style={{ gap: 12 }}>
+          <View style={{ gap: 12, flexShrink: 0 }}>
             <Text style={a.panelH1}>
               {'Every visit.\nA '}
-              <Text style={{ color: colors.teal }}>healthier</Text>
+              <Text style={{ color: colors.teal }}>{'healthier'}</Text>
               {'\ntomorrow.'}
             </Text>
             <Text style={a.panelSub}>
@@ -399,11 +397,11 @@ const a = StyleSheet.create({
   },
   panelH1: {
     fontFamily: FONT,
-    fontSize: 38,
-    lineHeight: 50,
+    fontSize: 34,
+    lineHeight: 44,
     fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: -1,
+    letterSpacing: -0.8,
   },
   panelSub: {
     fontFamily: FONT,
