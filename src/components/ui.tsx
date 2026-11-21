@@ -298,8 +298,8 @@ export function StatGrid({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Row of shortcut actions. */
-export function QuickActions({ items }: { items: [label: string, icon: IconName, onPress: () => void, badge?: number][] }) {
+/** Row of shortcut actions. tileColor/tileBg can be passed as 5th/6th tuple element. */
+export function QuickActions({ items }: { items: [label: string, icon: IconName, onPress: () => void, badge?: number, tileColor?: string, tileBg?: string][] }) {
   const { wide } = useBP();
   if (wide) return (
     <Group>{items.map(([l, i, fn, n]) => (
@@ -308,10 +308,12 @@ export function QuickActions({ items }: { items: [label: string, icon: IconName,
   );
   return (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      {items.map(([l, i, fn, n]) => (
+      {items.map(([l, i, fn, n, tc, tb]) => (
         <Pressable key={l} onPress={fn} accessibilityRole="button" accessibilityLabel={l} style={(st: PState) => [s.qa, { backgroundColor: hoverBg(st, colors.surface) }]}>
-          <View>
-            <Icon name={i} size={20} color={colors.accentDeep} />
+          <View style={{ position: 'relative' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: tb || colors.accentSoft }}>
+              <Icon name={i} size={20} color={tc || colors.accent} />
+            </View>
             {!!n && <View style={s.qaBadge}><Text style={s.countText}>{n}</Text></View>}
           </View>
           <Text style={{ fontFamily: FONT, fontSize: 12, lineHeight: 15, minHeight: 30, fontWeight: '500', color: colors.ink, textAlign: 'center' }} numberOfLines={2}>{l}</Text>

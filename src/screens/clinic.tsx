@@ -55,10 +55,10 @@ export function StaffHome() {
   const unread = sel.unreadMsgs(db, user!);
   const loading = useFirstLoad('staffHome'); const { wide } = useBP();
   const shortcuts = <QuickActions items={[
-    ['Walk-in', 'calendar', () => nav.navigate('Book', { staff: '1' })],
-    ['New bill', 'receipt', () => nav.navigate('CreateBill')],
-    ['Due list', 'bell', () => nav.navigate('CareMonitor')],
-    ['Search patients', 'search', () => nav.navigate('Main', { screen: 'Patients' } as never)],
+    ['Walk-in', 'calendar', () => nav.navigate('Book', { staff: '1' }), 0, colors.teal, colors.tileTeal],
+    ['New bill', 'receipt', () => nav.navigate('CreateBill'), 0, colors.warmOrange, colors.tileOrange],
+    ['Due list', 'bell', () => nav.navigate('CareMonitor'), 0, colors.violet, colors.tileViolet],
+    ['Search patients', 'search', () => nav.navigate('Main', { screen: 'Patients' } as never), 0, colors.emerald, colors.tileEmerald],
   ]} />;
   const dueList = (due.overdue.length + due.soon.length) > 0 ? <Section title="Due and overdue pets" action="See all" onAction={() => nav.navigate('CareMonitor')}>
     <Group>{[...due.overdue, ...due.soon].slice(0, wide ? 5 : 4).map(({ f, pet, s: st }) => (

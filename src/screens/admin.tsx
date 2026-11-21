@@ -51,10 +51,10 @@ export function AdminHome() {
     </Pressable>
   );
   const shortcuts = <QuickActions items={[
-    ['Messages', 'chat', () => nav.navigate('Inbox'), unread],
-    ['Billing', 'wallet', () => nav.navigate('BillingList'), verify.length],
-    ['Due list', 'bell', () => nav.navigate('CareMonitor')],
-    ['Activity', 'history', () => nav.navigate('ActivityLog')],
+    ['Messages', 'chat', () => nav.navigate('Inbox'), unread, colors.emerald, colors.tileEmerald],
+    ['Billing', 'wallet', () => nav.navigate('BillingList'), verify.length, colors.warmOrange, colors.tileOrange],
+    ['Due list', 'bell', () => nav.navigate('CareMonitor'), 0, colors.violet, colors.tileViolet],
+    ['Activity', 'history', () => nav.navigate('ActivityLog'), 0, colors.teal, colors.tileTeal],
   ]} />;
   const activity = (
     <Section title="Staff activity" action="Activity log" onAction={() => nav.navigate('ActivityLog')}>
