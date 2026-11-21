@@ -52,11 +52,11 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
           return (
             <Pressable key={r.key} accessibilityRole="tab" accessibilityLabel={def[1]} accessibilityState={{ selected: on }}
               onPress={() => { if (!on) navigation.navigate(r.name); }} style={({ pressed }) => [ts.item, pressed && { opacity: 0.6 }]}>
-              <View style={[ts.pill, on && { backgroundColor: colors.accentSoft }]}>
-                <Icon name={def[2]} size={22} color={on ? colors.accentDeep : colors.ink2} strokeWidth={on ? 2.2 : 1.8} />
+              <View style={[ts.pill, on && { backgroundColor: colors.tileTeal }]}>
+                <Icon name={def[2]} size={22} color={on ? colors.teal : colors.ink2} strokeWidth={on ? 2.2 : 1.8} />
                 {badge(r.name) && <View style={ts.dot} />}
               </View>
-              <Text style={[ts.label, on && { color: colors.accentDeep, fontWeight: '600' }]} numberOfLines={1}>{def[1]}</Text>
+              <Text style={[ts.label, on && { color: colors.teal, fontWeight: '600' }]} numberOfLines={1}>{def[1]}</Text>
             </Pressable>
           );
         })}
