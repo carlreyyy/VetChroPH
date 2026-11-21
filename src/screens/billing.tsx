@@ -122,13 +122,19 @@ export function PayBill() {
   };
   return (
     <Screen title="Pay bill" sub="Pay with an e-wallet or bank transfer, then send your proof of payment." footer={<Btn label="Submit payment proof" icon="upload" style={{ flex: 1 }} onPress={submit} />}>
-      <View style={bl.amount}>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={type.small}>Amount due</Text>
-          <Text style={{ fontFamily: FONT, fontSize: 30, lineHeight: 36, fontWeight: '700', color: colors.accentDeep, letterSpacing: -0.8 }}>{money(bal)}</Text>
+      <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
+        <View style={{ backgroundColor: colors.accentDeep, padding: 18, flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="wallet" size={24} color="#fff" strokeWidth={1.9} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.58)', textTransform: 'uppercase', letterSpacing: 0.7 }}>Amount due</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 30, fontWeight: '700', color: '#fff', letterSpacing: -0.8 }}>{money(bal)}</Text>
+          </View>
+        </View>
+        <View style={{ backgroundColor: colors.surface, paddingHorizontal: 18, paddingVertical: 12 }}>
           <Text style={type.small}>{sel.pet(db, b.petId)!.name} · visit on {fmtD(b.date)}</Text>
         </View>
-        <View style={bl.amountIcon}><Icon name="wallet" size={22} color={colors.accentDeep} /></View>
       </View>
       <Section title="Payment method">
         <View style={{ flexDirection: 'row', gap: 8 }}>
