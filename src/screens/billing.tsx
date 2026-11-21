@@ -77,7 +77,7 @@ export function BillDetail() {
         </Group>
       </Section>}
       {clinic && pending && <Card style={{ alignItems: 'center', gap: 8 }}>
-        <View style={bl.proof}><Icon name="image" size={30} color={colors.accentDeep} /><T.Small>{pending.proof}</T.Small></View>
+        <View style={bl.proof}><Icon name="image" size={30} color={colors.warmOrange} /><T.Small>{pending.proof}</T.Small></View>
         <T.Small>Screenshot uploaded by {pending.by} on {fmtD(pending.date)}</T.Small>
       </Card>}
       {!clinic && bal > 0 && !pending && <T.Small>You can also pay in cash at the clinic. Bills are paid in full.</T.Small>}
@@ -88,7 +88,7 @@ export function BillDetail() {
       }} />}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {['Reference not found in our account', 'Amount does not match', 'Screenshot is unclear'].map(x => (
-            <Pressable key={x} onPress={() => { setWhy(x); setWhyErr(''); }} style={[bl.chip, why === x && { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep }]}><Text style={{ fontFamily: FONT, fontWeight: '600', fontSize: 13, color: why === x ? '#fff' : colors.ink }}>{x}</Text></Pressable>
+            <Pressable key={x} onPress={() => { setWhy(x); setWhyErr(''); }} style={[bl.chip, why === x && { backgroundColor: colors.bad, borderColor: colors.bad }]}><Text style={{ fontFamily: FONT, fontWeight: '600', fontSize: 13, color: why === x ? '#fff' : colors.ink }}>{x}</Text></Pressable>
           ))}
         </View>
         <Field label="Reason the owner will see" multiline value={why} onChangeText={v => { setWhy(v); setWhyErr(''); }} error={whyErr} />
@@ -140,8 +140,8 @@ export function PayBill() {
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {accounts.map(x => { const on = x.id === accId; return (
             <Pressable key={x.id} onPress={() => { setAccId(x.id); setF({ ...f, proof: '' }); }} style={[bl.method, on && bl.methodOn]} accessibilityRole="radio" accessibilityLabel={x.provider} accessibilityState={{ selected: on }}>
-              {on && <View style={bl.methodCheck}><Icon name="check" size={10} color={colors.accentDeep} strokeWidth={3.2} /></View>}
-              <Icon name={KIND_ICON[x.kind]} size={24} color={on ? '#fff' : colors.accentDeep} />
+              {on && <View style={bl.methodCheck}><Icon name="check" size={10} color={colors.warmOrange} strokeWidth={3.2} /></View>}
+              <Icon name={KIND_ICON[x.kind]} size={24} color={on ? '#fff' : colors.warmOrange} />
               <Text style={[type.h3, { fontSize: 13.5, textAlign: 'center' }, on && { color: '#fff' }]} numberOfLines={1}>{x.kind === 'Bank transfer' ? 'Bank transfer' : x.provider}</Text>
             </Pressable>
           ); })}
@@ -149,14 +149,14 @@ export function PayBill() {
       </Section>
       {acc && <View style={bl.payCard}>
         {bank
-          ? <View style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}><View style={bl.bankIcon}><Icon name="bank" size={24} color={colors.accentDeep} /></View><Text style={[type.small, { marginTop: 6 }]}>{acc.provider} account number</Text><Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '700', letterSpacing: 0.6, color: colors.ink }}>{acc.number}</Text></View>
+          ? <View style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}><View style={bl.bankIcon}><Icon name="bank" size={24} color={colors.warmOrange} /></View><Text style={[type.small, { marginTop: 6 }]}>{acc.provider} account number</Text><Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '700', letterSpacing: 0.6, color: colors.ink }}>{acc.number}</Text></View>
           : <><View style={bl.qrBox}><QrArt size={168} seed={acc.qrSeed} /></View><Text style={[type.h3, { fontSize: 14, marginTop: 2 }]}>Scan to pay with {acc.provider}</Text></>}
         <View style={{ height: 1, alignSelf: 'stretch', backgroundColor: colors.line, marginVertical: 4 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: 10 }}>
           <View style={{ flex: 1 }}><Text style={type.h3}>{acc.accountName}</Text><T.Small>{acc.provider} · {acc.number} · Business account</T.Small></View>
         </View>
         <Pressable onPress={() => toast(`Copied ${acc.number}`)} accessibilityRole="button" accessibilityLabel="Copy account number" hitSlop={8} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6 }, pressed && { opacity: 0.6 }]}>
-          <Text style={{ fontFamily: FONT, color: colors.accentDeep, fontWeight: '600', fontSize: 14, textDecorationLine: 'underline' }}>Copy account number</Text><Icon name="copy" size={16} color={colors.accentDeep} />
+          <Text style={{ fontFamily: FONT, color: colors.warmOrange, fontWeight: '600', fontSize: 14, textDecorationLine: 'underline' }}>Copy account number</Text><Icon name="copy" size={16} color={colors.warmOrange} />
         </Pressable>
       </View>}
       <Section title="How to pay">
@@ -168,8 +168,8 @@ export function PayBill() {
       </Section>
       <Section title="Proof of payment">
         <Field label="Reference number" placeholder="e.g. 5102 441 902" value={f.ref} onChangeText={v => { setF({ ...f, ref: v }); setErr({ ...err, ref: '' }); }} error={err.ref} />
-        <Pressable onPress={chooseProof} style={[bl.drop, !!err.proof && { borderColor: colors.bad }, !!f.proof && { borderStyle: 'solid', borderColor: colors.accentDeep, backgroundColor: '#F6F8FC' }]} accessibilityRole="button">
-          <Icon name={f.proof ? 'check' : 'upload'} size={20} color={colors.accentDeep} />
+        <Pressable onPress={chooseProof} style={[bl.drop, !!err.proof && { borderColor: colors.bad }, !!f.proof && { borderStyle: 'solid', borderColor: colors.warmOrange, backgroundColor: '#FFF8F3' }]} accessibilityRole="button">
+          <Icon name={f.proof ? 'check' : 'upload'} size={20} color={colors.warmOrange} />
           <Text style={type.h3}>{f.proof || 'Upload payment screenshot'}</Text>
           <T.Small>{f.proof ? 'Click to choose another' : 'JPEG or PNG, up to 10 MB'}</T.Small>
         </Pressable>
@@ -293,15 +293,15 @@ const bl = StyleSheet.create({
   chip: { paddingHorizontal: 12, height: 34, justifyContent: 'center', borderRadius: 17, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
   qrBox: { padding: 10, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: '#fff' },
   amount: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: 20, ...shadow },
-  amountIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  amountIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.tileOrange, alignItems: 'center', justifyContent: 'center' },
   payCard: { alignItems: 'center', gap: 10, padding: 16, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, ...shadow },
-  bankIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  copy: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 34, borderRadius: radius.md, backgroundColor: colors.accentSoft },
+  bankIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.tileOrange, alignItems: 'center', justifyContent: 'center' },
+  copy: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 34, borderRadius: radius.md, backgroundColor: colors.tileOrange },
   steps: { gap: 12, padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
   method: { flex: 1, height: 80, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, padding: 8, gap: 6, alignItems: 'center', justifyContent: 'center', ...shadow },
   methodCheck: { position: 'absolute', top: 6, right: 6, width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  methodOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  step: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center', marginTop: -1 },
+  methodOn: { backgroundColor: colors.warmOrange, borderColor: colors.warmOrange },
+  step: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.warmOrange, alignItems: 'center', justifyContent: 'center', marginTop: -1 },
   drop: { borderWidth: 1, borderStyle: 'dashed', borderColor: colors.lineStrong, borderRadius: radius.lg, padding: 18, alignItems: 'center', gap: 4, backgroundColor: colors.surface },
   dash: { borderBottomWidth: 1, borderStyle: 'dashed', borderColor: colors.line },
 });

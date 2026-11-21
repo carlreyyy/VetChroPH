@@ -58,7 +58,7 @@ export function PetDetail() {
             {INFO_FACTS.map(([icon, label, value], idx) => (
               <View key={label} style={[pd.factRow, idx === 0 && { borderTopWidth: 0 }]}>
                 <View style={pd.factIcon}>
-                  <Icon name={icon} size={14} color={colors.accentDeep} strokeWidth={2.2} />
+                  <Icon name={icon} size={14} color={colors.teal} strokeWidth={2.2} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontFamily: FONT, fontSize: 11.5, color: colors.ink3 }}>{label}</Text>
@@ -299,7 +299,7 @@ export function PetForm() {
             {!unknownBirth
               ? <Field label="Birthdate" placeholder="YYYY-MM-DD" value={f.birth} onChangeText={v => set('birth', v)} error={err.birth} />
               : <Field label="Estimated age (years)" keyboardType="decimal-pad" value={f.ageYears} onChangeText={v => set('ageYears', v)} error={err.ageYears} />}
-            <Pressable onPress={() => setUnknownBirth(x => !x)} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'flex-start' }}><Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>{unknownBirth ? 'I know the birthdate' : "I don't know the exact birthdate"}</Text></Pressable>
+            <Pressable onPress={() => setUnknownBirth(x => !x)} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'flex-start' }}><Text style={{ color: colors.teal, fontWeight: '600', fontSize: 13.5 }}>{unknownBirth ? 'I know the birthdate' : "I don't know the exact birthdate"}</Text></Pressable>
           </View>,
           <Field label="Weight (kg)" keyboardType="decimal-pad" placeholder="e.g. 8.5" value={f.weight} onChangeText={v => set('weight', v)} error={err.weight} />,
         )}
@@ -405,12 +405,12 @@ const pd = StyleSheet.create({
   infoFlat: { borderTopWidth: 1, borderTopColor: colors.line },
   fact: { width: '50%', paddingVertical: 12, gap: 2 },
   factRow:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line },
-  factIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  factIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   side: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   sideImg: { width: '100%', height: 230 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
   cell: { width: '50%', flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 13 },
-  cellIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  cellIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
   footer: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   visit: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
   dateBox: { width: 46, height: 50, borderRadius: 10, backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center' },

@@ -31,7 +31,7 @@ export function AdminHome() {
   const loading = useFirstLoad('adminHome'); const { wide } = useBP();
   const money_ = (
     <Pressable onPress={() => nav.navigate('Main', { screen: 'Reports' } as never)} accessibilityRole="button" accessibilityLabel="Revenue — view reports"
-      style={({ pressed }: any) => [{ borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: colors.accentDeep, opacity: pressed ? 0.9 : 1 }]}>
+      style={({ pressed }: any) => [{ borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, opacity: pressed ? 0.9 : 1 }]}>
       {/* Navy revenue header */}
       <View style={{ backgroundColor: colors.accentDeep, padding: 18, flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
         <View style={{ flex: 1 }}>
@@ -130,7 +130,7 @@ export function Reports() {
             {bars.map((v, i) => (
               <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 6, height: '100%' }}>
                 <Text style={{ fontFamily: FONT, fontSize: 10.5, color: colors.ink2, fontWeight: '700' }}>{v ? `${(v / 1000).toFixed(1)}k` : ''}</Text>
-                <View style={{ width: '100%', maxWidth: 30, height: Math.max(4, (v / max) * 92), borderRadius: 7, backgroundColor: i === bars.length - 1 ? colors.accentDeep : '#C5D2E8' }} />
+                <View style={{ width: '100%', maxWidth: 30, height: Math.max(4, (v / max) * 92), borderRadius: 7, backgroundColor: i === bars.length - 1 ? colors.teal : '#C5D2E8' }} />
                 <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink2 }}>{labels[i]}</Text>
               </View>
             ))}

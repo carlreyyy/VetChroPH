@@ -196,7 +196,7 @@ export function Book() {
           <View style={{ gap: 10 }}>
             {db.services.filter(x => x.active).map(x => { const on = f.service === x.name; return (
               <Pressable key={x.id} onPress={() => { setF({ ...f, service: x.name }); setErr({ ...err, service: '' }); }} accessibilityRole="radio" accessibilityLabel={x.name} accessibilityState={{ selected: on }} style={(st: PState) => [bk.svc, on ? bk.svcOn : st.hovered ? { borderColor: colors.lineStrong } : null]}>
-                <View style={[bk.svcIcon, on && { backgroundColor: '#fff' }]}><Icon name={SVC_ICON[x.category] || 'steth'} size={19} color={colors.accentDeep} strokeWidth={2.1} /></View>
+                <View style={[bk.svcIcon, on && { backgroundColor: '#fff' }]}><Icon name={SVC_ICON[x.category] || 'steth'} size={19} color={colors.teal} strokeWidth={2.1} /></View>
                 <View style={{ flex: 1, minWidth: 0 }}><Text style={type.h3}>{x.name}</Text><Text style={type.small}>{x.category} · about {x.minutes} min</Text></View>
                 <Text style={[type.h3, { fontSize: 14 }]}>{money(x.price)}</Text>
                 <View style={[bk.radio, on && bk.radioOn]}>{on && <Icon name="check" size={13} color="#fff" strokeWidth={3} />}</View>
@@ -227,7 +227,7 @@ export function Book() {
           <Group>
             <Row left={<PetAvatar pet={pet} size={44} />} title={pet.name} sub={`${pet.breed} · ${owner?.name || ''}`} />
             <Row icon={SVC_ICON[service?.category || ''] || 'steth'} title={f.service} sub={service ? `About ${service.minutes} min` : undefined} right={<Text style={[type.h3, { fontSize: 14 }]}>{service ? money(service.price) : ''}</Text>} />
-            <Row icon="calendar" title={fmtD(f.date)} sub={`${t12(f.time)} · ${rel(f.date)}`} onPress={() => setStep(steps.indexOf('Schedule'))} right={<Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>Change</Text>} />
+            <Row icon="calendar" title={fmtD(f.date)} sub={`${t12(f.time)} · ${rel(f.date)}`} onPress={() => setStep(steps.indexOf('Schedule'))} right={<Text style={{ color: colors.teal, fontWeight: '600', fontSize: 13.5 }}>Change</Text>} />
             <Row icon="pin" title={db.clinic.name} sub={db.clinic.address} />
           </Group>
         </Section>
@@ -279,7 +279,7 @@ export function BookSuccess() {
         </View>
         {([['steth', 'Service', a.service + (db.services.find(x => x.name === a.service) ? ` · ${money(db.services.find(x => x.name === a.service)!.price)}` : '')], ['calendar', 'Date and time', `${fmtD(a.date)} · ${t12(a.time)}`], ['pin', 'Clinic', db.clinic.name]] as const).map(([i, l, v]) => (
           <View key={l} style={bk.sumRow}>
-            <View style={bk.sumIcon}><Icon name={i} size={16} color={colors.accentDeep} /></View>
+            <View style={bk.sumIcon}><Icon name={i} size={16} color={colors.teal} /></View>
             <View style={{ flex: 1 }}><Text style={[type.small, { fontSize: 12 }]}>{l}</Text><Text style={[type.h3, { fontSize: 14.5 }]}>{v}</Text></View>
           </View>
         ))}
@@ -399,7 +399,7 @@ function MonthCalendar({ value, onChange, disabled, dots = true, selected = true
             const on = selected && d === value, today = diff(d) === 0, n = dots ? count(d) : 0, off = disabled?.(d);
             return (
               <Pressable key={i} disabled={off} onPress={() => onChange(d)} style={[cal.cell, today && !on && cal.cellToday, on && cal.cellOn]} accessibilityRole="button" accessibilityLabel={`${fmtD(d)}${dots ? `, ${n} appointments` : ''}`} accessibilityState={{ selected: on, disabled: off }}>
-                <Text style={[cal.num, off && { color: colors.ink3, fontWeight: '400' }, today && !on && { color: colors.accentDeep, fontWeight: '700' }, on && { color: '#fff', fontWeight: '700' }]}>{parseD(d).getDate()}</Text>
+                <Text style={[cal.num, off && { color: colors.ink3, fontWeight: '400' }, today && !on && { color: colors.teal, fontWeight: '700' }, on && { color: '#fff', fontWeight: '700' }]}>{parseD(d).getDate()}</Text>
                 <View style={[cal.dot, { opacity: n ? 1 : 0 }, on && { backgroundColor: '#fff' }]} />
               </Pressable>
             );
@@ -431,7 +431,7 @@ export function ClinicAppts() {
   return (
     <Screen title="Schedule" back={false} big tabbed sub={wide ? 'Appointments booked online, by phone and walk-ins.' : undefined} right={<View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
       {wide ? <View style={{ width: 210 }}><Seg options={[['list', 'List'], ['cal', 'Calendar']]} value={view} onChange={setView} /></View> : <Pressable onPress={() => setView(view === 'list' ? 'cal' : 'list')} accessibilityRole="button" accessibilityLabel={view === 'list' ? 'Show calendar' : 'Show list'} style={ca.toggle}>
-        <Icon name={view === 'list' ? 'calgrid' : 'list'} size={19} color={colors.accentDeep} />
+        <Icon name={view === 'list' ? 'calgrid' : 'list'} size={19} color={colors.teal} />
       </Pressable>}
       <Btn label={wide ? 'New appointment' : 'New'} icon="plus" small={!wide} onPress={() => nav.navigate('Book', { staff: '1' })} />
     </View>}>
@@ -443,7 +443,7 @@ export function ClinicAppts() {
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          {([['Confirmed', ['confirmed', 'checked_in', 'completed', 'resched'], colors.accentDeep], ['Completed', ['completed'], colors.ok], ['Cancelled', ['cancelled'], colors.ink2], ['Missed', ['missed'], colors.bad]] as const).map(([l, st, c]) => (
+          {([['Confirmed', ['confirmed', 'checked_in', 'completed', 'resched'], colors.teal], ['Completed', ['completed'], colors.ok], ['Cancelled', ['cancelled'], colors.ink2], ['Missed', ['missed'], colors.bad]] as const).map(([l, st, c]) => (
             <View key={l} style={{ flex: 1, alignItems: 'center', gap: 2 }}><Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '700', color: c }}>{count([...st])}</Text><Text style={[type.small, { fontSize: 12 }]}>{l}</Text></View>
           ))}
         </View>
@@ -527,31 +527,31 @@ const bk = StyleSheet.create({
   ring: { padding: 3, borderRadius: 34, borderWidth: 2, borderColor: 'transparent' },
   title: { fontFamily: FONT, fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 },
   svc: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, ...shadow },
-  svcOn: { borderColor: colors.accentDeep, borderWidth: 1.5, paddingVertical: 11.5, paddingHorizontal: 13.5, backgroundColor: colors.accentSoft },
-  tip: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: colors.subtle, borderWidth: 1, borderColor: colors.accentSoft },
-  tipIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
+  svcOn: { borderColor: colors.teal, borderWidth: 1.5, paddingVertical: 11.5, paddingHorizontal: 13.5, backgroundColor: colors.tileTeal },
+  tip: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: colors.subtle, borderWidth: 1, borderColor: colors.tileTeal },
+  tipIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.teal, alignItems: 'center', justifyContent: 'center' },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
-  radioOn: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
+  radioOn: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.teal, alignItems: 'center', justifyContent: 'center' },
   petChip: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingLeft: 8, paddingRight: 14, borderRadius: 28, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
-  petChipOn: { borderColor: colors.accentDeep, borderWidth: 1.5, paddingVertical: 7.5, paddingLeft: 7.5, paddingRight: 13.5, backgroundColor: colors.accentSoft },
-  tick: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center', marginLeft: 2 },
-  picked: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: colors.accentSoft, alignSelf: 'flex-start' },
+  petChipOn: { borderColor: colors.teal, borderWidth: 1.5, paddingVertical: 7.5, paddingLeft: 7.5, paddingRight: 13.5, backgroundColor: colors.tileTeal },
+  tick: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.teal, alignItems: 'center', justifyContent: 'center', marginLeft: 2 },
+  picked: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: colors.tileTeal, alignSelf: 'flex-start' },
   svcIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center' },
   ring2:   { width: 128, height: 128, borderRadius: 64, borderWidth: 2, borderColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
   halo: { width: 100, height: 100, borderRadius: 50, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
   success: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.teal, alignItems: 'center', justifyContent: 'center' },
   summary: { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   sumRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line },
-  sumIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  sumIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
 });
 const cal = StyleSheet.create({
   row: { flexDirection: 'row' },
   dow: { fontFamily: FONT, flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '500', color: colors.ink2, paddingVertical: 6 },
   cell: { flex: 1, height: 40, marginVertical: 2, marginHorizontal: 3, alignItems: 'center', justifyContent: 'center', borderRadius: 20, gap: 2 },
-  cellOn: { backgroundColor: colors.accentDeep },
-  cellToday: { borderWidth: 1.5, borderColor: colors.accent },
+  cellOn: { backgroundColor: colors.teal },
+  cellToday: { borderWidth: 1.5, borderColor: colors.teal },
   num: { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.accent },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.teal },
   nav: { width: 34, height: 34, borderRadius: 11, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
   navT: { fontFamily: FONT, fontSize: 20, lineHeight: 22, color: colors.ink, fontWeight: '600' },
 });

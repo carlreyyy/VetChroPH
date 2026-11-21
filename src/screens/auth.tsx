@@ -85,10 +85,10 @@ function RightPaws() {
   return (
     <>
       <View style={{ position: 'absolute', right: 20, top: 30, opacity: 0.035, zIndex: 0 }}>
-        <Icon name="paw" size={200} color={colors.accentDeep} />
+        <Icon name="paw" size={200} color={colors.teal} />
       </View>
       <View style={{ position: 'absolute', left: 10, bottom: 60, opacity: 0.025, zIndex: 0, transform: [{ rotate: '-30deg' }] }}>
-        <Icon name="paw" size={120} color={colors.accentDeep} />
+        <Icon name="paw" size={120} color={colors.teal} />
       </View>
     </>
   );
@@ -172,7 +172,7 @@ export function Welcome() {
               <Pressable onPress={() => setDemo(x => !x)} accessibilityRole="button"
                 accessibilityState={{ expanded: demo }} style={a.demoHead}>
                 <View style={a.demoIconWrap}>
-                  <Icon name="users" size={15} color={colors.accentDeep} />
+                  <Icon name="users" size={15} color={colors.teal} />
                 </View>
                 <Text style={a.demoTitle}>Explore demo accounts</Text>
                 <Icon name={demo ? 'chevU' : 'chevD'} size={16} color={colors.ink2} />
@@ -181,7 +181,7 @@ export function Welcome() {
                 <Pressable key={id} onPress={() => act.demoLogin(id)} accessibilityRole="button"
                   accessibilityLabel={`Sign in as ${role}`}
                   style={({ pressed }) => [a.demoRow, pressed && { backgroundColor: colors.subtle }]}>
-                  <View style={a.demoIcon}><Icon name={icon} size={15} color={colors.accentDeep} /></View>
+                  <View style={a.demoIcon}><Icon name={icon} size={15} color={colors.teal} /></View>
                   <View style={{ flex: 1 }}>
                     <Text style={a.demoRole}>{role}</Text>
                     <Text style={a.demoName} numberOfLines={1}>{name}</Text>
@@ -272,7 +272,7 @@ function WelcomeDemo({ demo, setDemo, act }: { demo: boolean; setDemo: (v: boole
       <Pressable onPress={() => setDemo(!demo)} accessibilityRole="button"
         accessibilityState={{ expanded: demo }} style={a.demoHead}>
         <View style={a.demoIconWrap}>
-          <Icon name="users" size={15} color={colors.accentDeep} />
+          <Icon name="users" size={15} color={colors.teal} />
         </View>
         <Text style={a.demoTitle}>Explore demo accounts</Text>
         <Icon name={demo ? 'chevU' : 'chevD'} size={16} color={colors.ink2} />
@@ -281,7 +281,7 @@ function WelcomeDemo({ demo, setDemo, act }: { demo: boolean; setDemo: (v: boole
         <Pressable key={id} onPress={() => act.demoLogin(id)} accessibilityRole="button"
           accessibilityLabel={`Sign in as ${role}`}
           style={({ pressed }) => [a.demoRow, pressed && { backgroundColor: colors.subtle }]}>
-          <View style={a.demoIcon}><Icon name={icon} size={15} color={colors.accentDeep} /></View>
+          <View style={a.demoIcon}><Icon name={icon} size={15} color={colors.teal} /></View>
           <View style={{ flex: 1 }}>
             <Text style={a.demoRole}>{role}</Text>
             <Text style={a.demoName} numberOfLines={1}>{name}</Text>
@@ -414,7 +414,7 @@ export function ResetPassword() {
   return (
     <Screen title="Reset password" footer={<Btn label={['Send code', 'Check code', 'Save new password'][step]} full style={{ flex: 1 }} onPress={next} />}>
       <View style={{ flexDirection: 'row', gap: 6 }}>
-        {[0, 1, 2].map(i => <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= step ? colors.accentDeep : colors.line }} />)}
+        {[0, 1, 2].map(i => <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= step ? colors.teal : colors.line }} />)}
       </View>
       {step === 0 && <><T.Body muted>Enter the mobile number on your account. We will send a 6-digit code.</T.Body>
         <Field label="Mobile number" icon="phone" keyboardType="phone-pad" placeholder="0917 555 0142" value={phone} onChangeText={v => { setPhone(v); setErr(''); }} error={err} /></>}
@@ -432,7 +432,7 @@ const a = StyleSheet.create({
   h1:       { fontFamily: FONT, fontSize: 30, lineHeight: 38, fontWeight: '700', color: colors.ink, letterSpacing: -0.7 },
   lede:     { fontFamily: FONT, fontSize: 15, lineHeight: 23, color: colors.ink2 },
   heroWrap: { alignItems: 'center', justifyContent: 'flex-end' },
-  blobBig:  { position: 'absolute', bottom: 0, backgroundColor: colors.accentSoft },
+  blobBig:  { position: 'absolute', bottom: 0, backgroundColor: colors.tileTeal },
   blobSm:   { position: 'absolute', top: 6, right: '12%', backgroundColor: colors.subtle },
 
   /* Left panel */
@@ -445,7 +445,7 @@ const a = StyleSheet.create({
 
   /* Right panel (desktop welcome) */
   rightScroll:  { flexGrow: 1, padding: 56, gap: 28, justifyContent: 'center', maxWidth: 480, alignSelf: 'center', width: '100%' },
-  rightMark:    { width: 54, height: 54, borderRadius: 16, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  rightMark:    { width: 54, height: 54, borderRadius: 16, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
   rightH1:      { fontFamily: FONT, fontSize: 30, lineHeight: 38, fontWeight: '700', color: colors.ink, letterSpacing: -0.7 },
   rightSub:     { fontFamily: FONT, fontSize: 15, lineHeight: 23, color: colors.ink2 },
 
@@ -458,10 +458,10 @@ const a = StyleSheet.create({
   /* Demo accounts */
   demo:        { borderWidth: 1, borderColor: colors.line, borderRadius: 14, backgroundColor: '#fff', overflow: 'hidden' },
   demoHead:    { minHeight: 50, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
-  demoIconWrap:{ width: 30, height: 30, borderRadius: 8, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  demoIconWrap:{ width: 30, height: 30, borderRadius: 8, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
   demoTitle:   { fontFamily: FONT, flex: 1, fontSize: 14.5, fontWeight: '600', color: colors.ink },
   demoRow:     { minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, borderTopWidth: 1, borderTopColor: colors.line },
-  demoIcon:    { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  demoIcon:    { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
   demoRole:    { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: colors.ink },
   demoName:    { fontFamily: FONT, fontSize: 12.5, color: colors.ink2, marginTop: 1 },
   reset:       { alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line },

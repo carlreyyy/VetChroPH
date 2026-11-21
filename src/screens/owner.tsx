@@ -532,9 +532,9 @@ const o = StyleSheet.create({
 
   // Action cards
   action: { flex: 1, minWidth: 0, gap: 12, padding: 14, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
-  actionIcon: { width: 34, height: 34, borderRadius: 9, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  actionIcon: { width: 34, height: 34, borderRadius: 9, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
   qa: { flex: 1, alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 6, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
-  qaIcon: { width: 42, height: 42, borderRadius: 13, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  qaIcon: { width: 42, height: 42, borderRadius: 13, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
   qaBadge: { position: 'absolute', top: -4, right: -6 },
   qaLabel: { fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.ink },
 
