@@ -315,9 +315,13 @@ export function VisitDetail() {
   const follows = db.followups.filter(f => f.petId === pet.id && f.status === 'open');
   return (
     <Screen title="Visit record" right={user!.role === 'admin' ? <Btn label="Edit" icon="edit" small kind="line" onPress={() => nav.navigate('ConsultForm', { petId: pet.id, visitId: v.id })} /> : undefined}>
-      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-        <PetAvatar pet={pet} size={52} />
-        <View style={{ flex: 1 }}><T.H2>{pet.name}</T.H2><T.Small>{fmtDY(v.date)} · {v.vet}</T.Small></View>
+      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center', padding: 16, backgroundColor: colors.accentDeep, borderRadius: 14, overflow: 'hidden', ...shadow }}>
+        <PetAvatar pet={pet} size={48} square />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ fontFamily: FONT, fontSize: 17, fontWeight: '700', color: '#fff', letterSpacing: -0.3 }} numberOfLines={1}>{pet.name}</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.68)' }}>{fmtDY(v.date)} · {v.vet}</Text>
+          {!!v.diagnosis && <Text style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.86)', marginTop: 1 }} numberOfLines={1}>{v.diagnosis}</Text>}
+        </View>
       </View>
       {!v.diagnosis && <Banner tone="warn" icon="clock" title="Waiting for the veterinarian" sub={`${v.enteredBy || 'Staff'} entered the reason for visit. The veterinarian completes the rest.`} />}
       <Card style={{ gap: 14 }}>
@@ -397,7 +401,7 @@ const pd = StyleSheet.create({
   sheet: { marginTop: -26, borderTopLeftRadius: 26, borderTopRightRadius: 26, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 22, gap: 18 },
   nameCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, paddingVertical: 14 },
   name: { fontFamily: FONT, fontSize: 26, fontWeight: '700', letterSpacing: -0.6, color: colors.ink },
-  info: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, ...shadow },
+  info: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, paddingBottom: 4, ...shadow },
   infoFlat: { borderTopWidth: 1, borderTopColor: colors.line },
   fact: { width: '50%', paddingVertical: 12, gap: 2 },
   factRow:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line },
