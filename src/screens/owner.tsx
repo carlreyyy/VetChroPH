@@ -414,22 +414,23 @@ export function OwnerBills() {
   const due = sum(unpaid, billBalance), checking = sum(pending, billBalance), paidTotal = sum(bills.filter(b => billState(b) === 'paid'), billTotal);
   const pet = (b: typeof bills[0]) => sel.pet(db, b.petId)!;
 
-  const mini = (label: string, value: string) => (
-    <View style={{ gap: 2, minWidth: 120 }}><Text style={type.small}>{label}</Text><Text style={[type.h2, { fontSize: 17 }]}>{value}</Text></View>
-  );
   return (
     <Screen title="Bills" back={false} big tabbed sub="Bills from your visits, payments and receipts.">
-      <Card style={wide ? { flexDirection: 'row', alignItems: 'center', gap: 32 } : { gap: 16 }}>
-        <View style={{ flex: wide ? 1 : undefined, gap: 2 }}>
-          <Text style={type.small}>Balance due</Text>
-          <Text style={[o.balance, due > 0 && { color: colors.accentDeep }]}>{money(due)}</Text>
-          <Text style={[type.small, { marginTop: 4 }]}>Pay by GCash, another e-wallet, bank transfer, or cash at the clinic.</Text>
+      <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
+        <View style={{ backgroundColor: colors.accentDeep, padding: wide ? 20 : 18, flexDirection: wide ? 'row' : 'column', gap: wide ? 32 : 4, alignItems: wide ? 'center' : 'flex-start' }}>
+          <View style={{ flex: wide ? 1 : undefined, gap: 2 }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.58)', textTransform: 'uppercase', letterSpacing: 0.7 }}>Balance due</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 32, fontWeight: '700', color: '#fff', letterSpacing: -1 }}>{money(due)}</Text>
+          </View>
+          <View style={wide ? { flexDirection: 'row', gap: 32, paddingLeft: 32, borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.18)' } : { flexDirection: 'row', gap: 32, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.14)', width: '100%' }}>
+            <View style={{ gap: 1 }}><Text style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Being checked</Text><Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.88)' }}>{money(checking)}</Text></View>
+            <View style={{ gap: 1 }}><Text style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Paid so far</Text><Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.88)' }}>{money(paidTotal)}</Text></View>
+          </View>
         </View>
-        <View style={[{ flexDirection: 'row', gap: 32 }, wide ? { paddingLeft: 32, borderLeftWidth: 1, borderLeftColor: colors.line } : { paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.line }]}>
-          {mini('Being checked', money(checking))}
-          {mini('Paid so far', money(paidTotal))}
+        <View style={{ backgroundColor: colors.surface, paddingHorizontal: 18, paddingVertical: 12 }}>
+          <Text style={[type.small, { fontSize: 12.5 }]}>Pay by GCash, e-wallet, bank transfer, or cash at the clinic.</Text>
         </View>
-      </Card>
+      </View>
 
       <Section title="To pay">
         {open.length ? (

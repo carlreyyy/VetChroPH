@@ -9,7 +9,7 @@ import { Cell, Cols, DataTable, useBP } from '../components/responsive';
 import type { Appt } from '../types';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, type, FONT } from '../theme';
+import { colors, shadow, type, FONT } from '../theme';
 import {
   APPT, BILL, D, FOLLOW_ICON, ago, ageOf, billBalance, billState, byDateTime, cap, diff, fmtD, followStatus, isEmail, isPhone, money, normPhone, t12,
 } from '../utils/format';
@@ -164,9 +164,29 @@ export function OwnerDetail() {
   return (
     <Screen title="Owner record" right={<View style={{ flexDirection: 'row', gap: 8 }}><IconBtn name="phone" label="Call owner" onPress={() => Linking.openURL(`tel:${o.phone.replace(/\s/g, '')}`)} /><IconBtn name="edit" label="Edit owner" onPress={() => setEdit(true)} /></View>}
       footer={<><Btn label="Message" icon="chat" kind="line" style={{ flex: 1 }} onPress={() => nav.navigate('Chat', { ownerId: o.id })} /><Btn label="Book visit" icon="calendar" style={{ flex: 1 }} onPress={() => nav.navigate('Book', { ownerId: o.id, staff: '1' })} /></>}>
-      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-        <Avatar name={o.name} size={56} />
-        <View style={{ flex: 1, gap: 2 }}><T.H1>{o.name}</T.H1><T.Small>{o.phone}{o.email ? ` · ${o.email}` : ''}</T.Small><T.Small>{o.address || 'No address'}</T.Small></View>
+      <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
+        <View style={{ backgroundColor: colors.accentDeep, padding: 16, flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <Avatar name={o.name} size={56} />
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={{ fontFamily: FONT, fontSize: 20, fontWeight: '700', color: '#fff', letterSpacing: -0.4 }} numberOfLines={1}>{o.name}</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.68)' }} numberOfLines={1}>{o.phone}{o.email ? ` · ${o.email}` : ''}</Text>
+            {!!o.address && <Text style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.52)' }} numberOfLines={1}>{o.address}</Text>}
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', backgroundColor: colors.surface, paddingHorizontal: 16, paddingVertical: 12 }}>
+          <View style={{ flex: 1, gap: 1 }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink3, textTransform: 'uppercase', letterSpacing: 0.6 }}>Client since</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: colors.ink }}>{fmtD(o.since)}</Text>
+          </View>
+          <View style={{ flex: 1, gap: 1, alignItems: 'center' }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink3, textTransform: 'uppercase', letterSpacing: 0.6 }}>Pets</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: colors.ink }}>{pets.length}</Text>
+          </View>
+          <View style={{ flex: 1, gap: 1, alignItems: 'flex-end' }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink3, textTransform: 'uppercase', letterSpacing: 0.6 }}>Open bills</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: bills.length > 0 ? colors.bad : colors.ok }}>{bills.length}</Text>
+          </View>
+        </View>
       </View>
       <Section title="Pets">
         {pets.length === 0 ? <T.Small>No pets yet.</T.Small> : <Group>{pets.map(p => <Row key={p.id} left={<PetAvatar pet={p} size={42} />} title={p.name} sub={`${cap(p.species)} · ${p.breed} · ${ageOf(p.birth)}`} right={p.status !== 'active' ? <Pill text={cap(p.status)} /> : undefined} onPress={() => nav.navigate('PetDetail', { id: p.id })} />)}</Group>}

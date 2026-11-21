@@ -7,7 +7,7 @@ import { BrandTile } from '../components/Brand';
 import { Icon, IconName } from '../components/Icon';
 import { useApp } from '../store/AppStore';
 import { useNav } from '../navigation/nav';
-import { colors, type, Tone, FONT } from '../theme';
+import { colors, shadow, type, Tone, FONT } from '../theme';
 import { ago, fmtD, D, firstName, greeting, isEmail, isPhone, parseD } from '../utils/format';
 import { DEFAULT_PREFS } from '../data/seed';
 import { Cols, useBP } from '../components/responsive';
@@ -137,45 +137,46 @@ export function Profile() {
   const { wide } = useBP();
   const edit = () => { setErr({}); setF({ name: user!.name, phone: user!.phone, email: user!.email, address: ownerRec?.address || '' }); setEditOpen(true); };
   const card = (
-    <Card style={{ gap: 20 }}>
-      {/* Avatar + name row */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+    <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
+      {/* Navy hero top */}
+      <View style={{ backgroundColor: colors.accentDeep, padding: 20, flexDirection: 'row', gap: 16, alignItems: 'center' }}>
         <Avatar name={user!.name} size={64} />
-        <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-          <Text style={{ fontFamily: FONT, fontSize: 19, lineHeight: 25, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 }} numberOfLines={1}>{user!.name}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: colors.accentSoft }}>
-              <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.accentDeep }}>{ROLE_LABEL[user!.role]}</Text>
-            </View>
-            {ownerRec && <Text style={type.small}>since {parseD(ownerRec.since).getFullYear()}</Text>}
+        <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
+          <Text style={{ fontFamily: FONT, fontSize: 20, lineHeight: 26, fontWeight: '700', color: '#fff', letterSpacing: -0.4 }} numberOfLines={1}>{user!.name}</Text>
+          <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'flex-start' }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>{ROLE_LABEL[user!.role]}</Text>
           </View>
+          {ownerRec && <Text style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.52)' }}>client since {parseD(ownerRec.since).getFullYear()}</Text>}
         </View>
       </View>
 
-      {/* Contact info */}
-      <View style={{ gap: 8 }}>
-        {([['mail', user!.email], ['phone', user!.phone], ...(owner && ownerRec?.address ? [['pin', ownerRec.address]] : [])] as [IconName, string][]).map(([i, v]) => (
-          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Icon name={i} size={15} color={colors.ink3} />
-            <Text style={[type.small, { fontSize: 13.5, color: colors.ink, flex: 1 }]} numberOfLines={2}>{v}</Text>
-          </View>
-        ))}
-      </View>
-
-      <Btn label="Edit profile" icon="edit" kind="line" small onPress={edit} />
-
-      {/* Owner stats strip */}
-      {owner && (
-        <View style={pf.stats}>
-          {([[String(myPets), myPets === 1 ? 'Pet' : 'Pets'], [String(myAppts), myAppts === 1 ? 'Visit' : 'Visits'], [`${years}+`, years === 1 ? 'Year' : 'Years']] as const).map(([v, l], k) => (
-            <View key={l} style={[pf.stat, k > 0 && { borderLeftWidth: 1, borderLeftColor: colors.line }]}>
-              <Text style={pf.val}>{v}</Text>
-              <Text style={[type.small, { fontSize: 12 }]}>{l}</Text>
+      {/* White bottom: contact + edit + stats */}
+      <View style={{ backgroundColor: colors.surface, padding: 16, gap: 14 }}>
+        {/* Contact info */}
+        <View style={{ gap: 8 }}>
+          {([['mail', user!.email], ['phone', user!.phone], ...(owner && ownerRec?.address ? [['pin', ownerRec.address]] : [])] as [IconName, string][]).map(([i, v]) => (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Icon name={i} size={15} color={colors.ink3} />
+              <Text style={[type.small, { fontSize: 13.5, color: colors.ink, flex: 1 }]} numberOfLines={2}>{v}</Text>
             </View>
           ))}
         </View>
-      )}
-    </Card>
+
+        <Btn label="Edit profile" icon="edit" kind="line" small onPress={edit} />
+
+        {/* Owner stats strip */}
+        {owner && (
+          <View style={pf.stats}>
+            {([[String(myPets), myPets === 1 ? 'Pet' : 'Pets'], [String(myAppts), myAppts === 1 ? 'Visit' : 'Visits'], [`${years}+`, years === 1 ? 'Year' : 'Years']] as const).map(([v, l], k) => (
+              <View key={l} style={[pf.stat, k > 0 && { borderLeftWidth: 1, borderLeftColor: colors.line }]}>
+                <Text style={pf.val}>{v}</Text>
+                <Text style={[type.small, { fontSize: 12 }]}>{l}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    </View>
   );
   const settings = (
     <>
