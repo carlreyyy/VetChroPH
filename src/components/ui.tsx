@@ -85,19 +85,20 @@ export function PageHeader({ title, back = true, right, sub }: { title?: string;
   const nav = useNavigation();
   const canBack = back && nav.canGoBack();
   return (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: 10 }}>
       {canBack && (
         <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => nav.goBack()}
           style={(st: PState) => [s.backLink, st.hovered && { backgroundColor: colors.hover }]}>
-          <Icon name="chevL" size={16} color={colors.ink2} /><Text style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: '500', color: colors.ink2 }}>Back</Text>
+          <Icon name="chevL" size={15} color={colors.ink3} />
+          <Text style={{ fontFamily: FONT, fontSize: 13, fontWeight: '500', color: colors.ink3 }}>Back</Text>
         </Pressable>
       )}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 44 }}>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={s.pageTitle} numberOfLines={1} accessibilityRole="header">{title}</Text>
-          {sub && <Text style={[type.small, { fontSize: 14.5, lineHeight: 20, marginTop: 4 }]}>{sub}</Text>}
+          <Text style={s.pageTitle} numberOfLines={2} accessibilityRole="header">{title}</Text>
+          {sub && <Text style={[type.small, { fontSize: 14, lineHeight: 20, color: colors.ink2, marginTop: 3 }]}>{sub}</Text>}
         </View>
-        {right}
+        {right && <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flexShrink: 0 }}>{right}</View>}
       </View>
     </View>
   );
@@ -223,10 +224,10 @@ export function IconTile({ name, size = 36, danger, tone, solid }: { name: IconN
 export function Section({ title, action, onAction, children, sub }: { title: string; action?: string; onAction?: () => void; children?: React.ReactNode; sub?: string }) {
   return (
     <View style={{ gap: space.md }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 24 }}>
-        <View style={{ flex: 1, minWidth: 0 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, minHeight: 22 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text style={s.sectionTitle} accessibilityRole="header">{title}</Text>
-          {!!sub && <Text style={[type.small, { marginTop: 2 }]}>{sub}</Text>}
+          {!!sub && <Text style={[type.small, { fontSize: 13, marginTop: 1 }]}>{sub}</Text>}
         </View>
         {action && onAction && <LinkBtn label={action} onPress={onAction} />}
       </View>
@@ -266,39 +267,31 @@ export const CountBadge = ({ n, tone = 'dot' }: { n: number; tone?: 'dot' | 'nav
 export function Stat({ value, label, onPress, alert, dark, icon }: { value: string | number; label: string; onPress?: () => void; alert?: boolean; dark?: boolean; icon?: IconName }) {
   if (dark) return (
     <Pressable disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}`}
-      style={(st: PState) => [s.stat, s.statDark, onPress && st.hovered && { backgroundColor: '#1A3461' }]}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      style={(st: PState) => [s.stat, s.statCard, s.statDark, onPress && st.hovered && { backgroundColor: '#214080' }]}>
+      <View style={s.statIconDark}><Icon name={icon || 'calendar'} size={16} color="rgba(255,255,255,0.85)" strokeWidth={1.8} /></View>
+      <View style={{ flex: 1, gap: 2 }}>
         <Text style={[s.statValue, { color: '#fff', fontSize: 26, letterSpacing: -0.6 }]} numberOfLines={1}>{value}</Text>
-        {icon && <View style={s.statIconDark}><Icon name={icon} size={15} color="rgba(255,255,255,0.75)" strokeWidth={1.8} /></View>}
+        <Text style={[type.small, { fontSize: 12, color: 'rgba(255,255,255,0.65)' }]} numberOfLines={2}>{label}</Text>
       </View>
-      <Text style={[type.small, { fontSize: 12, color: 'rgba(255,255,255,0.65)' }]} numberOfLines={2}>{label}</Text>
     </Pressable>
   );
   return (
     <Pressable disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}`}
-      style={(st: PState) => [s.stat, onPress && { backgroundColor: hoverBg(st) }]}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      style={(st: PState) => [s.stat, s.statCard, onPress && st.hovered && { borderColor: colors.lineStrong, backgroundColor: colors.subtle }]}>
+      {icon && <View style={[s.statIcon, alert && { backgroundColor: colors.badBg }]}><Icon name={icon} size={16} color={alert ? colors.bad : colors.accent} strokeWidth={1.8} /></View>}
+      <View style={{ flex: 1, gap: 2 }}>
         <Text style={[s.statValue, alert && { color: colors.bad }]} numberOfLines={1}>{value}</Text>
-        {icon && <View style={[s.statIcon, alert && { backgroundColor: colors.badBg }]}><Icon name={icon} size={15} color={alert ? colors.bad : colors.accentDeep} strokeWidth={1.8} /></View>}
+        <Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={2}>{label}</Text>
       </View>
-      <Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={2}>{label}</Text>
     </Pressable>
   );
 }
-/** Metrics in one bordered strip: 2×2 on phones, one row on tablets. */
+/** Metrics as individual cards in a row (2 per row on phone). */
 export function StatGrid({ children }: { children: React.ReactNode }) {
-  const wide = useWide();
   const items = React.Children.toArray(children).filter(Boolean);
-  const perRow = wide ? items.length : 2;
-  const rows: React.ReactNode[][] = [];
-  items.forEach((c, i) => { (rows[Math.floor(i / perRow)] ||= []).push(c); });
   return (
-    <View style={s.group}>
-      {rows.map((r, ri) => (
-        <View key={ri} style={[{ flexDirection: 'row' }, ri > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line }]}>
-          {r.map((c, ci) => <View key={ci} style={[{ flex: 1 }, ci > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: colors.line }]}>{c}</View>)}
-        </View>
-      ))}
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+      {items.map((c, i) => <View key={i} style={{ flex: 1, minWidth: 130 }}>{c}</View>)}
     </View>
   );
 }
@@ -329,10 +322,10 @@ export function QuickActions({ items }: { items: [label: string, icon: IconName,
 export function Empty({ icon = 'info', title, sub, action }: { icon?: IconName; title: string; sub?: string; action?: React.ReactNode }) {
   return (
     <View style={s.empty}>
-      <View style={s.emptyIcon}><Icon name={icon} size={22} color={colors.accent} /></View>
-      <Text style={[type.h3, { textAlign: 'center' }]}>{title}</Text>
-      {sub && <Text style={[type.small, { textAlign: 'center', maxWidth: 300 }]}>{sub}</Text>}
-      {action && <View style={{ marginTop: 8 }}>{action}</View>}
+      <View style={s.emptyIcon}><Icon name={icon} size={20} color={colors.accent} strokeWidth={1.8} /></View>
+      <Text style={[type.h3, { textAlign: 'center', letterSpacing: -0.2 }]}>{title}</Text>
+      {sub && <Text style={[type.small, { textAlign: 'center', maxWidth: 280, lineHeight: 20 }]}>{sub}</Text>}
+      {action && <View style={{ marginTop: 10 }}>{action}</View>}
     </View>
   );
 }
@@ -594,15 +587,16 @@ export const s = StyleSheet.create({
   chipPill: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 9, height: 24, borderRadius: 6 },
 
   // Stats
-  stat:        { paddingVertical: 16, paddingHorizontal: 18, gap: 6, minHeight: 88 },
-  statDark:    { backgroundColor: colors.accentDeep },
-  statValue:   { fontFamily: FONT, fontSize: 28, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
-  statIcon:    { width: 28, height: 28, borderRadius: 7, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  statIconDark:{ width: 28, height: 28, borderRadius: 7, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
+  stat:        { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, minHeight: 90 },
+  statCard:    { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, ...shadow },
+  statDark:    { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
+  statValue:   { fontFamily: FONT, fontSize: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
+  statIcon:    { width: 40, height: 40, borderRadius: 10, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  statIconDark:{ width: 40, height: 40, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
 
   // Empty / misc
-  empty:     { alignItems: 'center', gap: 6, paddingVertical: 36, paddingHorizontal: 20 },
-  emptyIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  empty:     { alignItems: 'center', gap: 8, paddingVertical: 40, paddingHorizontal: 24 },
+  emptyIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
   kv:        { flexDirection: 'row', justifyContent: 'space-between', gap: 16, paddingVertical: 12, borderBottomWidth: HAIR, borderBottomColor: colors.line },
   kvValue:   { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink, textAlign: 'right', flexShrink: 1 },
   banner:    { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: radius.md, padding: 14 },

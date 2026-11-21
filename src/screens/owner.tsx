@@ -57,15 +57,26 @@ function PetCard({ pet, compact }: { pet: Pet; compact?: boolean }) {
   const nav = useNav(); const { db } = useApp(); const st = petStatus(db, pet);
   return (
     <Pressable onPress={() => nav.navigate('PetDetail', { id: pet.id })} accessibilityRole="button" accessibilityLabel={`${pet.name}, ${st.label}`}
-      style={(s: PState) => [o.petCard, compact && { width: 156 }, s.hovered && { borderColor: colors.lineStrong }, s.pressed && { opacity: 0.9 }]}>
-      <View style={pet.status !== 'active' ? { opacity: 0.6 } : undefined}><PetPhoto pet={pet} h={compact ? 112 : 172} /></View>
-      <View style={{ padding: compact ? 12 : 16, gap: 3 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={[type.h3, { flexShrink: 1 }, !compact && { fontSize: 16 }]} numberOfLines={1}>{pet.name}</Text>
-          <SexMark sex={pet.sex} size={14} />
+      style={(s: PState) => [o.petCard, compact && { width: 160 }, s.hovered && { borderColor: colors.accentMid, transform: [{ translateY: -2 }] }, s.pressed && { opacity: 0.9 }]}>
+      <View style={[{ position: 'relative' }, pet.status !== 'active' ? { opacity: 0.5 } : undefined]}>
+        <PetPhoto pet={pet} h={compact ? 116 : 180} />
+        {/* Status dot badge overlaid on photo */}
+        {pet.status === 'active' && st.tone === 'ok' && (
+          <View style={{ position: 'absolute', top: 10, right: 10, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.ok, borderWidth: 2, borderColor: '#fff' }} />
+        )}
+        {pet.status === 'active' && (st.tone === 'warn' || st.tone === 'bad') && (
+          <View style={{ position: 'absolute', top: 8, right: 8, paddingHorizontal: 7, height: 20, borderRadius: 10, backgroundColor: st.tone === 'bad' ? colors.bad : colors.warn, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#fff' }}>
+            <Text style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: '700', color: '#fff' }} numberOfLines={1}>{st.label}</Text>
+          </View>
+        )}
+      </View>
+      <View style={{ padding: compact ? 12 : 14, gap: 3 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <Text style={[type.h3, { flexShrink: 1 }, !compact && { fontSize: 15.5 }]} numberOfLines={1}>{pet.name}</Text>
+          <SexMark sex={pet.sex} size={13} />
         </View>
-        <Text style={[type.small, compact && { fontSize: 12 }]} numberOfLines={1}>{pet.breed} · {ageOf(pet.birth)}</Text>
-        <View style={{ marginTop: 6 }}><Pill text={st.label} tone={st.tone} /></View>
+        <Text style={[type.small, { fontSize: compact ? 12 : 12.5 }]} numberOfLines={1}>{pet.breed} · {ageOf(pet.birth)}</Text>
+        {!compact && <View style={{ marginTop: 6 }}><Pill text={st.label} tone={st.tone} chip /></View>}
       </View>
     </Pressable>
   );
@@ -85,6 +96,38 @@ function AddPetCard({ onPress, compact }: { onPress: () => void; compact?: boole
 /* ---------- home ---------- */
 type Action = { label: string; short: string; icon: IconName; sub: string; onPress: () => void; badge?: number; primary?: boolean };
 
+function HeroGreeting({ name, next, onBook }: { name: string; next?: typeof undefined | ReturnType<typeof Object>; onBook: () => void }) {
+  const { wide } = useBP();
+  return (
+    <View style={o.hero}>
+      <View style={o.heroBlob1} />
+      <View style={o.heroBlob2} />
+      <View style={o.heroBlob3} />
+      <View style={{ flex: 1, gap: 10, zIndex: 1 }}>
+        <View style={{ gap: 4 }}>
+          <Text style={o.heroGreeting} numberOfLines={1}>{greeting()}, {firstName(name)}!</Text>
+          <Text style={o.heroTagline}>Your pet's health is our priority 🐾</Text>
+        </View>
+        {(next as any) && (
+          <Text style={o.heroNext} numberOfLines={1}>
+            Next visit {rel((next as any).date).toLowerCase()} · {t12((next as any).time)}
+          </Text>
+        )}
+        <Pressable onPress={onBook} accessibilityRole="button" accessibilityLabel="Book an appointment"
+          style={({ pressed }) => [o.heroBtn, pressed && { opacity: 0.88 }]}>
+          <Icon name="calendar" size={15} color={colors.accentDeep} strokeWidth={2.2} />
+          <Text style={o.heroBtnText}>Book an appointment</Text>
+        </Pressable>
+      </View>
+      {wide && (
+        <Image source={SCENES.welcomePets} resizeMode="contain"
+          style={{ width: 190, height: 160, position: 'absolute', right: 24, bottom: 0 }}
+          accessibilityLabel="A cat and a dog" />
+      )}
+    </View>
+  );
+}
+
 /** The four things owners come to do, one tap away. */
 function ActionStrip({ items }: { items: Action[] }) {
   const { wide } = useBP();
@@ -92,14 +135,14 @@ function ActionStrip({ items }: { items: Action[] }) {
     <View style={{ flexDirection: 'row', gap: 8 }}>
       {items.map(a => (
         <Pressable key={a.label} onPress={a.onPress} accessibilityRole="button" accessibilityLabel={a.badge ? `${a.label}, ${a.badge}` : a.label}
-          style={({ pressed }) => [o.qa, a.primary && { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep }, pressed && { opacity: 0.65 }]}>
+          style={({ pressed }) => [o.qa, pressed && { opacity: 0.75 }]}>
           <View style={{ position: 'relative' }}>
-            <View style={[o.qaIcon, a.primary && { backgroundColor: 'rgba(255,255,255,0.18)', borderColor: 'transparent' }]}>
-              <Icon name={a.icon} size={20} color={a.primary ? '#fff' : colors.accentDeep} strokeWidth={2} />
+            <View style={o.qaIcon}>
+              <Icon name={a.icon} size={20} color={colors.accent} strokeWidth={2} />
             </View>
             {!!a.badge && <View style={o.qaBadge}><CountBadge n={a.badge} /></View>}
           </View>
-          <Text style={[o.qaLabel, a.primary && { color: '#fff' }]} numberOfLines={1}>{a.short}</Text>
+          <Text style={o.qaLabel} numberOfLines={1}>{a.short}</Text>
         </Pressable>
       ))}
     </View>
@@ -108,21 +151,87 @@ function ActionStrip({ items }: { items: Action[] }) {
     <View style={{ flexDirection: 'row', gap: 12 }}>
       {items.map(a => (
         <Pressable key={a.label} onPress={a.onPress} accessibilityRole="button" accessibilityLabel={a.label}
-          style={(st: PState) => [o.action, a.primary && o.actionPrimary,
-            st.hovered && (a.primary ? { backgroundColor: '#1D3560' } : { borderColor: colors.accentMid }),
+          style={(st: PState) => [o.action,
+            st.hovered && { borderColor: colors.accentMid, backgroundColor: colors.hover },
             st.pressed && { opacity: 0.88 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <View style={[o.actionIcon, a.primary && { backgroundColor: 'rgba(255,255,255,0.18)', borderColor: 'transparent' }]}>
-              <Icon name={a.icon} size={18} color={a.primary ? '#fff' : colors.accent} strokeWidth={2} />
+            <View style={o.actionIcon}>
+              <Icon name={a.icon} size={18} color={colors.accent} strokeWidth={2} />
             </View>
-            {a.badge ? <CountBadge n={a.badge} /> : <Icon name="chevR" size={16} color={a.primary ? 'rgba(255,255,255,0.55)' : colors.ink3} />}
+            {a.badge ? <CountBadge n={a.badge} /> : <Icon name="chevR" size={15} color={colors.ink3} />}
           </View>
-          <View style={{ gap: 3 }}>
-            <Text style={[type.h3, { fontSize: 14 }, a.primary && { color: '#fff' }]} numberOfLines={1}>{a.label}</Text>
-            <Text style={[type.small, { fontSize: 12.5 }, a.primary && { color: 'rgba(255,255,255,0.68)' }]} numberOfLines={1}>{a.sub}</Text>
+          <View style={{ gap: 2 }}>
+            <Text style={[type.h3, { fontSize: 13.5 }]} numberOfLines={1}>{a.label}</Text>
+            <Text style={[type.small, { fontSize: 12 }]} numberOfLines={2}>{a.sub}</Text>
           </View>
         </Pressable>
       ))}
+    </View>
+  );
+}
+
+function AlertsPanel({ follows, unpaid, c, today, db }: { follows: any[]; unpaid: any[]; c: any; today: any; db: any }) {
+  const nav = useNav();
+  const hasAlerts = follows.length + unpaid.length > 0;
+  return (
+    <View style={{ gap: 20 }}>
+      <Section title="Alerts & reminders" action={hasAlerts ? 'View all' : undefined} onAction={() => nav.navigate('Notifications')}>
+        {!hasAlerts ? (
+          <Card tint style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.ok + '22', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="check" size={18} color={colors.ok} strokeWidth={2.2} />
+            </View>
+            <Text style={[type.small, { flex: 1 }]}>All caught up — no reminders due this week.</Text>
+          </Card>
+        ) : (
+          <Group>
+            {follows.slice(0, 4).map(f => {
+              const st = followStatus(f);
+              const p = sel.pet(db, f.petId)!;
+              return (
+                <Row key={f.id}
+                  left={<View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: st.tone === 'bad' ? colors.badBg : colors.warnBg, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name={st.tone === 'bad' ? 'alert' : 'bell'} size={17} color={st.tone === 'bad' ? colors.bad : colors.warn} strokeWidth={2} />
+                  </View>}
+                  title={f.reason}
+                  sub={`${p.name} · ${st.label}`}
+                  right={<Pill text={st.label} tone={st.tone} chip />}
+                  onPress={() => nav.navigate('PetDetail', { id: p.id, tab: 'follow' })} />
+              );
+            })}
+            {unpaid.slice(0, 2).map(b => {
+              const p = sel.pet(db, b.petId)!;
+              return (
+                <Row key={b.id}
+                  left={<View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.warnBg, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="wallet" size={17} color={colors.warn} strokeWidth={2} />
+                  </View>}
+                  title={money(billBalance(b)) + ' to pay'}
+                  sub={`${p.name} · visit on ${fmtDS(b.date)}`}
+                  action={<Btn label="Pay" small onPress={() => nav.navigate('PayBill', { id: b.id })} />}
+                  onPress={() => nav.navigate('BillDetail', { id: b.id })} />
+              );
+            })}
+          </Group>
+        )}
+      </Section>
+
+      <Section title="Your clinic" action="Details" onAction={() => nav.navigate('ClinicInfo')}>
+        <Card style={{ gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <BrandTile size={40} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[type.h3, { fontSize: 14 }]} numberOfLines={1}>{c.name}</Text>
+              <Text style={type.small} numberOfLines={2}>{c.address}</Text>
+            </View>
+          </View>
+          <Pill chip text={today?.open ? `Open today · ${hourLabel(today.from)} – ${hourLabel(today.to)}` : 'Closed today'} tone={today?.open ? 'ok' : ''} />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Btn label="Call" icon="phone" kind="line" small style={{ flex: 1 }} onPress={() => callClinic(c.mobile)} />
+            <Btn label="Map" icon="nav" kind="line" small style={{ flex: 1 }} onPress={() => openDirections(c)} />
+          </View>
+        </Card>
+      </Section>
     </View>
   );
 }
@@ -159,50 +268,29 @@ export function OwnerHome() {
     { label: 'Clinic info', short: 'Clinic', icon: 'pin', sub: today?.open ? `Open today until ${hourLabel(today.to)}` : 'Closed today', onPress: () => nav.navigate('ClinicInfo') },
   ];
 
-  const intro = (
-    <View style={{ gap: 4 }}>
-      <Text style={[o.hello, !wide && { fontSize: 24, lineHeight: 30 }]} accessibilityRole="header" numberOfLines={1}>{greeting()}, {firstName(user!.name)}</Text>
-      <Text style={[type.small, { fontSize: 14.5, lineHeight: 20 }]}>{fmtD(D(0))} · {next ? `Next visit ${rel(next.date).toLowerCase()} at ${t12(next.time)}` : 'Your pets are in good hands'}</Text>
-    </View>
-  );
-
-  const attention = offers.length + follows.length + unpaid.length > 0 ? (
+  const attention = offers.length > 0 ? (
     <Section title="Needs your attention">
       <Group>
         {offers.map(a => { const p = sel.pet(db, a.petId)!; return (
           <Row key={a.id} icon="calendar" title={`New time suggested for ${p.name}`} sub={a.offer ? `${fmtD(a.offer.date)} at ${t12(a.offer.time)}` : undefined}
             action={<Btn label="Review" small kind="line" onPress={() => nav.navigate('ApptDetail', { id: a.id })} />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />
         ); })}
-        {unpaid.map(b => { const p = sel.pet(db, b.petId)!; return (
-          <Row key={b.id} icon="receipt" title={`${money(billBalance(b))} to pay`} sub={`${p.name} · visit on ${fmtDS(b.date)}`}
-            action={<Btn label="Pay" small onPress={() => nav.navigate('PayBill', { id: b.id })} />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />
-        ); })}
-        {follows.slice(0, 3).map(f => { const p = sel.pet(db, f.petId)!; const st = followStatus(f); return (
-          <Row key={f.id} left={<PetAvatar pet={p} size={36} />} title={f.reason} sub={`${p.name} · ${st.key === 'overdue' ? 'was due' : 'due'} ${fmtDS(f.date)}`}
-            right={<Pill text={st.label} tone={st.tone} />} onPress={() => nav.navigate('PetDetail', { id: p.id, tab: 'follow' })} />
-        ); })}
       </Group>
-    </Section>
-  ) : desktop ? (
-    <Section title="Needs your attention">
-      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <IconTile name="check" tone="ok" size={40} />
-        <View style={{ flex: 1 }}><Text style={type.h3}>You're all caught up</Text><T.Small>No bills to pay and no reminders due this week.</T.Small></View>
-      </Card>
     </Section>
   ) : null;
 
   const nextBlock = (
-    <Section title="Next visit" action={upcoming.length > 0 ? 'All appointments' : undefined} onAction={() => tab('Appointments')}>
+    <Section title="Your next visit" action={upcoming.length > 0 ? 'All appointments' : undefined} onAction={() => tab('Appointments')}>
       {next ? (() => { const p = sel.pet(db, next.petId)!; return (
-        <Card onPress={() => nav.navigate('ApptDetail', { id: next.id })} label={`${next.service} for ${p.name} on ${fmtD(next.date)} at ${t12(next.time)}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <Card onPress={() => nav.navigate('ApptDetail', { id: next.id })} label={`${next.service} for ${p.name} on ${fmtD(next.date)} at ${t12(next.time)}`}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
           <DateTile date={next.date} />
-          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-            <Text style={[type.h2, { fontSize: 17 }]} numberOfLines={1}>{next.service}</Text>
+          <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+            <Text style={[type.h2, { fontSize: 16 }]} numberOfLines={1}>{next.service}</Text>
             <Text style={type.small} numberOfLines={1}>{p.name} · {rel(next.date)}, {t12(next.time)}</Text>
-            <View style={{ marginTop: 4 }}><Pill text={APPT[next.status][0]} tone={APPT[next.status][1]} badge /></View>
+            <View style={{ marginTop: 2 }}><Pill text={APPT[next.status][0]} tone={APPT[next.status][1]} badge /></View>
           </View>
-          {wide && <PetAvatar pet={p} size={48} />}
+          {wide && <PetAvatar pet={p} size={46} />}
           <Icon name="chevR" size={18} color={colors.ink3} />
         </Card>
       ); })() : (
@@ -224,35 +312,16 @@ export function OwnerHome() {
     </Section>
   );
 
-  const clinicBlock = (
-    <Section title="Your clinic" action="Details" onAction={() => nav.navigate('ClinicInfo')}>
-      <Card style={{ gap: 14 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <BrandTile size={42} />
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={type.h3} numberOfLines={1}>{c.name}</Text>
-            <Text style={type.small} numberOfLines={2}>{c.address}</Text>
-          </View>
-        </View>
-        <Pill text={today?.open ? `Open today · ${hourLabel(today.from)} – ${hourLabel(today.to)}` : 'Closed today'} tone={today?.open ? 'ok' : ''} />
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Btn label="Call" icon="phone" kind="line" small style={{ flex: 1 }} onPress={() => callClinic(c.mobile)} />
-          <Btn label="Directions" icon="nav" kind="line" small style={{ flex: 1 }} onPress={() => openDirections(c)} />
-        </View>
-      </Card>
-    </Section>
-  );
-
   return (
     <Screen hideHeader tabbed>
-      {intro}
+      <HeroGreeting name={user!.name} next={next} onBook={() => nav.navigate('Book')} />
       <ActionStrip items={actions} />
       {loading ? <HomeSkeleton /> : desktop ? (
-        <Cols ratio={[2, 1]} gap={32}>
-          <>{nextBlock}{petsBlock}</>
-          <>{attention}{clinicBlock}</>
+        <Cols ratio={[2, 1]} gap={28}>
+          <>{attention}{nextBlock}{petsBlock}</>
+          <AlertsPanel follows={follows} unpaid={unpaid} c={c} today={today} db={db} />
         </Cols>
-      ) : <>{attention}{nextBlock}{petsBlock}{clinicBlock}</>}
+      ) : <>{attention}{nextBlock}{petsBlock}</>}
     </Screen>
   );
 }
@@ -449,21 +518,35 @@ export function ClinicInfo() {
 }
 
 const o = StyleSheet.create({
-  hello: { fontFamily: FONT, fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
-  action: { flex: 1, minWidth: 0, gap: 14, padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
-  actionPrimary: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  actionIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.accentSoft, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-  qa: { flex: 1, alignItems: 'center', gap: 7, paddingVertical: 12, paddingHorizontal: 6, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
-  qaIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  // Hero greeting banner
+  hero: { backgroundColor: colors.accentDeep, borderRadius: radius.xl, padding: 24, minHeight: 160, overflow: 'hidden', justifyContent: 'flex-end' },
+  heroBlob1: { position: 'absolute', right: -30, top: -30, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(47,125,225,0.28)' },
+  heroBlob2: { position: 'absolute', right: 100, top: -50, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(126,200,245,0.14)' },
+  heroBlob3: { position: 'absolute', left: -20, bottom: -40, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(47,125,225,0.18)' },
+  heroGreeting: { fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '700', color: '#fff', letterSpacing: -0.4 },
+  heroTagline: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: 'rgba(255,255,255,0.72)' },
+  heroNext: { fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.52)', marginTop: -2 },
+  heroBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 14, height: 36, alignSelf: 'flex-start', marginTop: 4 },
+  heroBtnText: { fontFamily: FONT, fontSize: 13.5, fontWeight: '600', color: colors.accentDeep },
+
+  // Action cards
+  action: { flex: 1, minWidth: 0, gap: 12, padding: 14, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
+  actionIcon: { width: 34, height: 34, borderRadius: 9, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  qa: { flex: 1, alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 6, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
+  qaIcon: { width: 42, height: 42, borderRadius: 13, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
   qaBadge: { position: 'absolute', top: -4, right: -6 },
-  qaLabel: { fontFamily: FONT, fontSize: 12, fontWeight: '600', color: colors.ink },
-  dateTile: { width: 56, height: 60, borderRadius: 12, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
-  dateMon: { fontFamily: FONT, fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: 0.8 },
+  qaLabel: { fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.ink },
+
+  // Date tile
+  dateTile: { width: 54, height: 58, borderRadius: 12, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
+  dateMon: { fontFamily: FONT, fontSize: 9.5, fontWeight: '700', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.8 },
   dateDay: { fontFamily: FONT, fontSize: 22, lineHeight: 26, fontWeight: '700', color: '#fff' },
+
+  // Pet cards
   petCard: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   addCard: { alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.lineStrong, backgroundColor: 'transparent' },
   petRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 16 },
   visit: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
-  balance: { fontFamily: FONT, fontSize: 32, lineHeight: 38, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
+  balance: { fontFamily: FONT, fontSize: 30, lineHeight: 36, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
   clinicImg: { width: '100%', height: 190, backgroundColor: colors.subtle },
 });

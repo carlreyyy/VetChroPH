@@ -26,22 +26,40 @@ export function AuthFrame({ children }: { children: React.ReactNode }) {
   const { bp } = useBP();
   if (bp === 'mobile') return <>{children}</>;
   return (
-    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
       {bp === 'desktop' && (
         <View style={a.panel}>
-          <Logo size={34} light />
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <View style={a.panelBlob} />
-            <Image source={SCENES.welcomePets} resizeMode="contain" style={{ width: '88%', maxWidth: 520, aspectRatio: 560 / 541 }} accessibilityLabel="A cat and a dog" />
+          {/* Decorative blobs */}
+          <View style={a.panelBlob1} />
+          <View style={a.panelBlob2} />
+          <View style={a.panelBlob3} />
+
+          {/* Logo */}
+          <Logo size={36} light />
+
+          {/* Pet photo */}
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', zIndex: 1 }}>
+            <Image source={SCENES.welcomePets} resizeMode="contain"
+              style={{ width: '92%', maxWidth: 460, aspectRatio: 560 / 541 }}
+              accessibilityLabel="A cat and a dog" />
           </View>
-          <View style={{ gap: 8 }}>
-            <Text style={{ fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.4 }}>Manage every visit, record and reminder for your clinic and the pets it cares for.</Text>
-            <Text style={{ fontSize: 14, lineHeight: 21, color: 'rgba(255,255,255,0.65)' }}>VetChroPH · Talisay City, Philippines</Text>
+
+          {/* Text block */}
+          <View style={{ gap: 14, zIndex: 1 }}>
+            <Text style={a.panelHeadline}>Every visit, record{'\n'}and reminder — in one place.</Text>
+            <Text style={a.panelSub}>Built for veterinary clinics in the Philippines.</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
+              {['Book visits', 'View records', 'Pay bills', 'Get reminders'].map(f => (
+                <View key={f} style={a.featureChip}>
+                  <Text style={a.featureChipText}>{f}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       )}
-      <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#fff' }}>
-        <View style={{ flex: 1, width: '100%', maxWidth: 560 }}>{children}</View>
+      <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#fff', borderLeftWidth: 1, borderLeftColor: colors.line }}>
+        <View style={{ flex: 1, width: '100%', maxWidth: 520 }}>{children}</View>
       </View>
     </View>
   );
@@ -51,41 +69,45 @@ export function Welcome() {
   const nav = useNav(); const { db, act } = useApp(); const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions(); const { desktop } = useBP();
   const [demo, setDemo] = useState(false);
-  const heroH = Math.max(170, Math.min(270, height * 0.3));
+  const heroH = Math.max(160, Math.min(240, height * 0.28));
   return (
     <ScrollView style={{ flex: 1, backgroundColor: '#fff' }} contentContainerStyle={[a.welcome, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 20 }, desktop && { justifyContent: 'center', paddingVertical: 48 }]}>
       {desktop ? <BrandMark size={44} /> : <Logo size={34} />}
-      <View style={{ gap: 8 }}>
+      <View style={{ gap: 10 }}>
         <Text style={a.h1} accessibilityRole="header">Your pets' care,{'\n'}all in one place.</Text>
-        <Text style={a.lede}>Book visits, view records and reminders, message {db.clinic.name}, and pay bills.</Text>
+        <Text style={a.lede}>Book visits, view health records and reminders, message {db.clinic.name}, and pay bills — all from one app.</Text>
       </View>
-      {!desktop && <View style={[a.heroWrap, { height: heroH }]}>
-        <View style={[a.blobBig, { width: heroH * 1.05, height: heroH * 1.05, borderRadius: heroH }]} />
-        <View style={[a.blobSmall, { width: heroH * 0.34, height: heroH * 0.34, borderRadius: heroH }]} />
-        <Image source={SCENES.welcomePets} resizeMode="contain" style={{ width: '100%', height: heroH }} accessibilityLabel="A cat and a dog" />
-      </View>}
+      {!desktop && (
+        <View style={[a.heroWrap, { height: heroH }]}>
+          <View style={[a.blobBig, { width: heroH * 1.1, height: heroH * 1.1, borderRadius: heroH }]} />
+          <View style={[a.blobSmall, { width: heroH * 0.32, height: heroH * 0.32, borderRadius: heroH }]} />
+          <Image source={SCENES.welcomePets} resizeMode="contain" style={{ width: '100%', height: heroH }} accessibilityLabel="A cat and a dog" />
+        </View>
+      )}
       <View style={{ gap: 10 }}>
         <Btn label="Log in" icon="login" full onPress={() => nav.navigate('Login')} />
         <Btn label="Create a pet owner account" icon="userplus" kind="line" full onPress={() => nav.navigate('SignUp')} />
       </View>
       <View style={a.demo}>
         <Pressable onPress={() => setDemo(!demo)} accessibilityRole="button" accessibilityState={{ expanded: demo }} style={a.demoHead}>
-          <Icon name="users" size={18} color={colors.accentDeep} />
-          <Text style={a.demoTitle}>Explore Demo Accounts</Text>
-          <Icon name={demo ? 'chevU' : 'chevD'} size={18} color={colors.ink2} />
+          <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="users" size={16} color={colors.accentDeep} />
+          </View>
+          <Text style={a.demoTitle}>Explore demo accounts</Text>
+          <Icon name={demo ? 'chevU' : 'chevD'} size={17} color={colors.ink2} />
         </Pressable>
         {demo && DEMO.map(([id, role, name, icon]) => (
           <Pressable key={id} onPress={() => act.demoLogin(id)} accessibilityRole="button" accessibilityLabel={`Sign in as ${role}`}
             style={({ pressed }) => [a.demoRow, pressed && { backgroundColor: colors.subtle }]}>
-            <View style={a.demoIcon}><Icon name={icon} size={17} color={colors.accentDeep} /></View>
+            <View style={a.demoIcon}><Icon name={icon} size={16} color={colors.accentDeep} /></View>
             <View style={{ flex: 1 }}>
               <Text style={a.demoRole}>{role}</Text>
               <Text style={a.demoName} numberOfLines={1}>{name}</Text>
             </View>
-            <Icon name="chevR" size={16} color={colors.ink3} />
+            <Icon name="chevR" size={15} color={colors.ink3} />
           </Pressable>
         ))}
-        {demo && <Pressable onPress={resetDemoData} accessibilityRole="button" style={a.reset}><Text style={{ fontSize: 13, color: colors.ink2 }}>Reset demo data</Text></Pressable>}
+        {demo && <Pressable onPress={resetDemoData} accessibilityRole="button" style={a.reset}><Text style={{ fontFamily: FONT, fontSize: 13, color: colors.ink3 }}>Reset demo data</Text></Pressable>}
       </View>
     </ScrollView>
   );
@@ -205,8 +227,17 @@ const a = StyleSheet.create({
   welcome: { flexGrow: 1, paddingHorizontal: space.xl, gap: 22, width: '100%', maxWidth: 520, alignSelf: 'center' },
   h1: { fontFamily: FONT, fontSize: 30, lineHeight: 37, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
   lede: { fontFamily: FONT, fontSize: 15, lineHeight: 23, color: colors.ink2 },
-  panel: { width: '46%', maxWidth: 760, backgroundColor: colors.accentDeep, padding: 48, gap: 24 },
-  panelBlob: { position: 'absolute', width: '70%', aspectRatio: 1, borderRadius: 999, backgroundColor: 'rgba(79,130,184,0.15)' },
+
+  // Auth panel (left column on desktop)
+  panel: { width: '44%', maxWidth: 680, backgroundColor: colors.accentDeep, padding: 48, gap: 24, overflow: 'hidden' },
+  panelBlob1: { position: 'absolute', right: -60, top: -60, width: 320, height: 320, borderRadius: 160, backgroundColor: 'rgba(47,125,225,0.25)' },
+  panelBlob2: { position: 'absolute', left: -40, bottom: 80, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(126,200,245,0.12)' },
+  panelBlob3: { position: 'absolute', right: 60, bottom: -80, width: 240, height: 240, borderRadius: 120, backgroundColor: 'rgba(20,39,71,0.6)' },
+  panelHeadline: { fontFamily: FONT, fontSize: 24, lineHeight: 32, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.5 },
+  panelSub: { fontFamily: FONT, fontSize: 14, lineHeight: 21, color: 'rgba(255,255,255,0.58)' },
+  featureChip: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
+  featureChipText: { fontFamily: FONT, fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.82)' },
+
   reset: { alignItems: 'center', paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line },
   heroWrap: { alignItems: 'center', justifyContent: 'flex-end' },
   blobBig: { position: 'absolute', bottom: 0, backgroundColor: colors.accentSoft },

@@ -18,25 +18,26 @@ export const ROLE_LABEL = { owner: 'Pet Owner', staff: 'Clinic Staff', admin: 'A
 export function HomeHeader({ sub, action }: { sub?: string; action?: React.ReactNode }) {
   const nav = useNav(); const { user, db, act } = useApp(); const { wide } = useBP();
   const unread = (db.notifs[act.inboxKey()] || []).filter(n => n.unread).length;
-  // Tablets and desktops: the sidebar already has the logo, notifications and profile, so the page header is just a title.
+  // Tablets and desktops: the sidebar already has the logo, so the page header is just a greeting + date.
   if (wide) return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ fontFamily: FONT, fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 }} numberOfLines={1} accessibilityRole="header">{greeting()}, {firstName(user!.name)}</Text>
-        <Text style={[type.small, { fontSize: 14.5, marginTop: 4 }]}>{sub || fmtD(D(0))}</Text>
+        <Text style={{ fontFamily: FONT, fontSize: 11, fontWeight: '600', color: colors.ink3, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 }}>{fmtD(D(0))}</Text>
+        <Text style={{ fontFamily: FONT, fontSize: 26, lineHeight: 32, fontWeight: '700', color: colors.ink, letterSpacing: -0.5 }} numberOfLines={1} accessibilityRole="header">{greeting()}, {firstName(user!.name)}</Text>
+        {sub && <Text style={[type.small, { fontSize: 14, marginTop: 3, color: colors.ink2 }]}>{sub}</Text>}
       </View>
       {action}
     </View>
   );
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 10 }}>
-      <BrandTile size={42} />
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 8 }}>
+      <BrandTile size={40} />
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[type.small, { fontSize: 14 }]} numberOfLines={1}>{greeting()},</Text>
-        <Text style={{ fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '700', color: colors.ink, letterSpacing: -0.4 }} numberOfLines={1}>{firstName(user!.name)}</Text>
+        <Text style={{ fontFamily: FONT, fontSize: 12, color: colors.ink3 }} numberOfLines={1}>{greeting()}</Text>
+        <Text style={{ fontFamily: FONT, fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.4 }} numberOfLines={1}>{firstName(user!.name)}</Text>
       </View>
       <IconBtn name="bell" label="Notifications" count={unread} framed onPress={() => nav.navigate('Notifications')} />
-      <Pressable onPress={() => nav.navigate('Profile')} accessibilityLabel="Profile and settings" accessibilityRole="button"><Avatar name={user!.name} size={40} /></Pressable>
+      <Pressable onPress={() => nav.navigate('Profile')} accessibilityLabel="Profile and settings" accessibilityRole="button"><Avatar name={user!.name} size={38} /></Pressable>
     </View>
   );
 }
@@ -136,25 +137,40 @@ export function Profile() {
   const { wide } = useBP();
   const edit = () => { setErr({}); setF({ name: user!.name, phone: user!.phone, email: user!.email, address: ownerRec?.address || '' }); setEditOpen(true); };
   const card = (
-    <Card style={{ gap: 18 }}>
-      <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 16 }, wide && { flexDirection: 'column', alignItems: 'flex-start' }]}>
-        <Avatar name={user!.name} size={wide ? 72 : 64} />
-        <View style={{ flex: wide ? undefined : 1, minWidth: 0, gap: 2 }}>
-          <Text style={{ fontFamily: FONT, fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 }} numberOfLines={1}>{user!.name}</Text>
-          <T.Small numberOfLines={1}>{ROLE_LABEL[user!.role]}{ownerRec ? ` · client since ${parseD(ownerRec.since).getFullYear()}` : ''}</T.Small>
+    <Card style={{ gap: 20 }}>
+      {/* Avatar + name row */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <Avatar name={user!.name} size={64} />
+        <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+          <Text style={{ fontFamily: FONT, fontSize: 19, lineHeight: 25, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 }} numberOfLines={1}>{user!.name}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: colors.accentSoft }}>
+              <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.accentDeep }}>{ROLE_LABEL[user!.role]}</Text>
+            </View>
+            {ownerRec && <Text style={type.small}>since {parseD(ownerRec.since).getFullYear()}</Text>}
+          </View>
         </View>
       </View>
-      <View style={{ gap: 10 }}>
+
+      {/* Contact info */}
+      <View style={{ gap: 8 }}>
         {([['mail', user!.email], ['phone', user!.phone], ...(owner && ownerRec?.address ? [['pin', ownerRec.address]] : [])] as [IconName, string][]).map(([i, v]) => (
-          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Icon name={i} size={16} color={colors.ink3} /><Text style={[type.small, { fontSize: 14, color: colors.ink, flex: 1 }]} numberOfLines={2}>{v}</Text></View>
+          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Icon name={i} size={15} color={colors.ink3} />
+            <Text style={[type.small, { fontSize: 13.5, color: colors.ink, flex: 1 }]} numberOfLines={2}>{v}</Text>
+          </View>
         ))}
       </View>
+
       <Btn label="Edit profile" icon="edit" kind="line" small onPress={edit} />
+
+      {/* Owner stats strip */}
       {owner && (
         <View style={pf.stats}>
           {([[String(myPets), myPets === 1 ? 'Pet' : 'Pets'], [String(myAppts), myAppts === 1 ? 'Visit' : 'Visits'], [`${years}+`, years === 1 ? 'Year' : 'Years']] as const).map(([v, l], k) => (
             <View key={l} style={[pf.stat, k > 0 && { borderLeftWidth: 1, borderLeftColor: colors.line }]}>
-              <Text style={pf.val}>{v}</Text><Text style={type.small}>{l}</Text>
+              <Text style={pf.val}>{v}</Text>
+              <Text style={[type.small, { fontSize: 12 }]}>{l}</Text>
             </View>
           ))}
         </View>

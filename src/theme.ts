@@ -35,8 +35,8 @@ export const colors = {
 
 // Dark sidebar — staff & admin only (owners keep white top-nav)
 export const sidebar = {
-  bg: '#0D1B2A',
-  border: 'rgba(255,255,255,0.09)',
+  bg: '#1B3A6B',
+  border: 'rgba(255,255,255,0.11)',
   itemHover: 'rgba(255,255,255,0.07)',
   itemActive: 'rgba(47,125,225,0.22)',   // blue tint (GeneX-style), not white
   itemActiveBorder: '#2F7DE1',           // left accent bar on active item
