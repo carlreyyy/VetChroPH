@@ -47,6 +47,37 @@ export function DashSkeleton() {
   );
 }
 
+function TodayBanner({ today, waiting }: { today: Appt[]; waiting: Appt[] }) {
+  const done = today.filter(a => a.status === 'completed').length;
+  const upcoming = today.filter(a => a.status === 'confirmed' || a.status === 'resched').length;
+  const { wide } = useBP();
+  if (!wide) return null;
+  const stat = (value: number, label: string, color: string) => (
+    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+      <Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '800', color, letterSpacing: -0.8, lineHeight: 26 }}>{value}</Text>
+      <Text style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: '500' }}>{label}</Text>
+    </View>
+  );
+  return (
+    <View style={{ borderRadius: 16, backgroundColor: colors.accentDeep, paddingHorizontal: 24, paddingVertical: 20, flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+      <View style={{ flex: 1, gap: 8 }}>
+        <Text style={{ fontFamily: FONT, fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 0.8 }}>Today's appointments</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          {stat(done, 'completed', colors.ok)}
+          <View style={{ width: 1, height: 20, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+          {stat(waiting.length, 'checked in', colors.teal)}
+          <View style={{ width: 1, height: 20, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+          {stat(upcoming, 'upcoming', 'rgba(255,255,255,0.65)')}
+        </View>
+      </View>
+      <View style={{ alignItems: 'flex-end', gap: 1 }}>
+        <Text style={{ fontFamily: FONT, fontSize: 48, fontWeight: '800', color: '#fff', letterSpacing: -2, lineHeight: 52 }}>{today.length}</Text>
+        <Text style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.6 }}>Total</Text>
+      </View>
+    </View>
+  );
+}
+
 export function StaffHome() {
   const nav = useNav(); const { db, user } = useApp(); const due = useDueList();
   const today = db.appts.filter(a => diff(a.date) === 0 && a.status !== 'cancelled').sort(byDateTime);
@@ -57,8 +88,8 @@ export function StaffHome() {
   const shortcuts = <QuickActions items={[
     ['Walk-in', 'calendar', () => nav.navigate('Book', { staff: '1' }), 0, colors.teal, colors.tileTeal],
     ['New bill', 'receipt', () => nav.navigate('CreateBill'), 0, colors.warmOrange, colors.tileOrange],
-    ['Due list', 'bell', () => nav.navigate('CareMonitor'), 0, colors.violet, colors.tileViolet],
-    ['Search patients', 'search', () => nav.navigate('Main', { screen: 'Patients' } as never), 0, colors.emerald, colors.tileEmerald],
+    ['Due list', 'bell', () => nav.navigate('CareMonitor'), 0, colors.teal, colors.tileTeal],
+    ['Search patients', 'search', () => nav.navigate('Main', { screen: 'Patients' } as never), 0, colors.teal, colors.tileTeal],
   ]} />;
   const dueList = (due.overdue.length + due.soon.length) > 0 ? <Section title="Due and overdue pets" action="See all" onAction={() => nav.navigate('CareMonitor')}>
     <Group>{[...due.overdue, ...due.soon].slice(0, wide ? 5 : 4).map(({ f, pet, s: st }) => (
@@ -71,11 +102,12 @@ export function StaffHome() {
       <HomeHeader sub={`${fmtD(D(0))} · ${today.length} appointments today${waiting.length ? `, ${waiting.length} checked in` : ''}`}
         action={<Btn label="New appointment" icon="plus" onPress={() => nav.navigate('Book', { staff: '1' })} />} />
       <Greeting sub={`${today.length} appointments today${waiting.length ? `, ${waiting.length} checked in` : ''}.`} />
+      <TodayBanner today={today} waiting={waiting} />
       <StatGrid>
         <Stat value={today.length} label="Appointments today" icon="calendar" tileColor={colors.teal} tileBg={colors.tileTeal} onPress={() => nav.navigate('Main', { screen: 'Appointments' } as never)} />
         <Stat value={verify.length} label="Payments to verify" icon="wallet" tileColor={verify.length > 0 ? undefined : colors.warmOrange} tileBg={verify.length > 0 ? undefined : colors.tileOrange} alert={verify.length > 0} onPress={() => nav.navigate('Main', { screen: 'Billing' } as never)} />
-        <Stat value={due.overdue.length} label="Overdue follow-ups" icon="alert" tileColor={due.overdue.length > 0 ? undefined : colors.violet} tileBg={due.overdue.length > 0 ? undefined : colors.tileViolet} alert={due.overdue.length > 0} onPress={() => nav.navigate('CareMonitor')} />
-        <Stat value={unread} label="Unread messages" icon="chat" tileColor={unread > 0 ? undefined : colors.emerald} tileBg={unread > 0 ? undefined : colors.tileEmerald} alert={unread > 0} onPress={() => nav.navigate('Main', { screen: 'Messages' } as never)} />
+        <Stat value={due.overdue.length} label="Overdue follow-ups" icon="alert" tileColor={due.overdue.length > 0 ? undefined : colors.teal} tileBg={due.overdue.length > 0 ? undefined : colors.tileTeal} alert={due.overdue.length > 0} onPress={() => nav.navigate('CareMonitor')} />
+        <Stat value={unread} label="Unread messages" icon="chat" tileColor={unread > 0 ? undefined : colors.teal} tileBg={unread > 0 ? undefined : colors.tileTeal} alert={unread > 0} onPress={() => nav.navigate('Main', { screen: 'Messages' } as never)} />
       </StatGrid>
       {wide ? (
         <Cols ratio={[2, 1]} stackBelow="desktop">

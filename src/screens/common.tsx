@@ -22,9 +22,12 @@ export function HomeHeader({ sub, action }: { sub?: string; action?: React.React
   if (wide) return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ fontFamily: FONT, fontSize: 11, fontWeight: '600', color: colors.ink3, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 }}>{fmtD(D(0))}</Text>
-        <Text style={{ fontFamily: FONT, fontSize: 26, lineHeight: 32, fontWeight: '700', color: colors.ink, letterSpacing: -0.5 }} numberOfLines={1} accessibilityRole="header">{greeting()}, {firstName(user!.name)}</Text>
-        {sub && <Text style={[type.small, { fontSize: 14, marginTop: 3, color: colors.ink2 }]}>{sub}</Text>}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.teal }} />
+          <Text style={{ fontFamily: FONT, fontSize: 11, fontWeight: '600', color: colors.ink3, letterSpacing: 0.8, textTransform: 'uppercase' }}>{fmtD(D(0))}</Text>
+        </View>
+        <Text style={{ fontFamily: FONT, fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 }} numberOfLines={1} accessibilityRole="header">{greeting()}, {firstName(user!.name)}</Text>
+        {sub && <Text style={[type.small, { fontSize: 14, marginTop: 4, color: colors.ink2 }]}>{sub}</Text>}
       </View>
       {action}
     </View>

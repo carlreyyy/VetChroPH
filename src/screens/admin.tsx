@@ -51,9 +51,9 @@ export function AdminHome() {
     </Pressable>
   );
   const shortcuts = <QuickActions items={[
-    ['Messages', 'chat', () => nav.navigate('Inbox'), unread, colors.emerald, colors.tileEmerald],
+    ['Messages', 'chat', () => nav.navigate('Inbox'), unread, colors.teal, colors.tileTeal],
     ['Billing', 'wallet', () => nav.navigate('BillingList'), verify.length, colors.warmOrange, colors.tileOrange],
-    ['Due list', 'bell', () => nav.navigate('CareMonitor'), 0, colors.violet, colors.tileViolet],
+    ['Due list', 'bell', () => nav.navigate('CareMonitor'), 0, colors.teal, colors.tileTeal],
     ['Activity', 'history', () => nav.navigate('ActivityLog'), 0, colors.teal, colors.tileTeal],
   ]} />;
   const activity = (
@@ -69,8 +69,8 @@ export function AdminHome() {
       <StatGrid>
         <Stat value={today.length} label="Appointments today" icon="calendar" tileColor={colors.teal} tileBg={colors.tileTeal} onPress={() => nav.navigate('Main', { screen: 'Appointments' } as never)} />
         <Stat value={verify.length} label="Payments to verify" icon="wallet" tileColor={verify.length > 0 ? undefined : colors.warmOrange} tileBg={verify.length > 0 ? undefined : colors.tileOrange} alert={verify.length > 0} onPress={() => nav.navigate('BillingList')} />
-        <Stat value={due.overdue.length} label="Overdue follow-ups" icon="alert" tileColor={due.overdue.length > 0 ? undefined : colors.violet} tileBg={due.overdue.length > 0 ? undefined : colors.tileViolet} alert={due.overdue.length > 0} onPress={() => nav.navigate('CareMonitor')} />
-        <Stat value={unread} label="Unread messages" icon="chat" tileColor={unread > 0 ? undefined : colors.emerald} tileBg={unread > 0 ? undefined : colors.tileEmerald} alert={unread > 0} onPress={() => nav.navigate('Inbox')} />
+        <Stat value={due.overdue.length} label="Overdue follow-ups" icon="alert" tileColor={due.overdue.length > 0 ? undefined : colors.teal} tileBg={due.overdue.length > 0 ? undefined : colors.tileTeal} alert={due.overdue.length > 0} onPress={() => nav.navigate('CareMonitor')} />
+        <Stat value={unread} label="Unread messages" icon="chat" tileColor={unread > 0 ? undefined : colors.teal} tileBg={unread > 0 ? undefined : colors.tileTeal} alert={unread > 0} onPress={() => nav.navigate('Inbox')} />
       </StatGrid>
       {wide ? (
         <Cols ratio={[2, 1]} stackBelow="desktop">
