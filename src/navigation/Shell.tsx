@@ -90,6 +90,7 @@ function Sidebar({ route, navRef, compact }: { route: string; navRef: Navigation
   const item = (it: Item, on: boolean) => (
     <Pressable key={it.key} onPress={() => go(it)} accessibilityRole="link" accessibilityLabel={it.label} accessibilityState={{ selected: on }}
       style={(st: PState) => [compact ? sb.railItem : sb.item, on ? sb.itemOn : st.hovered ? sb.itemHover : null]}>
+      {on && !compact && <View style={sb.activeBar} />}
       <Icon name={it.icon} size={compact ? 20 : 18} color={on ? sidebar.iconActive : sidebar.icon} strokeWidth={on ? 2.1 : 1.8} />
       {!compact && (
         <Text style={[sb.label, on && sb.labelOn]} numberOfLines={1}>{it.label}</Text>
@@ -184,6 +185,7 @@ const sb = StyleSheet.create({
   },
   itemOn: { backgroundColor: sidebar.itemActive },
   itemHover: { backgroundColor: sidebar.itemHover },
+  activeBar: { position: 'absolute', left: 0, top: 6, bottom: 6, width: 3, borderRadius: 2, backgroundColor: sidebar.itemActiveBorder },
   label: {
     flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '500',
     color: sidebar.text,

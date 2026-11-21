@@ -31,7 +31,7 @@ export function ScheduleTable({ list, showStaff }: { list: Appt[]; showStaff?: b
         { key: 'p', label: 'Patient', flex: 2, render: a => { const p = sel.pet(db, a.petId)!; return <Cell left={<PetAvatar pet={p} size={36} />} title={p.name} sub={sel.owner(db, a.ownerId)!.name} />; } },
         { key: 's', label: 'Service', flex: 2, render: a => a.service },
         ...(showStaff ? [{ key: 'h', label: 'Handled by', flex: 1.3, wideOnly: true, render: (a: Appt) => a.handledBy || '—' }] : []),
-        { key: 'st', label: 'Status', width: 120, render: a => <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} /> },
+        { key: 'st', label: 'Status', width: 120, render: a => <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge /> },
       ]} />
   );
 }
@@ -92,7 +92,7 @@ export function StaffHome() {
       <Section title="Today's schedule" action="All" onAction={() => nav.navigate('Main', { screen: 'Appointments' } as never)}>
         {today.length === 0 ? <T.Small>No appointments today.</T.Small> : (
           <Group>{today.map(a => { const p = sel.pet(db, a.petId)!; return (
-            <Row key={a.id} left={<PetAvatar pet={p} size={40} />} title={`${t12(a.time)} · ${p.name}`} sub={`${sel.owner(db, a.ownerId)!.name} · ${a.service}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />
+            <Row key={a.id} left={<PetAvatar pet={p} size={40} />} title={`${t12(a.time)} · ${p.name}`} sub={`${sel.owner(db, a.ownerId)!.name} · ${a.service}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />
           ); })}</Group>
         )}
       </Section>
@@ -171,8 +171,8 @@ export function OwnerDetail() {
       <Section title="Pets">
         {pets.length === 0 ? <T.Small>No pets yet.</T.Small> : <Group>{pets.map(p => <Row key={p.id} left={<PetAvatar pet={p} size={42} />} title={p.name} sub={`${cap(p.species)} · ${p.breed} · ${ageOf(p.birth)}`} right={p.status !== 'active' ? <Pill text={cap(p.status)} /> : undefined} onPress={() => nav.navigate('PetDetail', { id: p.id })} />)}</Group>}
       </Section>
-      {bills.length > 0 && <Section title="Open bills"><Group>{bills.map(b => <Row key={b.id} icon="receipt" title={`${sel.pet(db, b.petId)!.name} · ${money(billBalance(b))}`} sub={fmtD(b.date)} right={<Pill text={BILL[billState(b)][0]} tone={BILL[billState(b)][1]} />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />)}</Group></Section>}
-      {appts.length > 0 && <Section title="Recent appointments"><Group>{appts.map(a => <Row key={a.id} icon="calendar" title={`${sel.pet(db, a.petId)!.name} · ${a.service}`} sub={`${fmtD(a.date)}, ${t12(a.time)}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />)}</Group></Section>}
+      {bills.length > 0 && <Section title="Open bills"><Group>{bills.map(b => <Row key={b.id} icon="receipt" title={`${sel.pet(db, b.petId)!.name} · ${money(billBalance(b))}`} sub={fmtD(b.date)} right={<Pill text={BILL[billState(b)][0]} tone={BILL[billState(b)][1]} badge />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />)}</Group></Section>}
+      {appts.length > 0 && <Section title="Recent appointments"><Group>{appts.map(a => <Row key={a.id} icon="calendar" title={`${sel.pet(db, a.petId)!.name} · ${a.service}`} sub={`${fmtD(a.date)}, ${t12(a.time)}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />)}</Group></Section>}
       <Section title="Internal notes" action="Add note" onAction={() => { setNote(''); setNoteErr(''); setNoteOpen(true); }}>
         {o.notes.length === 0 ? <T.Small>No notes. Missed visits are noted here automatically.</T.Small> : <Group>{o.notes.map(n => <Row key={n.id} icon="sticky" title={n.text} sub={`${n.by} · ${ago(n.at)}`} subLines={2} />)}</Group>}
         <T.Small>Visible to clinic staff and the administrator only.</T.Small>

@@ -39,9 +39,9 @@ const useTab = () => { const nav = useNav(); return (screen: string) => nav.navi
 function DateTile({ date, size = 'md' }: { date: string; size?: 'sm' | 'md' }) {
   const d = parseD(date); const sm = size === 'sm';
   return (
-    <View style={[o.dateTile, sm && { width: 48, height: 52, borderRadius: 12 }]} accessible accessibilityLabel={fmtD(date)}>
+    <View style={[o.dateTile, sm && { width: 46, height: 50, borderRadius: 10 }]} accessible accessibilityLabel={fmtD(date)}>
       <Text style={o.dateMon}>{MON[d.getMonth()]}</Text>
-      <Text style={[o.dateDay, sm && { fontSize: 19, lineHeight: 22 }]}>{d.getDate()}</Text>
+      <Text style={[o.dateDay, sm && { fontSize: 18, lineHeight: 22 }]}>{d.getDate()}</Text>
     </View>
   );
 }
@@ -89,35 +89,37 @@ type Action = { label: string; short: string; icon: IconName; sub: string; onPre
 function ActionStrip({ items }: { items: Action[] }) {
   const { wide } = useBP();
   if (!wide) return (
-    <View style={{ flexDirection: 'row' }}>
+    <View style={{ flexDirection: 'row', gap: 8 }}>
       {items.map(a => (
         <Pressable key={a.label} onPress={a.onPress} accessibilityRole="button" accessibilityLabel={a.badge ? `${a.label}, ${a.badge}` : a.label}
-          style={({ pressed }) => [o.qa, pressed && { opacity: 0.6 }]}>
-          <View>
-            <View style={[o.qaIcon, a.primary && { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep }]}>
-              <Icon name={a.icon} size={22} color={a.primary ? '#fff' : colors.accentDeep} strokeWidth={2} />
+          style={({ pressed }) => [o.qa, a.primary && { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep }, pressed && { opacity: 0.65 }]}>
+          <View style={{ position: 'relative' }}>
+            <View style={[o.qaIcon, a.primary && { backgroundColor: 'rgba(255,255,255,0.18)', borderColor: 'transparent' }]}>
+              <Icon name={a.icon} size={20} color={a.primary ? '#fff' : colors.accentDeep} strokeWidth={2} />
             </View>
             {!!a.badge && <View style={o.qaBadge}><CountBadge n={a.badge} /></View>}
           </View>
-          <Text style={o.qaLabel} numberOfLines={1}>{a.short}</Text>
+          <Text style={[o.qaLabel, a.primary && { color: '#fff' }]} numberOfLines={1}>{a.short}</Text>
         </Pressable>
       ))}
     </View>
   );
   return (
-    <View style={{ flexDirection: 'row', gap: 16 }}>
+    <View style={{ flexDirection: 'row', gap: 12 }}>
       {items.map(a => (
         <Pressable key={a.label} onPress={a.onPress} accessibilityRole="button" accessibilityLabel={a.label}
-          style={(st: PState) => [o.action, a.primary && o.actionPrimary, st.hovered && (a.primary ? { backgroundColor: '#1D3560' } : { borderColor: colors.lineStrong }), st.pressed && { opacity: 0.9 }]}>
+          style={(st: PState) => [o.action, a.primary && o.actionPrimary,
+            st.hovered && (a.primary ? { backgroundColor: '#1D3560' } : { borderColor: colors.accentMid }),
+            st.pressed && { opacity: 0.88 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <View style={[o.actionIcon, a.primary && { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
-              <Icon name={a.icon} size={20} color={a.primary ? '#fff' : colors.accentDeep} strokeWidth={2} />
+            <View style={[o.actionIcon, a.primary && { backgroundColor: 'rgba(255,255,255,0.18)', borderColor: 'transparent' }]}>
+              <Icon name={a.icon} size={18} color={a.primary ? '#fff' : colors.accent} strokeWidth={2} />
             </View>
-            {a.badge ? <CountBadge n={a.badge} /> : <Icon name="chevR" size={18} color={a.primary ? 'rgba(255,255,255,0.7)' : colors.ink3} />}
+            {a.badge ? <CountBadge n={a.badge} /> : <Icon name="chevR" size={16} color={a.primary ? 'rgba(255,255,255,0.55)' : colors.ink3} />}
           </View>
-          <View style={{ gap: 2 }}>
-            <Text style={[type.h3, a.primary && { color: '#fff' }]} numberOfLines={1}>{a.label}</Text>
-            <Text style={[type.small, a.primary && { color: 'rgba(255,255,255,0.72)' }]} numberOfLines={1}>{a.sub}</Text>
+          <View style={{ gap: 3 }}>
+            <Text style={[type.h3, { fontSize: 14 }, a.primary && { color: '#fff' }]} numberOfLines={1}>{a.label}</Text>
+            <Text style={[type.small, { fontSize: 12.5 }, a.primary && { color: 'rgba(255,255,255,0.68)' }]} numberOfLines={1}>{a.sub}</Text>
           </View>
         </Pressable>
       ))}
@@ -198,7 +200,7 @@ export function OwnerHome() {
           <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
             <Text style={[type.h2, { fontSize: 17 }]} numberOfLines={1}>{next.service}</Text>
             <Text style={type.small} numberOfLines={1}>{p.name} · {rel(next.date)}, {t12(next.time)}</Text>
-            <View style={{ marginTop: 4 }}><Pill text={APPT[next.status][0]} tone={APPT[next.status][1]} /></View>
+            <View style={{ marginTop: 4 }}><Pill text={APPT[next.status][0]} tone={APPT[next.status][1]} badge /></View>
           </View>
           {wide && <PetAvatar pet={p} size={48} />}
           <Icon name="chevR" size={18} color={colors.ink3} />
@@ -309,7 +311,7 @@ export function OwnerAppts() {
             { key: 'd', label: 'Date', flex: 1.5, render: a => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}><DateTile date={a.date} size="sm" /><Cell title={fmtD(a.date)} sub={`${t12(a.time)} · ${rel(a.date)}`} /></View> },
             { key: 's', label: 'Service', flex: 1.6, render: a => a.service },
             { key: 'p', label: 'Pet', flex: 1.2, render: a => { const p = sel.pet(db, a.petId)!; return <Cell left={<PetAvatar pet={p} size={32} />} title={p.name} />; } },
-            { key: 'st', label: 'Status', width: 160, render: a => <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} /> },
+            { key: 'st', label: 'Status', width: 160, render: a => <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge /> },
           ]} />
       ) : (
         <Group>
@@ -320,7 +322,7 @@ export function OwnerAppts() {
               <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                 <Text style={type.h3} numberOfLines={1}>{a.service}</Text>
                 <T.Small numberOfLines={1}>{p.name} · {t12(a.time)}</T.Small>
-                <View style={{ marginTop: 3 }}><Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} /></View>
+                <View style={{ marginTop: 3 }}><Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge /></View>
               </View>
               <PetAvatar pet={p} size={40} />
             </Pressable>
@@ -365,7 +367,7 @@ export function OwnerBills() {
           <Group>
             {open.map(b => { const st = billState(b); return (
               <Row key={b.id} left={<PetAvatar pet={pet(b)} size={40} />} title={money(billBalance(b))} sub={`${pet(b).name} · visit on ${fmtD(b.date)}`}
-                right={st === 'unpaid' ? undefined : <Pill text={BILL[st][0]} tone={BILL[st][1]} />}
+                right={st === 'unpaid' ? undefined : <Pill text={BILL[st][0]} tone={BILL[st][1]} badge />}
                 action={st === 'unpaid' ? <Btn label="Pay now" small onPress={() => nav.navigate('PayBill', { id: b.id })} /> : undefined}
                 onPress={() => nav.navigate('BillDetail', { id: b.id })} />
             ); })}
@@ -381,7 +383,7 @@ export function OwnerBills() {
                 { key: 'd', label: 'Visit date', flex: 1.2, render: b => fmtD(b.date) },
                 { key: 'p', label: 'Pet', flex: 1.4, render: b => <Cell left={<PetAvatar pet={pet(b)} size={32} />} title={pet(b).name} /> },
                 { key: 'a', label: 'Amount', flex: 1, align: 'right', render: b => <Text style={[type.h3, { fontSize: 14 }]}>{money(billTotal(b))}</Text> },
-                { key: 's', label: 'Status', width: 120, render: b => <Pill text={BILL[billState(b)][0]} tone={BILL[billState(b)][1]} /> },
+                { key: 's', label: 'Status', width: 120, render: b => <Pill text={BILL[billState(b)][0]} tone={BILL[billState(b)][1]} badge /> },
               ]} />
           ) : (
             <Group>{paid.map(b => <Row key={b.id} left={<PetAvatar pet={pet(b)} size={40} />} title={money(billTotal(b))} sub={`${pet(b).name} · ${fmtD(b.date)}`} right={<Pill text="Paid" tone="ok" />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />)}</Group>
@@ -448,16 +450,16 @@ export function ClinicInfo() {
 
 const o = StyleSheet.create({
   hello: { fontFamily: FONT, fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
-  action: { flex: 1, minWidth: 0, gap: 18, padding: 18, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
+  action: { flex: 1, minWidth: 0, gap: 14, padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
   actionPrimary: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  actionIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  qa: { flex: 1, alignItems: 'center', gap: 8 },
-  qaIcon: { width: 56, height: 56, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', ...shadow },
-  qaBadge: { position: 'absolute', top: -5, right: -7 },
-  qaLabel: { fontFamily: FONT, fontSize: 12.5, fontWeight: '500', color: colors.ink },
-  dateTile: { width: 60, height: 64, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  dateMon: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 0.6 },
-  dateDay: { fontFamily: FONT, fontSize: 22, lineHeight: 26, fontWeight: '700', color: colors.accentDeep },
+  actionIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.accentSoft, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
+  qa: { flex: 1, alignItems: 'center', gap: 7, paddingVertical: 12, paddingHorizontal: 6, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
+  qaIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  qaBadge: { position: 'absolute', top: -4, right: -6 },
+  qaLabel: { fontFamily: FONT, fontSize: 12, fontWeight: '600', color: colors.ink },
+  dateTile: { width: 56, height: 60, borderRadius: 12, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
+  dateMon: { fontFamily: FONT, fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: 0.8 },
+  dateDay: { fontFamily: FONT, fontSize: 22, lineHeight: 26, fontWeight: '700', color: '#fff' },
   petCard: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   addCard: { alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.lineStrong, backgroundColor: 'transparent' },
   petRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 16 },

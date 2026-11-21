@@ -38,12 +38,13 @@ export const sidebar = {
   bg: '#0D1B2A',
   border: 'rgba(255,255,255,0.09)',
   itemHover: 'rgba(255,255,255,0.07)',
-  itemActive: 'rgba(255,255,255,0.12)',
+  itemActive: 'rgba(47,125,225,0.22)',   // blue tint (GeneX-style), not white
+  itemActiveBorder: '#2F7DE1',           // left accent bar on active item
   text: 'rgba(255,255,255,0.68)',
   textActive: '#FFFFFF',
   textMuted: 'rgba(255,255,255,0.32)',
   icon: 'rgba(255,255,255,0.5)',
-  iconActive: '#FFFFFF',
+  iconActive: '#7EC8F5',                 // bright light-blue for active icon
   badge: '#2F7DE1',
 };
 

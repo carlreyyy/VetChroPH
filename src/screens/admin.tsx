@@ -80,7 +80,7 @@ export function AdminHome() {
         <Section title="Today's schedule" action="Schedule" onAction={() => nav.navigate('Main', { screen: 'Appointments' } as never)}>
           {today.length === 0 ? <T.Small>No appointments today.</T.Small> : (
             <Group>{today.slice(0, 5).map(a => { const p = sel.pet(db, a.petId)!; return (
-              <Row key={a.id} left={<PetAvatar pet={p} size={40} />} title={`${t12(a.time)} · ${p.name}`} sub={`${a.service}${a.handledBy ? ` · ${a.handledBy}` : ''}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />
+              <Row key={a.id} left={<PetAvatar pet={p} size={40} />} title={`${t12(a.time)} · ${p.name}`} sub={`${a.service}${a.handledBy ? ` · ${a.handledBy}` : ''}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />
             ); })}</Group>
           )}
         </Section>

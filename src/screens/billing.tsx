@@ -38,7 +38,7 @@ export function BillDetail() {
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         <PetAvatar pet={pet} size={52} />
         <View style={{ flex: 1 }}><T.H2>{pet.name}</T.H2><T.Small>{fmtDY(b.date)}{clinic ? ` · ${owner.name}` : ''}</T.Small></View>
-        <Pill text={BILL[st][0]} tone={BILL[st][1]} />
+        <Pill text={BILL[st][0]} tone={BILL[st][1]} badge />
       </View>
       {clinic && pending && <Banner tone="warn" icon="shield" title="Check the clinic account first" sub={`Open the clinic's ${pending.method} account and look for reference ${pending.ref} for ${money(pending.amount)}. Screenshots can be edited, so always check the real account.`} />}
       {!clinic && pending && <Banner tone="warn" icon="clock" title="Payment proof sent" sub="The clinic is checking its account. You will get a notification when it is confirmed." />}
@@ -203,14 +203,14 @@ export function Billing() {
             { key: 'p', label: 'Patient', flex: 2, render: b => { const p = sel.pet(db, b.petId)!; return <Cell left={<PetAvatar pet={p} size={34} />} title={p.name} sub={sel.owner(db, b.ownerId)!.name} />; } },
             { key: 'pay', label: 'Payment', flex: 2, wideOnly: true, render: b => { const pay = b.payments.find(x => x.status === 'pending'); return pay ? <Cell title={`${pay.method} · Ref ${pay.ref}`} sub={`Sent ${fmtD(pay.date)}`} /> : '—'; } },
             { key: 't', label: 'Total', width: 110, align: 'right', render: b => money(billTotal(b)) },
-            { key: 's', label: 'Status', width: 130, render: b => { const st = billState(b); return <Pill text={BILL[st][0]} tone={BILL[st][1]} />; } },
+            { key: 's', label: 'Status', width: 130, render: b => { const st = billState(b); return <Pill text={BILL[st][0]} tone={BILL[st][1]} badge />; } },
           ]} />
       : list.length === 0 ? <Empty icon="receipt" title={tab === 'verify' ? 'No payments to check' : 'Nothing here'} sub={tab === 'verify' ? 'E-wallet and bank transfer proofs from owners appear here.' : undefined} /> : (
         <Group>
           {list.map(b => { const p = sel.pet(db, b.petId)!; const pay = b.payments.find(x => x.status === 'pending'); const st = billState(b); return (
             <Row key={b.id} left={<PetAvatar pet={p} size={40} />} title={`${p.name} · ${sel.owner(db, b.ownerId)!.name}`}
               sub={pay ? `${money(pay.amount)} · ${pay.method} · Ref ${pay.ref}` : `${money(billTotal(b))} · ${fmtD(b.date)}`}
-              right={<Pill text={BILL[st][0]} tone={BILL[st][1]} />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />
+              right={<Pill text={BILL[st][0]} tone={BILL[st][1]} badge />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />
           ); })}
         </Group>
       )}

@@ -235,19 +235,24 @@ export function Section({ title, action, onAction, children, sub }: { title: str
   );
 }
 
-/** Status as a small dot and colored text. Replaces filled pills, which made screens noisy. */
-export function Pill({ text, tone = '', chip }: { text: string; tone?: Tone; chip?: boolean }) {
-  const c = tone ? toneColors(tone).fg : colors.ink2;
+/** Status display. `chip` = subtle tinted bg. `badge` = solid filled (GeneX-style). Default = dot + text. */
+export function Pill({ text, tone = '', chip, badge }: { text: string; tone?: Tone; chip?: boolean; badge?: boolean }) {
+  const tc = toneColors(tone);
+  if (badge) return (
+    <View style={[s.chipPill, { backgroundColor: tone ? tc.fg : colors.accentDeep, paddingHorizontal: 10 }]}>
+      <Text style={[s.pillText, { color: '#fff', fontSize: 12 }]} numberOfLines={1}>{text}</Text>
+    </View>
+  );
   if (chip) return (
-    <View style={[s.chipPill, { backgroundColor: tone ? toneColors(tone).bg : colors.subtle }]}>
-      <View style={[s.pillDot, { backgroundColor: c }]} />
-      <Text style={[s.pillText, { color: c, fontSize: 12.5 }]} numberOfLines={1}>{text}</Text>
+    <View style={[s.chipPill, { backgroundColor: tone ? tc.bg : colors.subtle }]}>
+      <View style={[s.pillDot, { backgroundColor: tone ? tc.fg : colors.ink3 }]} />
+      <Text style={[s.pillText, { color: tone ? tc.fg : colors.ink2, fontSize: 12.5 }]} numberOfLines={1}>{text}</Text>
     </View>
   );
   return (
     <View style={s.pill}>
-      <View style={[s.pillDot, { backgroundColor: tone ? c : colors.ink3 }]} />
-      <Text style={[s.pillText, { color: c }]} numberOfLines={1}>{text}</Text>
+      <View style={[s.pillDot, { backgroundColor: tone ? tc.fg : colors.ink3 }]} />
+      <Text style={[s.pillText, { color: tone ? tc.fg : colors.ink2 }]} numberOfLines={1}>{text}</Text>
     </View>
   );
 }
@@ -258,10 +263,24 @@ export const CountBadge = ({ n, tone = 'dot' }: { n: number; tone?: 'dot' | 'nav
   : null;
 
 /** One metric inside a StatGrid. */
-export function Stat({ value, label, onPress, alert }: { value: string | number; label: string; onPress?: () => void; alert?: boolean; dark?: boolean; icon?: IconName }) {
+export function Stat({ value, label, onPress, alert, dark, icon }: { value: string | number; label: string; onPress?: () => void; alert?: boolean; dark?: boolean; icon?: IconName }) {
+  if (dark) return (
+    <Pressable disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}`}
+      style={(st: PState) => [s.stat, s.statDark, onPress && st.hovered && { backgroundColor: '#1A3461' }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <Text style={[s.statValue, { color: '#fff', fontSize: 26, letterSpacing: -0.6 }]} numberOfLines={1}>{value}</Text>
+        {icon && <View style={s.statIconDark}><Icon name={icon} size={15} color="rgba(255,255,255,0.75)" strokeWidth={1.8} /></View>}
+      </View>
+      <Text style={[type.small, { fontSize: 12, color: 'rgba(255,255,255,0.65)' }]} numberOfLines={2}>{label}</Text>
+    </Pressable>
+  );
   return (
-    <Pressable disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}`} style={(st: PState) => [s.stat, onPress && { backgroundColor: hoverBg(st) }]}>
-      <Text style={[s.statValue, alert && { color: colors.bad }]} numberOfLines={1}>{value}</Text>
+    <Pressable disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}`}
+      style={(st: PState) => [s.stat, onPress && { backgroundColor: hoverBg(st) }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <Text style={[s.statValue, alert && { color: colors.bad }]} numberOfLines={1}>{value}</Text>
+        {icon && <View style={[s.statIcon, alert && { backgroundColor: colors.badBg }]}><Icon name={icon} size={15} color={alert ? colors.bad : colors.accentDeep} strokeWidth={1.8} /></View>}
+      </View>
       <Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={2}>{label}</Text>
     </Pressable>
   );
@@ -575,8 +594,11 @@ export const s = StyleSheet.create({
   chipPill: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 9, height: 24, borderRadius: 6 },
 
   // Stats
-  stat:      { paddingVertical: 16, paddingHorizontal: 18, gap: 4, minHeight: 84 },
-  statValue: { fontFamily: FONT, fontSize: 28, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
+  stat:        { paddingVertical: 16, paddingHorizontal: 18, gap: 6, minHeight: 88 },
+  statDark:    { backgroundColor: colors.accentDeep },
+  statValue:   { fontFamily: FONT, fontSize: 28, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
+  statIcon:    { width: 28, height: 28, borderRadius: 7, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  statIconDark:{ width: 28, height: 28, borderRadius: 7, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
 
   // Empty / misc
   empty:     { alignItems: 'center', gap: 6, paddingVertical: 36, paddingHorizontal: 20 },

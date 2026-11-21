@@ -316,7 +316,7 @@ export function ApptDetail() {
           <T.H1>{pet.name}</T.H1>
           <T.Small>{a.service}</T.Small>
         </View>
-        <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} />
+        <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge />
       </View>
       {a.status === 'resched' && a.offer && <Banner tone="info" icon="calendar" title="New time suggested" sub={`${fmtD(a.offer.date)} at ${t12(a.offer.time)}. ${clinic ? 'Waiting for the owner.' : 'Accept it or decline below.'}`} />}
       {a.status === 'cancelled' && a.note && <Banner icon="info" title="Cancelled" sub={a.note} />}
@@ -470,7 +470,7 @@ export function ClinicAppts() {
                       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                         <Text style={type.h3} numberOfLines={1}>{p.name} <Text style={{ color: colors.ink2, fontWeight: '400' }}>· {o.name}</Text></Text>
                         <T.Small numberOfLines={1}>{a.service}{a.by === 'staff' ? ' · Phone/walk-in' : ''}{a.handledBy && admin ? ` · ${a.handledBy}` : ''}</T.Small>
-                        <View style={{ marginTop: 2 }}><Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} /></View>
+                        <View style={{ marginTop: 2 }}><Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge /></View>
                       </View>
                     </Pressable>
                   );
