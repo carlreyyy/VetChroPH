@@ -156,7 +156,7 @@ export function Welcome() {
               </Pressable>
               <Pressable onPress={() => nav.navigate('SignUp')} accessibilityRole="button" accessibilityLabel="Create an account"
                 style={({ pressed }) => [a.pillLine, pressed && { opacity: 0.88 }]}>
-                <Icon name="userplus" size={18} color={colors.accentDeep} strokeWidth={2} />
+                <Icon name="userplus" size={18} color={colors.teal} strokeWidth={2} />
                 <Text style={a.pillLineText}>Create an account</Text>
               </Pressable>
               {/* Google — visual only for the prototype */}
@@ -259,7 +259,7 @@ function WelcomeMobileButtons({ nav }: { nav: ReturnType<typeof useNav> }) {
       </Pressable>
       <Pressable onPress={() => nav.navigate('SignUp')} accessibilityRole="button" accessibilityLabel="Create an account"
         style={({ pressed }) => [a.pillLine, pressed && { opacity: 0.88 }]}>
-        <Icon name="userplus" size={18} color={colors.accentDeep} strokeWidth={2} />
+        <Icon name="userplus" size={18} color={colors.teal} strokeWidth={2} />
         <Text style={a.pillLineText}>Create an account</Text>
       </Pressable>
     </View>
@@ -450,10 +450,10 @@ const a = StyleSheet.create({
   rightSub:     { fontFamily: FONT, fontSize: 15, lineHeight: 23, color: colors.ink2 },
 
   /* Pill buttons */
-  pillPrimary:     { height: 50, borderRadius: 999, backgroundColor: colors.accentDeep, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  pillPrimary:     { height: 50, borderRadius: 999, backgroundColor: colors.teal, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   pillPrimaryText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: '#fff' },
-  pillLine:        { height: 50, borderRadius: 999, backgroundColor: '#fff', borderWidth: 1.5, borderColor: colors.lineStrong, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  pillLineText:    { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: colors.accentDeep },
+  pillLine:        { height: 50, borderRadius: 999, backgroundColor: '#fff', borderWidth: 1.5, borderColor: colors.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  pillLineText:    { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: colors.teal },
 
   /* Demo accounts */
   demo:        { borderWidth: 1, borderColor: colors.line, borderRadius: 14, backgroundColor: '#fff', overflow: 'hidden' },
