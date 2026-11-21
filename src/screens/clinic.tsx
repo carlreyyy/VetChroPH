@@ -9,7 +9,7 @@ import { Cell, Cols, DataTable, useBP } from '../components/responsive';
 import type { Appt } from '../types';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, type } from '../theme';
+import { colors, type, FONT } from '../theme';
 import {
   APPT, BILL, D, FOLLOW_ICON, ago, ageOf, billBalance, billState, byDateTime, cap, diff, fmtD, followStatus, isEmail, isPhone, money, normPhone, t12,
 } from '../utils/format';
@@ -27,7 +27,7 @@ export function ScheduleTable({ list, showStaff }: { list: Appt[]; showStaff?: b
   return (
     <DataTable rows={list} keyOf={a => a.id} onRowPress={a => nav.navigate('ApptDetail', { id: a.id })} rowLabel={a => `${t12(a.time)} ${sel.pet(db, a.petId)!.name}`}
       columns={[
-        { key: 't', label: 'Time', width: 84, render: a => <Text style={{ fontSize: 14, fontWeight: '600', color: colors.ink }}>{t12(a.time)}</Text> },
+        { key: 't', label: 'Time', width: 84, render: a => <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: colors.ink }}>{t12(a.time)}</Text> },
         { key: 'p', label: 'Patient', flex: 2, render: a => { const p = sel.pet(db, a.petId)!; return <Cell left={<PetAvatar pet={p} size={36} />} title={p.name} sub={sel.owner(db, a.ownerId)!.name} />; } },
         { key: 's', label: 'Service', flex: 2, render: a => a.service },
         ...(showStaff ? [{ key: 'h', label: 'Handled by', flex: 1.3, wideOnly: true, render: (a: Appt) => a.handledBy || '—' }] : []),

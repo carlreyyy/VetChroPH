@@ -2,7 +2,7 @@
 // mobile < 768 px (phones), tablet 768–1199 px (collapsed sidebar), desktop >= 1200 px (full sidebar).
 import React from 'react';
 import { Platform, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle, useWindowDimensions } from 'react-native';
-import { colors, shadow } from '../theme';
+import { colors, shadow, FONT } from '../theme';
 import { Icon } from './Icon';
 
 export type BP = 'mobile' | 'tablet' | 'desktop';
@@ -116,9 +116,9 @@ export const Cell = ({ title, sub, left }: { title: string; sub?: string; left?:
 const t = StyleSheet.create({
   wrap: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   head: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, height: 44, backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.line },
-  th: { fontSize: 12, fontWeight: '600', color: colors.ink2, letterSpacing: 0.3, textTransform: 'uppercase' },
+  th: { fontFamily: FONT, fontSize: 12, fontWeight: '600', color: colors.ink2, letterSpacing: 0.3, textTransform: 'uppercase' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, minHeight: 64, paddingVertical: 10 },
   rowLine: { borderTopWidth: 1, borderTopColor: colors.line },
-  td: { fontSize: 14, color: colors.ink },
-  sub: { fontSize: 12.5, color: colors.ink2, marginTop: 2 },
+  td: { fontFamily: FONT, fontSize: 14, color: colors.ink },
+  sub: { fontFamily: FONT, fontSize: 12.5, color: colors.ink2, marginTop: 2 },
 });

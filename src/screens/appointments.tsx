@@ -11,7 +11,7 @@ import { ScheduleTable } from './clinic';
 import { Icon, IconName } from '../components/Icon';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, shadow, space, type } from '../theme';
+import { colors, radius, shadow, space, type, FONT } from '../theme';
 import type { Appt } from '../types';
 import { APPT, D, DOW, MON, byDateTime, diff, fmtD, fmtDS, isUpcoming, money, normPhone, parseD, rel, t12, ymd } from '../utils/format';
 
@@ -261,7 +261,7 @@ export function BookSuccess() {
     </View>}>
       <View style={{ alignItems: 'center', gap: 8, paddingTop: 40, paddingBottom: 4 }}>
         <View style={bk.halo}><View style={bk.success}><Icon name="check" size={32} color="#fff" strokeWidth={2.8} /></View></View>
-        <Text style={[type.display, { fontSize: 24, fontWeight: '800', textAlign: 'center' }]}>Appointment confirmed</Text>
+        <Text style={[type.display, { fontSize: 24, fontWeight: '700', textAlign: 'center' }]}>Appointment confirmed</Text>
         <Text style={[type.body, { color: colors.ink2, textAlign: 'center', maxWidth: 300 }]}>{user!.role === 'owner' ? 'Your booking is confirmed. We will remind you 1 day and 2 hours before.' : 'The booking is confirmed and the owner was notified.'}</Text>
       </View>
       <View style={bk.summary}>
@@ -424,7 +424,7 @@ export function ClinicAppts() {
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {([['Confirmed', ['confirmed', 'checked_in', 'completed', 'resched'], colors.accentDeep], ['Completed', ['completed'], colors.ok], ['Cancelled', ['cancelled'], colors.ink2], ['Missed', ['missed'], colors.bad]] as const).map(([l, st, c]) => (
-            <View key={l} style={{ flex: 1, alignItems: 'center', gap: 2 }}><Text style={{ fontSize: 22, fontWeight: '700', color: c }}>{count([...st])}</Text><Text style={[type.small, { fontSize: 12 }]}>{l}</Text></View>
+            <View key={l} style={{ flex: 1, alignItems: 'center', gap: 2 }}><Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '700', color: c }}>{count([...st])}</Text><Text style={[type.small, { fontSize: 12 }]}>{l}</Text></View>
           ))}
         </View>
       </Card>}
@@ -488,13 +488,13 @@ export function ClinicAppts() {
 const sp = StyleSheet.create({
   day: { width: 56, height: 68, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', gap: 2 },
   dayOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  dayDow: { fontSize: 12, fontWeight: '500', color: colors.ink2 },
-  dayNum: { fontSize: 18, fontWeight: '700', color: colors.ink },
+  dayDow: { fontFamily: FONT, fontSize: 12, fontWeight: '500', color: colors.ink2 },
+  dayNum: { fontFamily: FONT, fontSize: 18, fontWeight: '700', color: colors.ink },
   slots: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   slot: { width: '31.6%', height: 42, borderRadius: 21, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   slotOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
   slotOff: { backgroundColor: colors.subtle, borderColor: colors.subtle },
-  slotText: { fontSize: 14, fontWeight: '500', color: colors.ink },
+  slotText: { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink },
 });
 const bk = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 4 },
@@ -502,10 +502,10 @@ const bk = StyleSheet.create({
   stepDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: '#9FB4CF', backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   stepNow: { borderColor: colors.accentDeep, backgroundColor: colors.accentDeep },
   stepDone: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  stepNum: { fontSize: 13, fontWeight: '700', color: colors.accentDeep },
-  stepLabel: { fontSize: 12, color: colors.ink2 },
+  stepNum: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: colors.accentDeep },
+  stepLabel: { fontFamily: FONT, fontSize: 12, color: colors.ink2 },
   ring: { padding: 3, borderRadius: 34, borderWidth: 2, borderColor: 'transparent' },
-  title: { fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 },
+  title: { fontFamily: FONT, fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 },
   svc: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, ...shadow },
   svcOn: { borderColor: colors.accentDeep, borderWidth: 1.5, paddingVertical: 11.5, paddingHorizontal: 13.5, backgroundColor: colors.accentSoft },
   tip: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: colors.subtle, borderWidth: 1, borderColor: colors.accentSoft },
@@ -525,19 +525,19 @@ const bk = StyleSheet.create({
 });
 const cal = StyleSheet.create({
   row: { flexDirection: 'row' },
-  dow: { flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '500', color: colors.ink2, paddingVertical: 6 },
+  dow: { fontFamily: FONT, flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '500', color: colors.ink2, paddingVertical: 6 },
   cell: { flex: 1, height: 40, marginVertical: 2, marginHorizontal: 3, alignItems: 'center', justifyContent: 'center', borderRadius: 20, gap: 2 },
   cellOn: { backgroundColor: colors.accentDeep },
   cellToday: { borderWidth: 1.5, borderColor: colors.accent },
-  num: { fontSize: 14, fontWeight: '500', color: colors.ink },
+  num: { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.accent },
   nav: { width: 34, height: 34, borderRadius: 11, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-  navT: { fontSize: 20, lineHeight: 22, color: colors.ink, fontWeight: '600' },
+  navT: { fontFamily: FONT, fontSize: 20, lineHeight: 22, color: colors.ink, fontWeight: '600' },
 });
 const ca = StyleSheet.create({
   toggle: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
   time: { width: 46, alignItems: 'flex-start' },
-  ampm: { fontSize: 11, color: colors.ink3, fontWeight: '500' },
-  timeText: { fontSize: 15, fontWeight: '600', color: colors.ink },
+  ampm: { fontFamily: FONT, fontSize: 11, color: colors.ink3, fontWeight: '500' },
+  timeText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: colors.ink },
 });

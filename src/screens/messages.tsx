@@ -10,7 +10,7 @@ import { useBP, hoverBg, PState } from '../components/responsive';
 import { Icon } from '../components/Icon';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, type } from '../theme';
+import { colors, radius, type, FONT } from '../theme';
 import { ago, clock, diff, fmtD, ymd } from '../utils/format';
 
 function Thread({ ownerId, tabbed }: { ownerId: string; tabbed?: boolean }) {
@@ -142,7 +142,7 @@ export function Inbox() {
                   <Text style={type.h3} numberOfLines={1}>{o.name}</Text>
                   <T.Small numberOfLines={1}>{o.phone} · {sel.petsOf(db, o.id).filter(x => x.status === 'active').map(x => x.name).join(', ') || 'No pets'}</T.Small>
                 </View>
-                <Pressable onPress={() => nav.navigate('OwnerDetail', { id: o.id })} accessibilityRole="button" style={(st: PState) => [ms.link, st.hovered && { backgroundColor: colors.subtle }]}><Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>Owner record</Text></Pressable>
+                <Pressable onPress={() => nav.navigate('OwnerDetail', { id: o.id })} accessibilityRole="button" style={(st: PState) => [ms.link, st.hovered && { backgroundColor: colors.subtle }]}><Text style={{ fontFamily: FONT, color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>Owner record</Text></Pressable>
               </View>
               <Thread key={o.id} ownerId={o.id} />
             </> : <Empty icon="chat" title="Pick a conversation" />}
@@ -175,21 +175,21 @@ const ms = StyleSheet.create({
   clinicTag: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   online: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.ok },
   bubbleWrap: { gap: 3 },
-  sender: { fontSize: 12, fontWeight: '600', color: colors.ink2, marginLeft: 2 },
+  sender: { fontFamily: FONT, fontSize: 12, fontWeight: '600', color: colors.ink2, marginLeft: 2 },
   dayPill: { alignSelf: 'center', backgroundColor: colors.subtle, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginTop: 14, marginBottom: 2 },
-  dayText: { fontSize: 11.5, fontWeight: '600', color: colors.ink2 },
+  dayText: { fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.ink2 },
   call: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
   bubble: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18 },
   own: { backgroundColor: colors.accentDeep, borderBottomRightRadius: 4 },
   other: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderBottomLeftRadius: 4 },
   time: { fontSize: 11, color: colors.ink3, marginHorizontal: 2 },
   bar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.surface },
-  input: { flex: 1, minHeight: 44, maxHeight: 110, borderRadius: 22, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.subtle, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, fontSize: 15, color: colors.ink },
+  input: { fontFamily: FONT, flex: 1, minHeight: 44, maxHeight: 110, borderRadius: 22, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.subtle, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, fontSize: 15, color: colors.ink },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
   split: { flex: 1, flexDirection: 'row', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 16, overflow: 'hidden', marginBottom: 24 },
   list: { width: 340, borderRightWidth: 1, borderRightColor: colors.line },
   thread: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.line },
   link: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
   count: { minWidth: 20, height: 20, borderRadius: 10, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  countText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  countText: { fontFamily: FONT, color: '#fff', fontSize: 11, fontWeight: '700' },
 });

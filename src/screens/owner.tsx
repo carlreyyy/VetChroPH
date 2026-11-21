@@ -10,7 +10,7 @@ import { AutoGrid, Cell, Cols, DataTable, PState, useBP } from '../components/re
 import { useApp, sel } from '../store/AppStore';
 import { useNav } from '../navigation/nav';
 import { PET_PHOTOS, SCENES } from '../data/photos';
-import { colors, radius, shadow, space, type, Tone } from '../theme';
+import { colors, radius, shadow, space, type, Tone, FONT } from '../theme';
 import type { Clinic, DB, Pet } from '../types';
 import {
   APPT, BILL, ageOf, billBalance, billState, billTotal, byDateTime, D, DOWL, firstName, fmtD, fmtDS, followStatus, greeting, hourLabel, isUpcoming, money, MON, parseD, rel, t12, TODAY,
@@ -447,21 +447,21 @@ export function ClinicInfo() {
 }
 
 const o = StyleSheet.create({
-  hello: { fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
+  hello: { fontFamily: FONT, fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
   action: { flex: 1, minWidth: 0, gap: 18, padding: 18, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
   actionPrimary: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
   actionIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
   qa: { flex: 1, alignItems: 'center', gap: 8 },
   qaIcon: { width: 56, height: 56, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', ...shadow },
   qaBadge: { position: 'absolute', top: -5, right: -7 },
-  qaLabel: { fontSize: 12.5, fontWeight: '500', color: colors.ink },
+  qaLabel: { fontFamily: FONT, fontSize: 12.5, fontWeight: '500', color: colors.ink },
   dateTile: { width: 60, height: 64, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  dateMon: { fontSize: 11, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 0.6 },
-  dateDay: { fontSize: 22, lineHeight: 26, fontWeight: '700', color: colors.accentDeep },
+  dateMon: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 0.6 },
+  dateDay: { fontFamily: FONT, fontSize: 22, lineHeight: 26, fontWeight: '700', color: colors.accentDeep },
   petCard: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   addCard: { alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.lineStrong, backgroundColor: 'transparent' },
   petRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 16 },
   visit: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
-  balance: { fontSize: 32, lineHeight: 38, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
+  balance: { fontFamily: FONT, fontSize: 32, lineHeight: 38, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
   clinicImg: { width: '100%', height: 190, backgroundColor: colors.subtle },
 });

@@ -12,7 +12,7 @@ import { Icon } from '../components/Icon';
 import { PetAvatar, QrArt } from '../components/PetArt';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, shadow, type } from '../theme';
+import { colors, radius, shadow, type, FONT } from '../theme';
 import type { BillItem, PayAccount } from '../types';
 import { BILL, billBalance, billPaid, billState, billTotal, diff, fmtD, fmtDY, money } from '../utils/format';
 
@@ -70,7 +70,7 @@ export function BillDetail() {
       }} />}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {['Reference not found in our account', 'Amount does not match', 'Screenshot is unclear'].map(x => (
-            <Pressable key={x} onPress={() => { setWhy(x); setWhyErr(''); }} style={[bl.chip, why === x && { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep }]}><Text style={{ fontWeight: '600', fontSize: 13, color: why === x ? '#fff' : colors.ink }}>{x}</Text></Pressable>
+            <Pressable key={x} onPress={() => { setWhy(x); setWhyErr(''); }} style={[bl.chip, why === x && { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep }]}><Text style={{ fontFamily: FONT, fontWeight: '600', fontSize: 13, color: why === x ? '#fff' : colors.ink }}>{x}</Text></Pressable>
           ))}
         </View>
         <Field label="Reason the owner will see" multiline value={why} onChangeText={v => { setWhy(v); setWhyErr(''); }} error={whyErr} />
@@ -107,7 +107,7 @@ export function PayBill() {
       <View style={bl.amount}>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={type.small}>Amount due</Text>
-          <Text style={{ fontSize: 30, lineHeight: 36, fontWeight: '700', color: colors.accentDeep, letterSpacing: -0.8 }}>{money(bal)}</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 30, lineHeight: 36, fontWeight: '700', color: colors.accentDeep, letterSpacing: -0.8 }}>{money(bal)}</Text>
           <Text style={type.small}>{sel.pet(db, b.petId)!.name} · visit on {fmtD(b.date)}</Text>
         </View>
         <View style={bl.amountIcon}><Icon name="wallet" size={22} color={colors.accentDeep} /></View>
@@ -125,14 +125,14 @@ export function PayBill() {
       </Section>
       {acc && <View style={bl.payCard}>
         {bank
-          ? <View style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}><View style={bl.bankIcon}><Icon name="bank" size={24} color={colors.accentDeep} /></View><Text style={[type.small, { marginTop: 6 }]}>{acc.provider} account number</Text><Text style={{ fontSize: 22, fontWeight: '700', letterSpacing: 0.6, color: colors.ink }}>{acc.number}</Text></View>
+          ? <View style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}><View style={bl.bankIcon}><Icon name="bank" size={24} color={colors.accentDeep} /></View><Text style={[type.small, { marginTop: 6 }]}>{acc.provider} account number</Text><Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '700', letterSpacing: 0.6, color: colors.ink }}>{acc.number}</Text></View>
           : <><View style={bl.qrBox}><QrArt size={168} seed={acc.qrSeed} /></View><Text style={[type.h3, { fontSize: 14, marginTop: 2 }]}>Scan to pay with {acc.provider}</Text></>}
         <View style={{ height: 1, alignSelf: 'stretch', backgroundColor: colors.line, marginVertical: 4 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: 10 }}>
           <View style={{ flex: 1 }}><Text style={type.h3}>{acc.accountName}</Text><T.Small>{acc.provider} · {acc.number} · Business account</T.Small></View>
         </View>
         <Pressable onPress={() => toast(`Copied ${acc.number}`)} accessibilityRole="button" accessibilityLabel="Copy account number" hitSlop={8} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6 }, pressed && { opacity: 0.6 }]}>
-          <Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 14, textDecorationLine: 'underline' }}>Copy account number</Text><Icon name="copy" size={16} color={colors.accentDeep} />
+          <Text style={{ fontFamily: FONT, color: colors.accentDeep, fontWeight: '600', fontSize: 14, textDecorationLine: 'underline' }}>Copy account number</Text><Icon name="copy" size={16} color={colors.accentDeep} />
         </Pressable>
       </View>}
       <Section title="How to pay">

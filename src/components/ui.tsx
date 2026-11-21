@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radius, shadow, space, toneColors, type, Tone } from '../theme';
+import { colors, radius, shadow, space, toneColors, type, Tone, FONT } from '../theme';
 import { Icon, IconName } from './Icon';
 import { initials } from '../utils/format';
 import { PEOPLE_PHOTOS } from '../data/photos';
@@ -89,7 +89,7 @@ export function PageHeader({ title, back = true, right, sub }: { title?: string;
       {canBack && (
         <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => nav.goBack()}
           style={(st: PState) => [s.backLink, st.hovered && { backgroundColor: colors.hover }]}>
-          <Icon name="chevL" size={16} color={colors.ink2} /><Text style={{ fontSize: 13.5, fontWeight: '500', color: colors.ink2 }}>Back</Text>
+          <Icon name="chevL" size={16} color={colors.ink2} /><Text style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: '500', color: colors.ink2 }}>Back</Text>
         </Pressable>
       )}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 44 }}>
@@ -138,12 +138,12 @@ export function Btn({ label, onPress, kind = 'primary', icon, iconRight, small, 
   );
 }
 const BTN: Record<BtnKind, { bg: string; fg: string; border: string; hover?: string }> = {
-  primary: { bg: colors.accentDeep, fg: '#fff', border: colors.accentDeep, hover: '#1D3560' },
-  soft: { bg: colors.accentSoft, fg: colors.accentDeep, border: colors.accentSoft, hover: '#DCE9F7' },
-  line: { bg: colors.surface, fg: colors.accentDeep, border: colors.lineStrong, hover: colors.hover },
-  ghost: { bg: 'transparent', fg: colors.accentDeep, border: 'transparent', hover: colors.hover },
-  danger: { bg: colors.surface, fg: colors.bad, border: '#EBC2BD', hover: '#FDF6F5' },
-  dangerFill: { bg: colors.bad, fg: '#fff', border: colors.bad, hover: '#A93224' },
+  primary:    { bg: colors.accentDeep, fg: '#fff',        border: colors.accentDeep, hover: '#1A3461' },
+  soft:       { bg: colors.accentSoft, fg: colors.accentDeep, border: colors.accentSoft, hover: '#D9EAFF' },
+  line:       { bg: colors.surface,    fg: colors.accentDeep, border: colors.lineStrong, hover: colors.hover },
+  ghost:      { bg: 'transparent',     fg: colors.accentDeep, border: 'transparent',    hover: colors.hover },
+  danger:     { bg: colors.surface,    fg: colors.bad,    border: '#F5C6C6',            hover: '#FFF5F5' },
+  dangerFill: { bg: colors.bad,        fg: '#fff',        border: colors.bad,            hover: '#B91C1C' },
 };
 
 export function IconBtn({ name, onPress, label, badge, count, size = 22, framed }: { name: IconName; onPress?: () => void; label: string; badge?: boolean; count?: number; size?: number; framed?: boolean }) {
@@ -160,7 +160,7 @@ export function IconBtn({ name, onPress, label, badge, count, size = 22, framed 
 export function LinkBtn({ label, onPress, icon }: { label: string; onPress: () => void; icon?: boolean }) {
   return (
     <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" style={(st: PState) => [{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: 2 }, st.hovered && { opacity: 0.75 }, st.pressed && { opacity: 0.5 }]}>
-      <Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>{label}</Text>
+      <Text style={{ fontFamily: FONT, color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>{label}</Text>
       {icon !== false && <Icon name="chevR" size={15} color={colors.accentDeep} />}
     </Pressable>
   );
@@ -300,7 +300,7 @@ export function QuickActions({ items }: { items: [label: string, icon: IconName,
             <Icon name={i} size={20} color={colors.accentDeep} />
             {!!n && <View style={s.qaBadge}><Text style={s.countText}>{n}</Text></View>}
           </View>
-          <Text style={{ fontSize: 12, lineHeight: 15, minHeight: 30, fontWeight: '500', color: colors.ink, textAlign: 'center' }} numberOfLines={2}>{l}</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 12, lineHeight: 15, minHeight: 30, fontWeight: '500', color: colors.ink, textAlign: 'center' }} numberOfLines={2}>{l}</Text>
         </Pressable>
       ))}
     </View>
@@ -361,7 +361,7 @@ export function Avatar({ name, size = 40, photo }: { name: string; size?: number
   if (src) return <Image source={src} accessibilityIgnoresInvertColors style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.subtle }} />;
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: size * 0.36 }}>{initials(name)}</Text>
+      <Text style={{ fontFamily: FONT, color: colors.accentDeep, fontWeight: '600', fontSize: size * 0.36 }}>{initials(name)}</Text>
     </View>
   );
 }
@@ -528,72 +528,94 @@ export function Picker<K extends string>({ label, options, value, onChange, erro
 
 const HAIR = StyleSheet.hairlineWidth;
 export const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  scroll: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: 40, gap: space.xxl },
-  footerWrap: { paddingHorizontal: space.lg, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: HAIR, borderTopColor: colors.line },
-  footer: { flexDirection: 'row', gap: 10 },
-  inlineFooter: { paddingTop: 24, borderTopWidth: 1, borderTopColor: colors.line },
+  screen:        { flex: 1, backgroundColor: colors.bg },
+  scroll:        { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: 40, gap: space.xxl },
+  footerWrap:    { paddingHorizontal: space.lg, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: HAIR, borderTopColor: colors.line },
+  footer:        { flexDirection: 'row', gap: 10 },
+  inlineFooter:  { paddingTop: 24, borderTopWidth: 1, borderTopColor: colors.line },
   inlineActions: { flexDirection: 'row', gap: 12, width: '100%', maxWidth: 440, alignSelf: 'flex-end' },
-  pageTitle: { fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
-  backLink: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: 4, paddingLeft: 4, paddingRight: 10, marginLeft: -6, borderRadius: 8 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.lg, paddingVertical: 6, minHeight: 52 },
-  headerTitle: { fontSize: 17, fontWeight: '600', color: colors.ink, letterSpacing: -0.2 },
-  bigTitle: { fontSize: 24, lineHeight: 30, fontWeight: '700', color: colors.ink, letterSpacing: -0.5 },
-  sectionTitle: { fontSize: 17, lineHeight: 22, fontWeight: '600', color: colors.ink, letterSpacing: -0.2 },
+
+  // Page headers
+  pageTitle:   { fontFamily: FONT, fontSize: 26, lineHeight: 32, fontWeight: '600', color: colors.ink, letterSpacing: -0.5 },
+  backLink:    { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: 4, paddingLeft: 4, paddingRight: 10, marginLeft: -6, borderRadius: 8 },
+  header:      { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.lg, paddingVertical: 6, minHeight: 52 },
+  headerTitle: { fontFamily: FONT, fontSize: 17, fontWeight: '600', color: colors.ink, letterSpacing: -0.2 },
+  bigTitle:    { fontFamily: FONT, fontSize: 24, lineHeight: 30, fontWeight: '700', color: colors.ink, letterSpacing: -0.5 },
+  sectionTitle: { fontFamily: FONT, fontSize: 15, lineHeight: 20, fontWeight: '600', color: colors.ink },
   back: { width: 36, height: 36, alignItems: 'flex-start', justifyContent: 'center', marginLeft: -4 },
-  btn: { height: 44, borderRadius: radius.md, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, flexShrink: 1 },
-  btnSm: { height: 36, paddingHorizontal: 14, borderRadius: 10 },
-  btnText: { fontSize: 15, fontWeight: '600' },
-  iconBtn: { width: 40, height: 40, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+
+  // Buttons
+  btn:    { height: 42, borderRadius: radius.md, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, flexShrink: 1 },
+  btnSm:  { height: 34, paddingHorizontal: 13, borderRadius: 8 },
+  btnText: { fontFamily: FONT, fontSize: 14, fontWeight: '600' },
+
+  // Icon buttons
+  iconBtn:       { width: 38, height: 38, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   iconBtnFramed: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
-  badge: { position: 'absolute', top: 8, right: 9, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dot, borderWidth: 1.5, borderColor: colors.surface },
-  iconCount: { position: 'absolute', top: 4, right: 3, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.surface },
-  card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: space.lg, ...shadow },
+  badge:         { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dot, borderWidth: 1.5, borderColor: colors.surface },
+  iconCount:     { position: 'absolute', top: 3, right: 2, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.surface },
+
+  // Containers
+  card:     { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: space.lg, ...shadow },
   cardTint: { backgroundColor: colors.subtle, borderColor: colors.subtle, shadowOpacity: 0, elevation: 0 },
-  group: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
-  qa: { flex: 1, alignItems: 'center', gap: 7, paddingVertical: 12, paddingHorizontal: 4, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
-  qaBadge: { position: 'absolute', top: -6, right: -10, minWidth: 17, height: 17, borderRadius: 9, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: space.lg, minHeight: 56 },
-  rowTitle: { fontSize: 15, fontWeight: '500', color: colors.ink },
-  rowSub: { fontSize: 13, color: colors.ink2, marginTop: 2, lineHeight: 18 },
-  unreadDot: { position: 'absolute', left: 6, top: '50%', marginTop: -3, width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accentDeep },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  pillDot: { width: 6, height: 6, borderRadius: 3 },
-  pillText: { fontSize: 12.5, fontWeight: '600' },
-  chipPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 10, height: 26, borderRadius: radius.sm },
-  stat: { paddingVertical: 14, paddingHorizontal: 16, gap: 3, minHeight: 78 },
-  statValue: { fontSize: 24, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
-  empty: { alignItems: 'center', gap: 6, paddingVertical: 36, paddingHorizontal: 20 },
-  emptyIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  kv: { flexDirection: 'row', justifyContent: 'space-between', gap: 16, paddingVertical: 12, borderBottomWidth: HAIR, borderBottomColor: colors.line },
-  kvValue: { fontSize: 14, fontWeight: '500', color: colors.ink, textAlign: 'right', flexShrink: 1 },
-  banner: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: radius.md, padding: 14 },
-  tabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.line },
-  tab: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, borderBottomWidth: 2, borderBottomColor: 'transparent', marginBottom: -1 },
-  tabOn: { borderBottomColor: colors.accentDeep },
-  tabText: { fontSize: 14, fontWeight: '500', color: colors.ink2 },
-  segc: { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: '#EBF0F6', borderRadius: radius.md, padding: 3, gap: 2 },
-  segcItem: { height: 34, paddingHorizontal: 16, borderRadius: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  segcOn: { backgroundColor: colors.surface, ...shadow, shadowOpacity: 0.08 },
-  segcText: { fontSize: 14, fontWeight: '500', color: colors.ink2 },
-  segcN: { fontSize: 12.5, fontWeight: '600', color: colors.ink3 },
-  count: { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
-  countText: { color: '#fff', fontSize: 10.5, fontWeight: '700' },
-  chip: { height: 34, paddingHorizontal: 14, borderRadius: 17, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, justifyContent: 'center' },
-  chipOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  chipText: { fontSize: 13.5, fontWeight: '500', color: colors.ink },
-  seg: { flex: 1, height: 44, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-  segOn: { backgroundColor: colors.accentSoft, borderColor: colors.accentDeep },
-  segText: { fontSize: 14, fontWeight: '500', color: colors.ink },
-  sw: { width: 44, height: 26, borderRadius: 13, backgroundColor: colors.lineStrong, padding: 3 },
-  swKnob: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' },
-  check: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
-  inp: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, paddingHorizontal: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.lineStrong, borderRadius: radius.md },
+  group:    { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
+  qa:       { flex: 1, alignItems: 'center', gap: 7, paddingVertical: 12, paddingHorizontal: 4, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
+  qaBadge:  { position: 'absolute', top: -6, right: -10, minWidth: 17, height: 17, borderRadius: 9, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+
+  // Rows
+  row:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: space.lg, minHeight: 56 },
+  rowTitle:   { fontFamily: FONT, fontSize: 14.5, fontWeight: '500', color: colors.ink },
+  rowSub:     { fontFamily: FONT, fontSize: 13, color: colors.ink2, marginTop: 2, lineHeight: 18 },
+  unreadDot:  { position: 'absolute', left: 6, top: '50%', marginTop: -3, width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accent },
+
+  // Pills / badges
+  pill:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  pillDot:  { width: 6, height: 6, borderRadius: 3 },
+  pillText: { fontFamily: FONT, fontSize: 12.5, fontWeight: '600' },
+  chipPill: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 9, height: 24, borderRadius: 6 },
+
+  // Stats
+  stat:      { paddingVertical: 16, paddingHorizontal: 18, gap: 4, minHeight: 84 },
+  statValue: { fontFamily: FONT, fontSize: 28, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
+
+  // Empty / misc
+  empty:     { alignItems: 'center', gap: 6, paddingVertical: 36, paddingHorizontal: 20 },
+  emptyIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  kv:        { flexDirection: 'row', justifyContent: 'space-between', gap: 16, paddingVertical: 12, borderBottomWidth: HAIR, borderBottomColor: colors.line },
+  kvValue:   { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink, textAlign: 'right', flexShrink: 1 },
+  banner:    { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: radius.md, padding: 14 },
+
+  // Tabs & segmented controls
+  tabs:     { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.line },
+  tab:      { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, borderBottomWidth: 2, borderBottomColor: 'transparent', marginBottom: -1 },
+  tabOn:    { borderBottomColor: colors.accentDeep },
+  tabText:  { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink2 },
+  segc:     { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: colors.subtle, borderRadius: 10, padding: 3, gap: 2 },
+  segcItem: { height: 32, paddingHorizontal: 14, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  segcOn:   { backgroundColor: colors.surface, ...shadow, shadowOpacity: 0.07 },
+  segcText: { fontFamily: FONT, fontSize: 13.5, fontWeight: '500', color: colors.ink2 },
+  segcN:    { fontFamily: FONT, fontSize: 12, fontWeight: '600', color: colors.ink3 },
+  count:    { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+  countText: { fontFamily: FONT, color: '#fff', fontSize: 10.5, fontWeight: '700' },
+  chip:     { height: 32, paddingHorizontal: 13, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, justifyContent: 'center' },
+  chipOn:   { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
+  chipText: { fontFamily: FONT, fontSize: 13, fontWeight: '500', color: colors.ink },
+  seg:      { flex: 1, height: 42, borderRadius: 8, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  segOn:    { backgroundColor: colors.accentSoft, borderColor: colors.accentDeep },
+  segText:  { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink },
+
+  // Toggle & checkbox
+  sw:      { width: 44, height: 26, borderRadius: 13, backgroundColor: colors.lineStrong, padding: 3 },
+  swKnob:  { width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' },
+  check:   { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+
+  // Inputs
+  inp:      { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, paddingHorizontal: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.lineStrong, borderRadius: 8 },
   inpMulti: { alignItems: 'flex-start', paddingVertical: 13 },
-  inpFocus: { borderColor: colors.accentDeep },
-  inpErr: { borderColor: colors.bad },
-  inpText: { flex: 1, fontSize: 15, color: colors.ink, paddingVertical: 0, minWidth: 0, outlineStyle: 'none' } as never,
-  pickRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: space.lg },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
+  inpFocus: { borderColor: colors.accent },
+  inpErr:   { borderColor: colors.bad },
+  inpText:  { fontFamily: FONT, flex: 1, fontSize: 15, color: colors.ink, paddingVertical: 0, minWidth: 0, outlineStyle: 'none' } as never,
+  pickRow:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: space.lg },
+  radio:    { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accentDeep },
 });

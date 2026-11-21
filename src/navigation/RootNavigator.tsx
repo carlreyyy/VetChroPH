@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp, sel } from '../store/AppStore';
-import { colors } from '../theme';
+import { colors, FONT } from '../theme';
 import { Icon, IconName } from '../components/Icon';
 import type { Role } from '../types';
 
@@ -132,6 +132,6 @@ const ts = StyleSheet.create({
   bar: { width: '100%', maxWidth: 560, height: TAB_BAR_H, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },
   item: { flex: 1, height: TAB_BAR_H - 4, alignItems: 'center', justifyContent: 'center', gap: 3 },
   pill: { width: 52, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  label: { color: colors.ink2, fontWeight: '500', fontSize: 11 },
+  label: { fontFamily: FONT, color: colors.ink2, fontWeight: '500', fontSize: 11 },
   dot: { position: 'absolute', top: 3, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dot, borderWidth: 1.5, borderColor: '#fff' },
 });

@@ -13,7 +13,7 @@ import { DashSkeleton, ScheduleTable, useDueList } from './clinic';
 import { Cell, Cols, DataTable, useBP } from '../components/responsive';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, type } from '../theme';
+import { colors, radius, type, FONT } from '../theme';
 import type { DayHours, PayAccount, Role, Service } from '../types';
 import { APPT, D, DOWL, MON, ago, billBalance, billState, billTotal, byDateTime, diff, fmtD, fmtDS, hourLabel, isEmail, isPhone, money, parseD, t12 } from '../utils/format';
 
@@ -32,8 +32,8 @@ export function AdminHome() {
   const money_ = (
     <Card onPress={() => nav.navigate('Main', { screen: 'Reports' } as never)} style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <View><T.Small>Collected today</T.Small><Text style={{ fontSize: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 }}>{money(paidIn(db, d => diff(d) === 0))}</Text></View>
-        <View style={{ alignItems: 'flex-end' }}><T.Small>This month</T.Small><Text style={{ fontSize: 18, fontWeight: '700', color: colors.ink, marginTop: 4 }}>{money(paidIn(db, d => sameMonth(d)))}</Text></View>
+        <View><T.Small>Collected today</T.Small><Text style={{ fontFamily: FONT, fontSize: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 }}>{money(paidIn(db, d => diff(d) === 0))}</Text></View>
+        <View style={{ alignItems: 'flex-end' }}><T.Small>This month</T.Small><Text style={{ fontFamily: FONT, fontSize: 18, fontWeight: '700', color: colors.ink, marginTop: 4 }}>{money(paidIn(db, d => sameMonth(d)))}</Text></View>
       </View>
       <View style={{ height: 1, backgroundColor: colors.line }} />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><T.Small>Unpaid bills</T.Small><Text style={[type.h3, { color: colors.bad }]}>{money(unpaid)}</Text></View>
@@ -110,13 +110,13 @@ export function Reports() {
     <Screen title="Reports" back={false} big tabbed sub="Collections, visits, due vaccines and unpaid bills.">
       <View style={{ maxWidth: 360 }}><Tabs options={[['daily', 'Daily'], ['monthly', 'Monthly']]} value={range} onChange={setRange} /></View>
       <Card style={{ gap: 14 }}>
-        <View><T.Small>{daily ? 'Collected today' : `Collected in ${MON[parseD(D(0)).getMonth()]}`}</T.Small><Text style={{ fontSize: 30, fontWeight: '700', color: colors.ink, letterSpacing: -1 }}>{money(headline)}</Text></View>
+        <View><T.Small>{daily ? 'Collected today' : `Collected in ${MON[parseD(D(0)).getMonth()]}`}</T.Small><Text style={{ fontFamily: FONT, fontSize: 30, fontWeight: '700', color: colors.ink, letterSpacing: -1 }}>{money(headline)}</Text></View>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 132, gap: 8 }}>
           {bars.map((v, i) => (
             <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 6, height: '100%' }}>
-              <Text style={{ fontSize: 10.5, color: colors.ink2, fontWeight: '700' }}>{v ? `${(v / 1000).toFixed(1)}k` : ''}</Text>
+              <Text style={{ fontFamily: FONT, fontSize: 10.5, color: colors.ink2, fontWeight: '700' }}>{v ? `${(v / 1000).toFixed(1)}k` : ''}</Text>
               <View style={{ width: '100%', maxWidth: 30, height: Math.max(4, (v / max) * 92), borderRadius: 7, backgroundColor: i === bars.length - 1 ? colors.accentDeep : '#C5D2E8' }} />
-              <Text style={{ fontSize: 11, color: colors.ink2 }}>{labels[i]}</Text>
+              <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink2 }}>{labels[i]}</Text>
             </View>
           ))}
         </View>

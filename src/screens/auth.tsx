@@ -10,7 +10,7 @@ import { BrandMark, Logo } from '../components/Brand';
 import { useApp, DEMO_CODE, resetDemoData } from '../store/AppStore';
 import { useBP } from '../components/responsive';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, space, type } from '../theme';
+import { colors, space, type, FONT } from '../theme';
 import { isEmail, isPhone } from '../utils/format';
 
 const DEMO: [string, string, string, IconName][] = [
@@ -29,14 +29,14 @@ export function AuthFrame({ children }: { children: React.ReactNode }) {
     <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#fff' }}>
       {bp === 'desktop' && (
         <View style={a.panel}>
-          <Logo size={34} />
+          <Logo size={34} light />
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <View style={a.panelBlob} />
             <Image source={SCENES.welcomePets} resizeMode="contain" style={{ width: '88%', maxWidth: 520, aspectRatio: 560 / 541 }} accessibilityLabel="A cat and a dog" />
           </View>
-          <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 22, fontWeight: '700', color: colors.accentDeep, letterSpacing: -0.3 }}>Care Today. Healthier Tomorrow.</Text>
-            <Text style={{ fontSize: 15, lineHeight: 22, color: colors.ink2, maxWidth: 440 }}>Appointments, medical records, reminders, messages and payments for your clinic and the pets it cares for.</Text>
+          <View style={{ gap: 8 }}>
+            <Text style={{ fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.4 }}>Manage every visit, record and reminder for your clinic and the pets it cares for.</Text>
+            <Text style={{ fontSize: 14, lineHeight: 21, color: 'rgba(255,255,255,0.65)' }}>VetChroPH · Talisay City, Philippines</Text>
           </View>
         </View>
       )}
@@ -56,7 +56,7 @@ export function Welcome() {
     <ScrollView style={{ flex: 1, backgroundColor: '#fff' }} contentContainerStyle={[a.welcome, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 20 }, desktop && { justifyContent: 'center', paddingVertical: 48 }]}>
       {desktop ? <BrandMark size={44} /> : <Logo size={34} />}
       <View style={{ gap: 8 }}>
-        <Text style={a.h1} accessibilityRole="header">Your pets' care,{'\n'}<Text style={{ color: colors.accent }}>in one place</Text></Text>
+        <Text style={a.h1} accessibilityRole="header">Your pets' care,{'\n'}all in one place.</Text>
         <Text style={a.lede}>Book visits, view records and reminders, message {db.clinic.name}, and pay bills.</Text>
       </View>
       {!desktop && <View style={[a.heroWrap, { height: heroH }]}>
@@ -202,20 +202,20 @@ export function ResetPassword() {
 }
 
 const a = StyleSheet.create({
-  welcome: { flexGrow: 1, paddingHorizontal: space.xl, gap: 20, width: '100%', maxWidth: 520, alignSelf: 'center' },
-  h1: { fontSize: 30, lineHeight: 37, fontWeight: '800', color: colors.ink, letterSpacing: -0.6 },
-  lede: { fontSize: 15, lineHeight: 22, color: colors.ink2 },
-  panel: { width: '46%', maxWidth: 760, backgroundColor: colors.accentSoft, padding: 48, gap: 24 },
-  panelBlob: { position: 'absolute', width: '70%', aspectRatio: 1, borderRadius: 999, backgroundColor: '#D6E6F6' },
+  welcome: { flexGrow: 1, paddingHorizontal: space.xl, gap: 22, width: '100%', maxWidth: 520, alignSelf: 'center' },
+  h1: { fontFamily: FONT, fontSize: 30, lineHeight: 37, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
+  lede: { fontFamily: FONT, fontSize: 15, lineHeight: 23, color: colors.ink2 },
+  panel: { width: '46%', maxWidth: 760, backgroundColor: colors.accentDeep, padding: 48, gap: 24 },
+  panelBlob: { position: 'absolute', width: '70%', aspectRatio: 1, borderRadius: 999, backgroundColor: 'rgba(79,130,184,0.15)' },
   reset: { alignItems: 'center', paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line },
   heroWrap: { alignItems: 'center', justifyContent: 'flex-end' },
   blobBig: { position: 'absolute', bottom: 0, backgroundColor: colors.accentSoft },
   blobSmall: { position: 'absolute', top: 6, right: '12%', backgroundColor: colors.subtle },
   demo: { borderWidth: 1, borderColor: colors.line, borderRadius: 16, backgroundColor: '#fff', overflow: 'hidden' },
   demoHead: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16 },
-  demoTitle: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.ink },
+  demoTitle: { fontFamily: FONT, flex: 1, fontSize: 15, fontWeight: '600', color: colors.ink },
   demoRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, borderTopWidth: 1, borderTopColor: colors.line },
   demoIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  demoRole: { fontSize: 15, fontWeight: '600', color: colors.ink },
-  demoName: { fontSize: 13, color: colors.ink2, marginTop: 1 },
+  demoRole: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: colors.ink },
+  demoName: { fontFamily: FONT, fontSize: 13, color: colors.ink2, marginTop: 1 },
 });

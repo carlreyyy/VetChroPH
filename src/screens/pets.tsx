@@ -17,7 +17,7 @@ import { Sheet, useConfirm } from '../components/overlays';
 import { PetArt, PetAvatar, coatsFor } from '../components/PetArt';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, shadow, type } from '../theme';
+import { colors, radius, shadow, type, FONT } from '../theme';
 import type { FollowKind, Pet, Species } from '../types';
 import { D, FOLLOW_ICON, ago, ageOf, cap, diff, fmtD, fmtDS, fmtDY, followStatus, parseD } from '../utils/format';
 
@@ -383,7 +383,7 @@ const pd = StyleSheet.create({
   round: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.94)', borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
   sheet: { marginTop: -26, borderTopLeftRadius: 26, borderTopRightRadius: 26, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 22, gap: 18 },
   nameCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, paddingVertical: 14 },
-  name: { fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: colors.ink },
+  name: { fontFamily: FONT, fontSize: 26, fontWeight: '700', letterSpacing: -0.6, color: colors.ink },
   info: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, ...shadow },
   infoFlat: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: colors.line },
   fact: { width: '50%', paddingVertical: 12, gap: 2 },
@@ -395,7 +395,7 @@ const pd = StyleSheet.create({
   footer: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   visit: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
   dateBox: { width: 46, height: 50, borderRadius: 10, backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center' },
-  dateMon: { fontSize: 11, fontWeight: '600', color: colors.ink2, textTransform: 'uppercase', letterSpacing: 0.4 },
-  dateDay: { fontSize: 18, fontWeight: '700', color: colors.ink, marginTop: -1 },
+  dateMon: { fontFamily: FONT, fontSize: 11, fontWeight: '600', color: colors.ink2, textTransform: 'uppercase', letterSpacing: 0.4 },
+  dateDay: { fontFamily: FONT, fontSize: 18, fontWeight: '700', color: colors.ink, marginTop: -1 },
   drop: { borderWidth: 1, borderStyle: 'dashed', borderColor: colors.lineStrong, borderRadius: 12, padding: 20, alignItems: 'center', gap: 4, backgroundColor: colors.surface },
 });

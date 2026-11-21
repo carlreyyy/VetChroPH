@@ -7,7 +7,7 @@ import { BrandTile } from '../components/Brand';
 import { Icon, IconName } from '../components/Icon';
 import { useApp } from '../store/AppStore';
 import { useNav } from '../navigation/nav';
-import { colors, type, Tone } from '../theme';
+import { colors, type, Tone, FONT } from '../theme';
 import { ago, fmtD, D, firstName, greeting, isEmail, isPhone, parseD } from '../utils/format';
 import { DEFAULT_PREFS } from '../data/seed';
 import { Cols, useBP } from '../components/responsive';
@@ -22,7 +22,7 @@ export function HomeHeader({ sub, action }: { sub?: string; action?: React.React
   if (wide) return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 }} numberOfLines={1} accessibilityRole="header">{greeting()}, {firstName(user!.name)}</Text>
+        <Text style={{ fontFamily: FONT, fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 }} numberOfLines={1} accessibilityRole="header">{greeting()}, {firstName(user!.name)}</Text>
         <Text style={[type.small, { fontSize: 14.5, marginTop: 4 }]}>{sub || fmtD(D(0))}</Text>
       </View>
       {action}
@@ -33,7 +33,7 @@ export function HomeHeader({ sub, action }: { sub?: string; action?: React.React
       <BrandTile size={42} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[type.small, { fontSize: 14 }]} numberOfLines={1}>{greeting()},</Text>
-        <Text style={{ fontSize: 22, lineHeight: 28, fontWeight: '700', color: colors.ink, letterSpacing: -0.4 }} numberOfLines={1}>{firstName(user!.name)}</Text>
+        <Text style={{ fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '700', color: colors.ink, letterSpacing: -0.4 }} numberOfLines={1}>{firstName(user!.name)}</Text>
       </View>
       <IconBtn name="bell" label="Notifications" count={unread} framed onPress={() => nav.navigate('Notifications')} />
       <Pressable onPress={() => nav.navigate('Profile')} accessibilityLabel="Profile and settings" accessibilityRole="button"><Avatar name={user!.name} size={40} /></Pressable>
@@ -140,7 +140,7 @@ export function Profile() {
       <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 16 }, wide && { flexDirection: 'column', alignItems: 'flex-start' }]}>
         <Avatar name={user!.name} size={wide ? 72 : 64} />
         <View style={{ flex: wide ? undefined : 1, minWidth: 0, gap: 2 }}>
-          <Text style={{ fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 }} numberOfLines={1}>{user!.name}</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 }} numberOfLines={1}>{user!.name}</Text>
           <T.Small numberOfLines={1}>{ROLE_LABEL[user!.role]}{ownerRec ? ` · client since ${parseD(ownerRec.since).getFullYear()}` : ''}</T.Small>
         </View>
       </View>
@@ -211,5 +211,5 @@ export function Profile() {
 const pf = StyleSheet.create({
   stats: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 16 },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
-  val: { color: colors.ink, fontSize: 18, fontWeight: '700', letterSpacing: -0.3 },
+  val: { fontFamily: FONT, color: colors.ink, fontSize: 18, fontWeight: '700', letterSpacing: -0.3 },
 });

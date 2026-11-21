@@ -1,53 +1,80 @@
-// Design tokens (design system v3). Brand colors are unchanged; radii, elevation and type are unified so every
-// screen shares one scale: 8 chips · 12 inputs and buttons · 16 cards · 20 feature panels.
+// Design tokens v4 — premium redesign.
+// Dark navy sidebar, Plus Jakarta Sans, vibrant blue accents, saturated semantic colors.
+export const FONT = 'Plus Jakarta Sans';
+
 export const colors = {
-  bg: '#F8FAFC',          // brand background
+  // ── Surfaces ──────────────────────────────────────────────────────────────
+  bg: '#F7F9FC',
   surface: '#FFFFFF',
-  subtle: '#F1F5FA',      // pale tint between background and light blue
-  hover: '#F4F7FB',       // hover wash for rows, links and icon buttons
-  line: '#E6EBF2',
-  lineStrong: '#D3DBE6',
-  ink: '#1F2937',         // brand main text
-  ink2: '#6B7280',        // brand muted text
-  ink3: '#9CA3AF',
-  accent: '#4F82B8',      // brand secondary blue (accents, icons)
-  accentDeep: '#142747',  // brand primary navy (buttons, key actions)
-  accentSoft: '#E6F0FA',  // brand light blue (selected states, highlights)
-  okBg: '#E7F6EC',
-  ok: '#1E7A4C',
-  warnBg: '#FDF4E3',
-  warn: '#A15C07',
-  badBg: '#FCEEEC',
-  bad: '#C0392B',
-  infoBg: '#E6F0FA',
-  info: '#142747',
-  dot: '#E5484D',
-  scrim: 'rgba(20,39,71,0.42)',
+  subtle: '#EEF2F8',
+  hover: '#E8EEF7',
+  line: '#DDE3ED',
+  lineStrong: '#C5CEDF',
+
+  // ── Text ──────────────────────────────────────────────────────────────────
+  ink: '#0F172A',      // richer than #1F2937
+  ink2: '#64748B',     // slate-500
+  ink3: '#94A3B8',     // slate-400
+
+  // ── Brand ─────────────────────────────────────────────────────────────────
+  accent: '#2F7DE1',       // vibrant interactive blue (up from #4F82B8)
+  accentMid: '#4F82B8',    // kept for focus rings and secondary use
+  accentDeep: '#142747',   // navy — primary CTA bg, unchanged
+  accentSoft: '#EBF4FF',   // selected / highlight wash
+
+  // ── Status ────────────────────────────────────────────────────────────────
+  okBg: '#ECFDF5',   ok: '#059669',
+  warnBg: '#FFFBEB', warn: '#D97706',
+  badBg: '#FEF2F2',  bad: '#DC2626',
+  infoBg: '#EFF6FF', info: '#1D4ED8',
+
+  // ── Misc ──────────────────────────────────────────────────────────────────
+  dot: '#EF4444',
+  scrim: 'rgba(10,20,40,0.52)',
+};
+
+// Dark sidebar — staff & admin only (owners keep white top-nav)
+export const sidebar = {
+  bg: '#0D1B2A',
+  border: 'rgba(255,255,255,0.09)',
+  itemHover: 'rgba(255,255,255,0.07)',
+  itemActive: 'rgba(255,255,255,0.12)',
+  text: 'rgba(255,255,255,0.68)',
+  textActive: '#FFFFFF',
+  textMuted: 'rgba(255,255,255,0.32)',
+  icon: 'rgba(255,255,255,0.5)',
+  iconActive: '#FFFFFF',
+  badge: '#2F7DE1',
 };
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 };
-export const radius = { sm: 8, md: 12, lg: 16, xl: 20, pill: 999 };
+export const radius = { sm: 8, md: 10, lg: 12, xl: 16, pill: 999 };
 export const MAX_W = 760;
-/** One soft elevation for cards and floating controls. Paired with a hairline border, never stacked. */
-export const shadow = { shadowColor: '#0F1E36', shadowOpacity: 0.045, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, elevation: 1 };
-/** Stronger elevation for menus and popovers. */
-export const shadowPop = { shadowColor: '#0F1E36', shadowOpacity: 0.14, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 8 };
+
+export const shadow = {
+  shadowColor: '#0A1628', shadowOpacity: 0.07,
+  shadowRadius: 12, shadowOffset: { width: 0, height: 2 }, elevation: 2,
+};
+export const shadowPop = {
+  shadowColor: '#0A1628', shadowOpacity: 0.18,
+  shadowRadius: 28, shadowOffset: { width: 0, height: 10 }, elevation: 10,
+};
 
 export const type = {
-  display: { fontSize: 28, lineHeight: 34, fontWeight: '700' as const, letterSpacing: -0.6, color: colors.ink },
-  h1: { fontSize: 20, lineHeight: 26, fontWeight: '700' as const, letterSpacing: -0.3, color: colors.ink },
-  h2: { fontSize: 16, lineHeight: 22, fontWeight: '600' as const, letterSpacing: -0.1, color: colors.ink },
-  h3: { fontSize: 15, lineHeight: 20, fontWeight: '600' as const, color: colors.ink },
-  body: { fontSize: 15, lineHeight: 22, color: colors.ink },
-  small: { fontSize: 13, lineHeight: 18, color: colors.ink2 },
-  label: { fontSize: 13, lineHeight: 18, fontWeight: '500' as const, color: colors.ink2 },
-  eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '600' as const, letterSpacing: 0.4, color: colors.ink3, textTransform: 'uppercase' as const },
+  display: { fontFamily: FONT, fontSize: 32, lineHeight: 38, fontWeight: '700' as const, letterSpacing: -0.8, color: colors.ink },
+  h1:      { fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '600' as const, letterSpacing: -0.4, color: colors.ink },
+  h2:      { fontFamily: FONT, fontSize: 17, lineHeight: 23, fontWeight: '600' as const, letterSpacing: -0.2, color: colors.ink },
+  h3:      { fontFamily: FONT, fontSize: 15, lineHeight: 21, fontWeight: '600' as const, color: colors.ink },
+  body:    { fontFamily: FONT, fontSize: 15, lineHeight: 23, color: colors.ink },
+  small:   { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: colors.ink2 },
+  label:   { fontFamily: FONT, fontSize: 13, lineHeight: 18, fontWeight: '500' as const, color: colors.ink2 },
+  eyebrow: { fontFamily: FONT, fontSize: 11, lineHeight: 15, fontWeight: '600' as const, letterSpacing: 0.5, color: colors.ink3, textTransform: 'uppercase' as const },
 };
 
 export type Tone = '' | 'ok' | 'warn' | 'bad' | 'info';
 export const toneColors = (t: Tone) =>
-  t === 'ok' ? { bg: colors.okBg, fg: colors.ok }
+  t === 'ok'   ? { bg: colors.okBg,   fg: colors.ok   }
   : t === 'warn' ? { bg: colors.warnBg, fg: colors.warn }
-  : t === 'bad' ? { bg: colors.badBg, fg: colors.bad }
+  : t === 'bad'  ? { bg: colors.badBg,  fg: colors.bad  }
   : t === 'info' ? { bg: colors.infoBg, fg: colors.info }
   : { bg: colors.subtle, fg: colors.ink2 };
