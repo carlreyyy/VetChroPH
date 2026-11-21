@@ -55,7 +55,7 @@ function Stepper({ steps, at }: { steps: string[]; at: number }) {
     <View style={bk.stepper} accessibilityLabel={`Step ${at + 1} of ${steps.length}: ${steps[at]}`}>
       {steps.map((l, i) => (
         <React.Fragment key={l}>
-          {i > 0 && <View style={[bk.stepLine, i <= at && { backgroundColor: colors.accentDeep }]} />}
+          {i > 0 && <View style={[bk.stepLine, i <= at && { backgroundColor: colors.teal }]} />}
           <View style={{ alignItems: 'center', gap: 5, width: 64 }}>
             <View style={[bk.stepDot, i < at && bk.stepDone, i === at && bk.stepNow]}>
               {i < at ? <Icon name="check" size={14} color="#fff" strokeWidth={2.8} /> : <Text style={[bk.stepNum, i === at && { color: '#fff' }]}>{i + 1}</Text>}
@@ -507,12 +507,12 @@ export function ClinicAppts() {
 
 const sp = StyleSheet.create({
   day: { width: 56, height: 68, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  dayOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
+  dayOn: { backgroundColor: colors.teal, borderColor: colors.teal },
   dayDow: { fontFamily: FONT, fontSize: 12, fontWeight: '500', color: colors.ink2 },
   dayNum: { fontFamily: FONT, fontSize: 18, fontWeight: '700', color: colors.ink },
   slots: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   slot: { width: '31.6%', height: 42, borderRadius: 21, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  slotOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
+  slotOn: { backgroundColor: colors.teal, borderColor: colors.teal },
   slotOff: { backgroundColor: colors.subtle, borderColor: colors.subtle },
   slotText: { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink },
 });
@@ -520,9 +520,9 @@ const bk = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 4 },
   stepLine: { flex: 1, height: 2, backgroundColor: '#C8D6E8', marginTop: 13, marginHorizontal: -16, maxWidth: 80 },
   stepDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: '#9FB4CF', backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  stepNow: { borderColor: colors.accentDeep, backgroundColor: colors.accentDeep },
-  stepDone: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  stepNum: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: colors.accentDeep },
+  stepNow: { borderColor: colors.teal, backgroundColor: colors.teal },
+  stepDone: { backgroundColor: colors.teal, borderColor: colors.teal },
+  stepNum: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: colors.teal },
   stepLabel: { fontFamily: FONT, fontSize: 12, color: colors.ink2 },
   ring: { padding: 3, borderRadius: 34, borderWidth: 2, borderColor: 'transparent' },
   title: { fontFamily: FONT, fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 },

@@ -70,7 +70,7 @@ function PetCard({ pet, compact }: { pet: Pet; compact?: boolean }) {
           </View>
         )}
       </View>
-      <View style={{ padding: compact ? 12 : 14, gap: 3 }}>
+      <View style={{ padding: compact ? 12 : 14, gap: 3, backgroundColor: '#FFFCF9' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
           <Text style={[type.h3, { flexShrink: 1 }, !compact && { fontSize: 15.5 }]} numberOfLines={1}>{pet.name}</Text>
           <SexMark sex={pet.sex} size={13} />
@@ -87,7 +87,7 @@ function AddPetCard({ onPress, compact }: { onPress: () => void; compact?: boole
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Add a pet"
       style={(s: PState) => [o.addCard, compact ? { width: 120 } : { flex: 1, minHeight: 240 }, s.hovered && { borderColor: colors.accent, backgroundColor: colors.surface }]}>
       <IconTile name="plus" size={compact ? 40 : 44} />
-      <Text style={[type.h3, { color: colors.accentDeep, fontSize: 14 }]}>Add a pet</Text>
+      <Text style={[type.h3, { color: colors.teal, fontSize: 14 }]}>Add a pet</Text>
       {!compact && <Text style={[type.small, { textAlign: 'center' }]}>Dogs and cats</Text>}
     </Pressable>
   );
@@ -545,7 +545,7 @@ const o = StyleSheet.create({
 
   // Pet cards
   petCard: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
-  addCard: { alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.lineStrong, backgroundColor: 'transparent' },
+  addCard: { alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.teal, backgroundColor: colors.tileTeal },
   petRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 16 },
   visit: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
   balance: { fontFamily: FONT, fontSize: 30, lineHeight: 36, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
