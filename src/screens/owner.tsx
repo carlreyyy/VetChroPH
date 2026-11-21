@@ -539,7 +539,7 @@ const o = StyleSheet.create({
   qaLabel: { fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.ink },
 
   // Date tile
-  dateTile: { width: 54, height: 58, borderRadius: 12, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
+  dateTile: { width: 54, height: 58, borderRadius: 12, backgroundColor: colors.teal, alignItems: 'center', justifyContent: 'center' },
   dateMon: { fontFamily: FONT, fontSize: 9.5, fontWeight: '700', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.8 },
   dateDay: { fontFamily: FONT, fontSize: 22, lineHeight: 26, fontWeight: '700', color: '#fff' },
 

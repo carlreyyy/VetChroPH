@@ -96,7 +96,7 @@ function TopNav({ route, navRef }: { route: string; navRef: Nav }) {
         <View style={n.right}>
           <IconBtn name="bell" label="Notifications" count={badges.notifs} onPress={() => goScreen(navRef, 'Notifications')} />
           <Pressable onPress={() => setMenu(true)} accessibilityRole="button" accessibilityLabel="Account menu" accessibilityState={{ expanded: menu }}
-            style={(st: PState) => [n.me, (menu || st.hovered) && { backgroundColor: colors.hover }, (route === 'Profile' || route === 'NotifSettings') && { backgroundColor: colors.accentSoft }]}>
+            style={(st: PState) => [n.me, (menu || st.hovered) && { backgroundColor: colors.hover }, (route === 'Profile' || route === 'NotifSettings') && { backgroundColor: colors.tileTeal }]}>
             <Avatar name={user!.name} size={32} />
             <Icon name="chevD" size={16} color={colors.ink2} />
           </Pressable>

@@ -161,8 +161,8 @@ export function IconBtn({ name, onPress, label, badge, count, size = 22, framed 
 export function LinkBtn({ label, onPress, icon }: { label: string; onPress: () => void; icon?: boolean }) {
   return (
     <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" style={(st: PState) => [{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: 2 }, st.hovered && { opacity: 0.75 }, st.pressed && { opacity: 0.5 }]}>
-      <Text style={{ fontFamily: FONT, color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>{label}</Text>
-      {icon !== false && <Icon name="chevR" size={15} color={colors.accentDeep} />}
+      <Text style={{ fontFamily: FONT, color: colors.teal, fontWeight: '600', fontSize: 13.5 }}>{label}</Text>
+      {icon !== false && <Icon name="chevR" size={15} color={colors.teal} />}
     </Pressable>
   );
 }
@@ -410,7 +410,7 @@ export function Tabs<K extends string>({ options, value, onChange }: { options: 
         const on = k === value;
         return (
           <Pressable key={k} accessibilityRole="tab" accessibilityLabel={l} accessibilityState={{ selected: on }} onPress={() => onChange(k)} style={(st: PState) => [s.tab, on && s.tabOn, !on && st.hovered && { borderBottomColor: colors.lineStrong }]}>
-            <Text style={[s.tabText, on && { color: colors.accentDeep, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
+            <Text style={[s.tabText, on && { color: colors.teal, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
             {!!n && <View style={s.count}><Text style={s.countText}>{n}</Text></View>}
           </Pressable>
         );
@@ -428,8 +428,8 @@ export function SegControl<K extends string>({ options, value, onChange, style }
         return (
           <Pressable key={k} onPress={() => onChange(k)} accessibilityRole="tab" accessibilityLabel={l} accessibilityState={{ selected: on }}
             style={(st: PState) => [s.segcItem, on ? s.segcOn : st.hovered ? { backgroundColor: 'rgba(255,255,255,0.6)' } : null]}>
-            <Text style={[s.segcText, on && { color: colors.accentDeep, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
-            {n != null && n > 0 && <Text style={[s.segcN, on && { color: colors.accentDeep }]}>{n}</Text>}
+            <Text style={[s.segcText, on && { color: colors.teal, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
+            {n != null && n > 0 && <Text style={[s.segcN, on && { color: colors.teal }]}>{n}</Text>}
           </Pressable>
         );
       })}
@@ -462,7 +462,7 @@ export function Seg<K extends string>({ label, options, value, onChange, error, 
           return (
             <Pressable key={k} onPress={() => onChange(k)} accessibilityRole="radio" accessibilityState={{ selected: on }}
               style={(st: PState) => [s.seg, wrap && { flexBasis: '30%', flexGrow: 1 }, on ? s.segOn : st.hovered ? { borderColor: colors.lineStrong } : null]}>
-              <Text style={[s.segText, on && { color: colors.accentDeep, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
+              <Text style={[s.segText, on && { color: colors.teal, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
             </Pressable>
           );
         })}
@@ -475,7 +475,7 @@ export function Seg<K extends string>({ label, options, value, onChange, error, 
 export function Toggle({ value, onChange, label }: { value: boolean; onChange: () => void; label: string }) {
   return (
     <Pressable accessibilityRole="switch" accessibilityLabel={label} accessibilityState={{ checked: value }} onPress={onChange} hitSlop={8}
-      style={[s.sw, value && { backgroundColor: colors.accentDeep }]}>
+      style={[s.sw, value && { backgroundColor: colors.teal }]}>
       <View style={[s.swKnob, value && { transform: [{ translateX: 18 }] }]} />
     </Pressable>
   );
@@ -485,7 +485,7 @@ export function Check({ value, onChange, label, error }: { value: boolean; onCha
   return (
     <View style={{ gap: 6 }}>
       <Pressable onPress={onChange} accessibilityRole="checkbox" accessibilityState={{ checked: value }} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-        <View style={[s.check, value && { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep }]}>{value && <Icon name="check" size={14} color="#fff" strokeWidth={2.6} />}</View>
+        <View style={[s.check, value && { backgroundColor: colors.teal, borderColor: colors.teal }]}>{value && <Icon name="check" size={14} color="#fff" strokeWidth={2.6} />}</View>
         <Text style={[type.body, { flex: 1, fontSize: 14, lineHeight: 20 }]}>{label}</Text>
       </Pressable>
       {error && <FieldError text={error} />}
@@ -526,12 +526,12 @@ export function Picker<K extends string>({ label, options, value, onChange, erro
           return (
             <View key={k}>
               {i > 0 && <Divider inset={space.lg} />}
-              <Pressable onPress={() => onChange(k)} style={[s.pickRow, on && { backgroundColor: colors.accentSoft }]} accessibilityRole="radio" accessibilityState={{ selected: on }}>
+              <Pressable onPress={() => onChange(k)} style={[s.pickRow, on && { backgroundColor: colors.tileTeal }]} accessibilityRole="radio" accessibilityState={{ selected: on }}>
                 <View style={{ flex: 1 }}>
                   <Text style={s.rowTitle}>{l}</Text>
                   {sub && <Text style={s.rowSub}>{sub}</Text>}
                 </View>
-                <View style={[s.radio, on && { borderColor: colors.accentDeep }]}>{on && <View style={s.radioDot} />}</View>
+                <View style={[s.radio, on && { borderColor: colors.teal }]}>{on && <View style={s.radioDot} />}</View>
               </Pressable>
             </View>
           );
@@ -608,7 +608,7 @@ export const s = StyleSheet.create({
   // Tabs & segmented controls
   tabs:     { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.line },
   tab:      { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, borderBottomWidth: 2, borderBottomColor: 'transparent', marginBottom: -1 },
-  tabOn:    { borderBottomColor: colors.accentDeep },
+  tabOn:    { borderBottomColor: colors.teal },
   tabText:  { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink2 },
   segc:     { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: colors.subtle, borderRadius: 10, padding: 3, gap: 2 },
   segcItem: { height: 32, paddingHorizontal: 14, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
@@ -618,10 +618,10 @@ export const s = StyleSheet.create({
   count:    { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   countText: { fontFamily: FONT, color: '#fff', fontSize: 10.5, fontWeight: '700' },
   chip:     { height: 32, paddingHorizontal: 13, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, justifyContent: 'center' },
-  chipOn:   { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
+  chipOn:   { backgroundColor: colors.teal, borderColor: colors.teal },
   chipText: { fontFamily: FONT, fontSize: 13, fontWeight: '500', color: colors.ink },
   seg:      { flex: 1, height: 42, borderRadius: 8, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-  segOn:    { backgroundColor: colors.accentSoft, borderColor: colors.accentDeep },
+  segOn:    { backgroundColor: colors.tileTeal, borderColor: colors.teal },
   segText:  { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink },
 
   // Toggle & checkbox
@@ -632,10 +632,10 @@ export const s = StyleSheet.create({
   // Inputs
   inp:      { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, paddingHorizontal: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.lineStrong, borderRadius: 8 },
   inpMulti: { alignItems: 'flex-start', paddingVertical: 13 },
-  inpFocus: { borderColor: colors.accent },
+  inpFocus: { borderColor: colors.teal },
   inpErr:   { borderColor: colors.bad },
   inpText:  { fontFamily: FONT, flex: 1, fontSize: 15, color: colors.ink, paddingVertical: 0, minWidth: 0, outlineStyle: 'none' } as never,
   pickRow:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: space.lg },
   radio:    { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accentDeep },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.teal },
 });
