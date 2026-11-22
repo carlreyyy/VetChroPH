@@ -1,83 +1,90 @@
-// Design tokens v4 — premium redesign.
-// Dark navy sidebar, Plus Jakarta Sans, vibrant blue accents, saturated semantic colors.
-export const FONT = 'Plus Jakarta Sans';
+// Design tokens v5: "The Care Line" (2026 redesign).
+// Warm linen paper, navy ink, clinic blue for anything you can act on, and one living accent (calamansi) that only
+// marks "now": today on a care line, the current queue slot, the selected item. Depth comes from tone and hairlines,
+// not shadows. Bricolage Grotesque carries headlines; Geist carries text and numbers.
+export const FONT = 'Geist';
+export const DISPLAY = 'Bricolage Grotesque';
 
 export const colors = {
-  // ── Surfaces ──────────────────────────────────────────────────────────────
-  bg: '#F7F9FC',
-  surface: '#FFFFFF',
-  subtle: '#EEF2F8',
-  hover: '#E8EEF7',
-  line: '#DDE3ED',
-  lineStrong: '#C5CEDF',
+  // Surfaces: paper on linen, separated by hairlines
+  bg: '#F3F2EE',          // linen: the page
+  surface: '#FBFAF7',     // paper: raised areas, inputs
+  subtle: '#ECEAE4',      // pressed / quiet fills
+  hover: '#E7E5DE',
+  line: '#E2DFD7',        // hairline rule
+  lineStrong: '#CBC7BC',  // input borders, stronger rules
 
-  // ── Text ──────────────────────────────────────────────────────────────────
-  ink: '#0F172A',      // richer than #1F2937
-  ink2: '#64748B',     // slate-500
-  ink3: '#94A3B8',     // slate-400
+  // Ink: navy-black text, AA on linen and paper
+  ink: '#13213B',
+  ink2: '#4C576B',
+  ink3: '#6B7383',
 
-  // ── Brand ─────────────────────────────────────────────────────────────────
-  accent: '#2F7DE1',       // vibrant interactive blue (up from #4F82B8)
-  accentMid: '#4F82B8',    // kept for focus rings and secondary use
-  accentDeep: '#142747',   // navy — primary CTA bg, unchanged
-  accentSoft: '#EBF4FF',   // selected / highlight wash
+  // Brand
+  blue: '#4F82B8',         // clinic blue: care line, illustration, large marks
+  accent: '#2D5F96',       // interactive blue: links, focus, selected text (AA on linen)
+  accentMid: '#4F82B8',
+  accentDeep: '#142747',   // brand navy: primary buttons, sidebar ink
+  accentSoft: '#E3EBF4',   // blue wash for selected rows
 
-  // ── Status ────────────────────────────────────────────────────────────────
-  okBg: '#ECFDF5',   ok: '#059669',
-  warnBg: '#FFFBEB', warn: '#D97706',
-  badBg: '#FEF2F2',  bad: '#DC2626',
-  infoBg: '#EFF6FF', info: '#1D4ED8',
+  // "Now": calamansi. Always paired with navy, never carries text on its own.
+  now: '#D4E157',
+  nowSoft: '#F1F5CF',
 
-  // ── Vibrant accent tones (stat tiles, variety) ────────────────────────────
-  warmOrange: '#F97316',  tileOrange: '#FFF4ED',
-  teal: '#0891B2',        tileTeal: '#E9F8FC',
-  violet: '#7C3AED',      tileViolet: '#F3F0FF',
-  emerald: '#059669',     tileEmerald: '#ECFDF5',
-  rose: '#E11D48',        tileRose: '#FFF1F2',
-  sky: '#0284C7',         tileSky: '#E0F2FE',
+  // Status: earthy, readable, distinct from the brand blue
+  okBg: '#E4EFE6',   ok: '#2E6E4E',
+  warnBg: '#F5EAD6', warn: '#8A5A12',
+  badBg: '#F5E1DC',  bad: '#A8392A',
+  infoBg: '#E3EBF4', info: '#2D5F96',
 
-  // ── Misc ──────────────────────────────────────────────────────────────────
-  dot: '#EF4444',
-  scrim: 'rgba(10,20,40,0.52)',
+  // Legacy accent names, folded into the new palette so older screens stay coherent
+  warmOrange: '#8A5A12',  tileOrange: '#F5EAD6',
+  teal: '#2D5F96',        tileTeal: '#E3EBF4',
+  violet: '#2D5F96',      tileViolet: '#E3EBF4',
+  emerald: '#2E6E4E',     tileEmerald: '#E4EFE6',
+  rose: '#A8392A',        tileRose: '#F5E1DC',
+  sky: '#2D5F96',         tileSky: '#E3EBF4',
+
+  dot: '#C2412D',
+  scrim: 'rgba(19,33,59,0.42)',
 };
 
-// Dark sidebar — staff & admin only (owners keep white top-nav)
+// Staff and admin sidebar: a deeper tone of the same paper, not a navy slab.
 export const sidebar = {
-  bg: '#1B3A6B',
-  border: 'rgba(255,255,255,0.11)',
-  itemHover: 'rgba(255,255,255,0.07)',
-  itemActive: 'rgba(47,125,225,0.22)',   // blue tint (GeneX-style), not white
-  itemActiveBorder: '#2F7DE1',           // left accent bar on active item
-  text: 'rgba(255,255,255,0.68)',
-  textActive: '#FFFFFF',
-  textMuted: 'rgba(255,255,255,0.32)',
-  icon: 'rgba(255,255,255,0.5)',
-  iconActive: '#7EC8F5',                 // bright light-blue for active icon
-  badge: '#2F7DE1',
+  bg: '#E9E7E0',
+  border: '#DCD9D0',
+  itemHover: 'rgba(19,33,59,0.05)',
+  itemActive: '#FBFAF7',
+  itemActiveBorder: '#D4E157',
+  text: '#4C576B',
+  textActive: '#13213B',
+  textMuted: '#6B7383',
+  icon: '#6B7383',
+  iconActive: '#142747',
+  badge: '#142747',
 };
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 };
-export const radius = { sm: 8, md: 10, lg: 12, xl: 16, pill: 999 };
+// Tighter radii: content is ruled, not boxed. Photos get the generous corners.
+export const radius = { sm: 6, md: 8, lg: 10, xl: 14, pill: 999 };
 export const MAX_W = 760;
 
-export const shadow = {
-  shadowColor: '#0A1628', shadowOpacity: 0.07,
-  shadowRadius: 12, shadowOffset: { width: 0, height: 2 }, elevation: 2,
-};
-export const shadowPop = {
-  shadowColor: '#0A1628', shadowOpacity: 0.18,
-  shadowRadius: 28, shadowOffset: { width: 0, height: 10 }, elevation: 10,
-};
+// No resting shadows. Kept as objects so existing spreads keep compiling.
+export const shadow = { shadowColor: '#13213B', shadowOpacity: 0, shadowRadius: 0, shadowOffset: { width: 0, height: 0 }, elevation: 0 };
+// Floating layers only (menus, sheets): one soft, low shadow.
+export const shadowPop = { shadowColor: '#13213B', shadowOpacity: 0.12, shadowRadius: 24, shadowOffset: { width: 0, height: 8 }, elevation: 8 };
 
+// Type scale (major third from 15): 12 · 13 · 15 · 17 · 20 · 26 · 34 · 44 · 60
 export const type = {
-  display: { fontFamily: FONT, fontSize: 32, lineHeight: 38, fontWeight: '700' as const, letterSpacing: -0.8, color: colors.ink },
-  h1:      { fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '600' as const, letterSpacing: -0.4, color: colors.ink },
+  hero:    { fontFamily: DISPLAY, fontSize: 60, lineHeight: 62, fontWeight: '600' as const, letterSpacing: -2.2, color: colors.ink },
+  display: { fontFamily: DISPLAY, fontSize: 34, lineHeight: 38, fontWeight: '600' as const, letterSpacing: -1, color: colors.ink },
+  h1:      { fontFamily: DISPLAY, fontSize: 26, lineHeight: 30, fontWeight: '600' as const, letterSpacing: -0.6, color: colors.ink },
   h2:      { fontFamily: FONT, fontSize: 17, lineHeight: 23, fontWeight: '600' as const, letterSpacing: -0.2, color: colors.ink },
   h3:      { fontFamily: FONT, fontSize: 15, lineHeight: 21, fontWeight: '600' as const, color: colors.ink },
   body:    { fontFamily: FONT, fontSize: 15, lineHeight: 23, color: colors.ink },
   small:   { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: colors.ink2 },
-  label:   { fontFamily: FONT, fontSize: 13, lineHeight: 18, fontWeight: '500' as const, color: colors.ink2 },
-  eyebrow: { fontFamily: FONT, fontSize: 11, lineHeight: 15, fontWeight: '600' as const, letterSpacing: 0.5, color: colors.ink3, textTransform: 'uppercase' as const },
+  label:   { fontFamily: FONT, fontSize: 13.5, lineHeight: 18, fontWeight: '500' as const, color: colors.ink },
+  eyebrow: { fontFamily: FONT, fontSize: 13, lineHeight: 18, fontWeight: '500' as const, color: colors.ink3 },
+  num:     { fontFamily: FONT, fontVariant: ['tabular-nums'] as ('tabular-nums')[] },
 };
 
 export type Tone = '' | 'ok' | 'warn' | 'bad' | 'info';

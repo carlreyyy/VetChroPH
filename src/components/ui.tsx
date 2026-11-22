@@ -1,6 +1,6 @@
-// Shared building blocks (design system v3). Every screen is composed from these so all roles look the same.
-// Principles: white cards with a hairline border and one soft shadow, one navy for actions, status as dot + text,
-// one radius scale (8 / 12 / 16 / 20), sentence-case labels.
+// Shared building blocks (design system v5, "The Care Line"). Every screen is composed from these.
+// Principles: paper on linen separated by hairlines (no resting shadows), navy for the main action, clinic blue for
+// links and selection, status as dot + text, sentence-case labels, 44 px touch targets.
 import React from 'react';
 import {
   ActivityIndicator, Animated, Image, ImageSourcePropType, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleProp, StyleSheet, Text,
@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radius, shadow, space, toneColors, type, Tone, FONT } from '../theme';
+import { colors, radius, shadow, space, toneColors, type, Tone, FONT, DISPLAY } from '../theme';
 import { Icon, IconName } from './Icon';
 import { initials } from '../utils/format';
 import { PEOPLE_PHOTOS } from '../data/photos';
@@ -139,12 +139,12 @@ export function Btn({ label, onPress, kind = 'primary', icon, iconRight, small, 
   );
 }
 const BTN: Record<BtnKind, { bg: string; fg: string; border: string; hover?: string }> = {
-  primary:    { bg: colors.accentDeep, fg: '#fff',        border: colors.accentDeep, hover: '#1A3461' },
-  soft:       { bg: colors.accentSoft, fg: colors.accentDeep, border: colors.accentSoft, hover: '#D9EAFF' },
+  primary:    { bg: colors.accentDeep, fg: '#fff',        border: colors.accentDeep, hover: '#203A66' },
+  soft:       { bg: colors.accentSoft, fg: colors.accentDeep, border: colors.accentSoft, hover: '#D5E1EE' },
   line:       { bg: colors.surface,    fg: colors.accentDeep, border: colors.lineStrong, hover: colors.hover },
   ghost:      { bg: 'transparent',     fg: colors.accentDeep, border: 'transparent',    hover: colors.hover },
-  danger:     { bg: colors.surface,    fg: colors.bad,    border: '#F5C6C6',            hover: '#FFF5F5' },
-  dangerFill: { bg: colors.bad,        fg: '#fff',        border: colors.bad,            hover: '#B91C1C' },
+  danger:     { bg: colors.surface,    fg: colors.bad,    border: '#E3BDB4',            hover: colors.badBg },
+  dangerFill: { bg: colors.bad,        fg: '#fff',        border: colors.bad,            hover: '#8F2F22' },
 };
 
 export function IconBtn({ name, onPress, label, badge, count, size = 22, framed }: { name: IconName; onPress?: () => void; label: string; badge?: boolean; count?: number; size?: number; framed?: boolean }) {
@@ -239,12 +239,7 @@ export function Section({ title, action, onAction, children, sub }: { title: str
 /** Status display. `chip` = subtle tinted bg. `badge` = solid filled (GeneX-style). Default = dot + text. */
 export function Pill({ text, tone = '', chip, badge }: { text: string; tone?: Tone; chip?: boolean; badge?: boolean }) {
   const tc = toneColors(tone);
-  if (badge) return (
-    <View style={[s.chipPill, { backgroundColor: tone ? tc.fg : colors.accentDeep, paddingHorizontal: 10 }]}>
-      <Text style={[s.pillText, { color: '#fff', fontSize: 12 }]} numberOfLines={1}>{text}</Text>
-    </View>
-  );
-  if (chip) return (
+  if (chip || badge) return (
     <View style={[s.chipPill, { backgroundColor: tone ? tc.bg : colors.subtle }]}>
       <View style={[s.pillDot, { backgroundColor: tone ? tc.fg : colors.ink3 }]} />
       <Text style={[s.pillText, { color: tone ? tc.fg : colors.ink2, fontSize: 12.5 }]} numberOfLines={1}>{text}</Text>
@@ -511,6 +506,39 @@ export function Field({ label, error, hint, icon, secure, style, ...p }: TextInp
     </View>
   );
 }
+/**
+ * Six-box verification code. One real (invisible) input sits on top of the boxes, so typing, pasting and SMS
+ * autofill all work; the boxes only draw what was typed and where the next digit goes.
+ */
+export function CodeInput({ value, onChange, error, autoFocus, length = 6 }: { value: string; onChange: (v: string) => void; error?: string; autoFocus?: boolean; length?: number }) {
+  const [focus, setFocus] = React.useState(!!autoFocus);
+  const digits = value.split('');
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ position: 'relative' }}>
+        <View style={{ flexDirection: 'row', gap: 8 }} pointerEvents="none">
+          {Array.from({ length }).map((_, i) => {
+            const active = focus && i === Math.min(value.length, length - 1);
+            return (
+              <View key={i} style={[s.codeBox, !!digits[i] && { borderColor: colors.ink2 }, active && s.codeBoxOn, !!error && { borderColor: colors.bad }]}>
+                <Text style={s.codeDigit}>{digits[i] || ''}</Text>
+                {active && !digits[i] && <View style={s.codeCaret} />}
+              </View>
+            );
+          })}
+        </View>
+        <TextInput value={value} autoFocus={autoFocus} maxLength={length} keyboardType="number-pad" inputMode="numeric"
+          autoComplete="one-time-code" textContentType="oneTimeCode" accessibilityLabel={`${length}-digit code`}
+          onChangeText={v => onChange(v.replace(/\D/g, '').slice(0, length))}
+          onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+          caretHidden selectionColor="transparent"
+          style={[StyleSheet.absoluteFill, { opacity: 0, color: 'transparent', fontSize: 1 }, { outlineStyle: 'none' } as never]} />
+      </View>
+      {error && <FieldError text={error} />}
+    </View>
+  );
+}
+
 export const FieldError = ({ text }: { text: string }) => (
   <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}><Icon name="alert" size={13} color={colors.bad} /><Text style={[type.small, { fontSize: 12.5, color: colors.bad, flex: 1 }]}>{text}</Text></View>
 );
@@ -552,27 +580,27 @@ export const s = StyleSheet.create({
   inlineActions: { flexDirection: 'row', gap: 12, width: '100%', maxWidth: 440, alignSelf: 'flex-end' },
 
   // Page headers
-  pageTitle:   { fontFamily: FONT, fontSize: 26, lineHeight: 32, fontWeight: '600', color: colors.ink, letterSpacing: -0.5 },
+  pageTitle:   { fontFamily: DISPLAY, fontSize: 34, lineHeight: 38, fontWeight: '600', color: colors.ink, letterSpacing: -1 },
   backLink:    { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: 4, paddingLeft: 4, paddingRight: 10, marginLeft: -6, borderRadius: 8 },
   header:      { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.lg, paddingVertical: 6, minHeight: 52 },
   headerTitle: { fontFamily: FONT, fontSize: 17, fontWeight: '600', color: colors.ink, letterSpacing: -0.2 },
-  bigTitle:    { fontFamily: FONT, fontSize: 24, lineHeight: 30, fontWeight: '700', color: colors.ink, letterSpacing: -0.5 },
-  sectionTitle: { fontFamily: FONT, fontSize: 15, lineHeight: 20, fontWeight: '600', color: colors.ink },
+  bigTitle:    { fontFamily: DISPLAY, fontSize: 28, lineHeight: 32, fontWeight: '600', color: colors.ink, letterSpacing: -0.8 },
+  sectionTitle: { fontFamily: DISPLAY, fontSize: 19, lineHeight: 24, fontWeight: '600', color: colors.ink, letterSpacing: -0.3 },
   back: { width: 36, height: 36, alignItems: 'flex-start', justifyContent: 'center', marginLeft: -4 },
 
   // Buttons
-  btn:    { height: 42, borderRadius: radius.md, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, flexShrink: 1 },
-  btnSm:  { height: 34, paddingHorizontal: 13, borderRadius: 8 },
+  btn:    { height: 46, borderRadius: radius.md, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, flexShrink: 1 },
+  btnSm:  { height: 40, paddingHorizontal: 14, borderRadius: 8 },
   btnText: { fontFamily: FONT, fontSize: 14, fontWeight: '600' },
 
   // Icon buttons
-  iconBtn:       { width: 38, height: 38, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  iconBtn:       { width: 44, height: 44, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   iconBtnFramed: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
   badge:         { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dot, borderWidth: 1.5, borderColor: colors.surface },
   iconCount:     { position: 'absolute', top: 3, right: 2, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.surface },
 
   // Containers
-  card:     { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: space.lg, ...shadow },
+  card:     { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: space.lg },
   cardTint: { backgroundColor: colors.subtle, borderColor: colors.subtle, shadowOpacity: 0, elevation: 0 },
   group:    { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   qa:       { flex: 1, alignItems: 'center', gap: 7, paddingVertical: 12, paddingHorizontal: 4, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
@@ -630,11 +658,15 @@ export const s = StyleSheet.create({
   check:   { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
 
   // Inputs
-  inp:      { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, paddingHorizontal: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.lineStrong, borderRadius: 8 },
+  inp:      { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 50, paddingHorizontal: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.lineStrong, borderRadius: 8 },
   inpMulti: { alignItems: 'flex-start', paddingVertical: 13 },
-  inpFocus: { borderColor: colors.teal },
+  inpFocus: { borderColor: colors.accent, boxShadow: `0 0 0 3px ${colors.accentSoft}` } as never,
   inpErr:   { borderColor: colors.bad },
   inpText:  { fontFamily: FONT, flex: 1, fontSize: 15, color: colors.ink, paddingVertical: 0, minWidth: 0, outlineStyle: 'none' } as never,
+  codeBox:  { flex: 1, maxWidth: 58, height: 60, borderRadius: 8, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  codeBoxOn:{ borderColor: colors.accent, borderWidth: 2 },
+  codeDigit:{ fontFamily: DISPLAY, fontSize: 26, fontWeight: '600', color: colors.ink, fontVariant: ['tabular-nums'] },
+  codeCaret:{ position: 'absolute', width: 2, height: 26, borderRadius: 1, backgroundColor: colors.accentDeep },
   pickRow:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: space.lg },
   radio:    { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.teal },

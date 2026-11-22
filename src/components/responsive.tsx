@@ -114,9 +114,9 @@ export const Cell = ({ title, sub, left }: { title: string; sub?: string; left?:
 );
 
 const t = StyleSheet.create({
-  wrap: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, height: 44, backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.line },
-  th: { fontFamily: FONT, fontSize: 12, fontWeight: '600', color: colors.ink2, letterSpacing: 0.3, textTransform: 'uppercase' },
+  wrap: { backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, height: 40, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line },
+  th: { fontFamily: FONT, fontSize: 12.5, fontWeight: '500', color: colors.ink3 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, minHeight: 64, paddingVertical: 10 },
   rowLine: { borderTopWidth: 1, borderTopColor: colors.line },
   td: { fontFamily: FONT, fontSize: 14, color: colors.ink },

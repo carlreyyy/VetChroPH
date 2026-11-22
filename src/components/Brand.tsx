@@ -1,7 +1,7 @@
 // VetChroPH brand assets. The mark is extracted from the brand sheet (assets/brand); the wordmark is set in type
 // so it stays sharp at every size. Use BrandMark where space is tight and Logo where the brand is introduced.
 import { Image, Text, View } from 'react-native';
-import { colors, FONT } from '../theme';
+import { colors, DISPLAY } from '../theme';
 
 const MARK = require('../../assets/brand/mark.png');
 const MARK_WHITE = require('../../assets/brand/mark_white.png');
@@ -22,8 +22,8 @@ export function BrandTile({ size = 40 }: { size?: number }) {
 
 export function Wordmark({ size = 20, light }: { size?: number; light?: boolean }) {
   return (
-    <Text style={{ fontFamily: FONT, fontSize: size, fontWeight: '700', letterSpacing: -0.3, color: light ? '#FFFFFF' : colors.accentDeep }}>
-      VetChro<Text style={{ color: light ? 'rgba(255,255,255,0.55)' : colors.accent }}>PH</Text>
+    <Text style={{ fontFamily: DISPLAY, fontSize: size, fontWeight: '600', letterSpacing: -size * 0.03, color: light ? '#FFFFFF' : colors.accentDeep }}>
+      VetChro<Text style={{ color: light ? 'rgba(255,255,255,0.6)' : colors.blue }}>PH</Text>
     </Text>
   );
 }

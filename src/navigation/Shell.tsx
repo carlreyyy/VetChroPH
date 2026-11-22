@@ -108,10 +108,10 @@ function Sidebar({ route, navRef, compact }: { route: string; navRef: Navigation
       {/* Brand */}
       <View style={[sb.brand, compact && { justifyContent: 'center', paddingHorizontal: 0 }]}>
         {compact
-          ? <BrandMark size={30} white />
+          ? <BrandMark size={30} />
           : <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <BrandMark size={28} white />
-              <Wordmark size={17} light />
+              <BrandMark size={28} />
+              <Wordmark size={19} />
             </View>
         }
       </View>

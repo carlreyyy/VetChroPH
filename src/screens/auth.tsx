@@ -1,311 +1,307 @@
 // Welcome, log-in, sign-up, verify and reset screens.
+// Welcome is the product's landing moment: a big editorial headline, the clinic's pets in a blue "studio" arch, and a
+// real care line from the demo data as proof of what the app does. Log in uses one smart field that accepts an
+// email or a PH mobile number and adapts as you type.
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Banner, Btn, Card, Check, Field, LinkBtn, Screen, T, Tabs } from '../components/ui';
+import { useNavigation } from '@react-navigation/native';
+import { Banner, Btn, Check, CodeInput, Field, LinkBtn, Screen, T } from '../components/ui';
 import { SCENES } from '../data/photos';
 import { Icon, IconName } from '../components/Icon';
-import { BrandMark, Logo, Wordmark } from '../components/Brand';
+import { Logo } from '../components/Brand';
+import { CareLine, careNodes, petHealth, RingGlyph } from '../components/care';
 import { useApp, DEMO_CODE, resetDemoData } from '../store/AppStore';
-import { useBP } from '../components/responsive';
+import { PState, useBP } from '../components/responsive';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, shadow, space, type, FONT } from '../theme';
-import { isEmail, isPhone } from '../utils/format';
+import { colors, type, FONT, DISPLAY } from '../theme';
+import { ageOf, hourLabel, isEmail, isPhone, TODAY } from '../utils/format';
 
 export { Logo };
 
-const DEMO: [string, string, string, IconName][] = [
-  ['u1', 'Pet Owner',      'Maria Santos',      'paw'],
-  ['u2', 'Clinic Staff',   'Lea Ramirez',       'steth'],
-  ['u3', 'Administrator',  'Dr. Elena Ybañez',  'shield'],
+const DEMO: [string, string, string, string, IconName][] = [
+  ['u1', 'Pet Owner',     'Maria Santos',     'maria.santos@example.com',   'paw'],
+  ['u2', 'Clinic Staff',  'Lea Ramirez',      'lea@sugbopetcare.example',   'steth'],
+  ['u3', 'Administrator', 'Dr. Elena Ybañez', 'elena@sugbopetcare.example', 'shield'],
 ];
+const ARCH_BG = '#D3DFEC';
 
-/* ─── Left brand panel: cinematic pet photo + dark navy overlay ─── */
-function AuthLeftPanel() {
+/* ─── Studio arch: the clinic's pets in a blue arch ─── */
+function PetArch({ width, height }: { width: number; height: number }) {
   return (
-    <View style={a.panel}>
-      {/* Photo at reduced opacity — panel's dark #091729 bg shows through uniformly, no overlay seams */}
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.45 }}>
-        <Image
-          source={SCENES.welcomePets}
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
-          accessibilityIgnoresInvertColors
-        />
-      </View>
-
-      {/* Content layer: use absolute positioning so text always gets panel_width − 2×padding */}
-      <View style={{ position: 'absolute', top: 48, left: 48, right: 48, bottom: 48, zIndex: 1, justifyContent: 'space-between' }}>
-        {/* Brand top-left */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <BrandMark size={28} white />
-          <Wordmark size={17} light />
-        </View>
-
-        {/* Headline + trust bottom */}
-        <View style={{ gap: 22 }}>
-          <View style={{ gap: 12, flexShrink: 0 }}>
-            <Text style={a.panelH1}>
-              {'Every visit.\nA '}
-              <Text style={{ color: colors.teal }}>{'healthier'}</Text>
-              {'\ntomorrow.'}
-            </Text>
-            <Text style={a.panelSub}>
-              Quality veterinary care for your beloved pets, all in one place.
-            </Text>
-          </View>
-
-          {/* Trust badges */}
-          <View style={{ flexDirection: 'row', gap: 20, flexWrap: 'wrap' }}>
-            {(['Trusted Care', 'Pet Wellness', 'Modern Clinic'] as const).map(label => (
-              <View key={label} style={a.trust}>
-                <View style={a.trustDot} />
-                <Text style={a.trustText}>{label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
+    <View style={{ width, height, borderTopLeftRadius: width / 2, borderTopRightRadius: width / 2, borderBottomLeftRadius: 14, borderBottomRightRadius: 14, backgroundColor: ARCH_BG, overflow: 'hidden', justifyContent: 'flex-end' }}>
+      {/* a quiet horizon line, like a studio backdrop meeting the floor */}
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: height * 0.18, backgroundColor: '#C5D4E5' }} />
+      <Image source={SCENES.welcomePets} resizeMode="contain" accessibilityLabel="A tabby cat and an Australian shepherd, patients of the clinic"
+        style={{ width: width * 1.02, height: Math.min(height * 0.92, width * 1.02 * 541 / 560), alignSelf: 'center' }} />
     </View>
   );
 }
 
-/* ─── AuthFrame wraps Login / SignUp / VerifyCode / ResetPassword ─── */
-export function AuthFrame({ children }: { children: React.ReactNode }) {
-  const { bp } = useBP();
-  if (bp === 'mobile') return <>{children}</>;
+/* ─── A real care line from the demo data, shown as a paper chart slip ─── */
+function ChartSlip({ width }: { width?: number }) {
+  const { db } = useApp();
+  const pet = db.pets.find(p => p.status === 'active');
+  if (!pet) return null;
+  const h = petHealth(db, pet);
   return (
-    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#fff' }}>
-      {bp === 'desktop' && <AuthLeftPanel />}
-      <View style={{ flex: 1, backgroundColor: '#fff' }}>
-        <View style={{ flex: 1, width: '100%', maxWidth: 480, alignSelf: 'center' }}>
-          {children}
-        </View>
+    <View style={[w.slip, width ? { width } : null]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <RingGlyph health={h.key} size={14} />
+        <Text style={w.slipName} numberOfLines={1}>{pet.name}</Text>
+        <Text style={w.slipMeta} numberOfLines={1}>{pet.breed}, {ageOf(pet.birth)}</Text>
       </View>
+      <CareLine nodes={careNodes(db, pet.id, { past: 2, future: 1 })} />
+    </View>
+  );
+}
+
+/* ─── Demo accounts: one tap signs in; credentials for typing are listed underneath ─── */
+function DemoAccounts({ start = false }: { start?: boolean }) {
+  const { act } = useApp();
+  const [open, setOpen] = useState(start);
+  return (
+    <View style={w.demo}>
+      <Pressable onPress={() => setOpen(!open)} accessibilityRole="button" accessibilityState={{ expanded: open }}
+        style={(st: PState) => [w.demoToggle, st.hovered && { backgroundColor: colors.hover }]}>
+        <Icon name="users" size={18} color={colors.accent} />
+        <Text style={w.demoTitle}>Explore demo accounts</Text>
+        <Icon name={open ? 'chevU' : 'chevD'} size={18} color={colors.ink2} />
+      </Pressable>
+      {open && (
+        <View>
+          {DEMO.map(([id, role, name, email, icon]) => (
+            <Pressable key={id} onPress={() => act.demoLogin(id)} accessibilityRole="button" accessibilityLabel={`Sign in as ${role}`}
+              style={(st: PState) => [w.demoRow, (st.hovered || st.pressed) && { backgroundColor: colors.hover }]}>
+              <Icon name={icon} size={18} color={colors.ink2} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={w.demoRole} numberOfLines={1}>{role}<Text style={w.demoName}>{`   ${name}`}</Text></Text>
+                <Text style={w.demoEmail} numberOfLines={1}>{email}</Text>
+              </View>
+              <Text style={w.demoGo}>Sign in</Text>
+            </Pressable>
+          ))}
+          <View style={w.demoFoot}>
+            <Text style={[type.small, { flex: 1, minWidth: 200 }]}>
+              Password for every account: <Text style={w.mono}>demo1234</Text>. Mobile login: <Text style={w.mono}>0917 555 0142</Text>, code <Text style={w.mono}>{DEMO_CODE}</Text>.
+            </Text>
+            <Pressable onPress={resetDemoData} accessibilityRole="button" hitSlop={8} style={(st: PState) => [w.reset, st.hovered && { backgroundColor: colors.hover }]}>
+              <Icon name="repeat" size={14} color={colors.ink2} />
+              <Text style={[type.small, { color: colors.ink2, fontWeight: '500' }]}>Reset demo data</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function ClinicFacts({ row }: { row?: boolean }) {
+  const { db } = useApp();
+  const day = db.settings.days[TODAY.getDay()];
+  const facts: [IconName, string][] = [
+    ['clock', day?.open ? `Open today, ${hourLabel(day.from)} to ${hourLabel(day.to)}` : 'Closed today'],
+    ['pin', db.clinic.address],
+    ['shield', 'Records kept private under RA 10173'],
+  ];
+  return (
+    <View style={[{ gap: 10 }, row && { flexDirection: 'row', gap: 32, flexWrap: 'wrap' }]}>
+      {facts.map(([i, t]) => (
+        <View key={t} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+          <Icon name={i} size={15} color={colors.ink3} />
+          <Text style={[type.small, { flexShrink: 1 }]} numberOfLines={row ? 1 : 2}>{t}</Text>
+        </View>
+      ))}
     </View>
   );
 }
 
 /* ─── Welcome ─── */
 export function Welcome() {
-  const { desktop, bp } = useBP();
-  const nav = useNav(); const { db, act } = useApp();
+  const { bp, width } = useBP(); const { height } = useWindowDimensions();
+  const nav = useNav(); const { db } = useApp();
   const insets = useSafeAreaInsets();
-  const [demo, setDemo] = useState(false);
+  const lede = `Vaccines, check-ups, bills and messages with ${db.clinic.name}, kept on one line so you always know what's next for your pet.`;
+  const ctas = (
+    <View style={[{ gap: 12 }, bp !== 'mobile' && { flexDirection: 'row' }]}>
+      <Btn label="Log in" icon="login" onPress={() => nav.navigate('Login')} style={bp !== 'mobile' ? { paddingHorizontal: 28, height: 52 } : { height: 52 }} />
+      <Btn label="Create an account" kind="line" onPress={() => nav.navigate('SignUp')} style={bp !== 'mobile' ? { paddingHorizontal: 28, height: 52 } : { height: 52 }} />
+    </View>
+  );
 
-  /* Desktop: cinematic 2-panel */
-  if (desktop) {
+  if (bp === 'desktop') {
+    const archH = Math.max(440, Math.min(height - 230, 660));
+    const archW = archH * 0.8;
     return (
-      <View style={{ flex: 1, flexDirection: 'row' }}>
-        <AuthLeftPanel />
-
-        {/* Right: clean sign-in panel */}
-        <View style={{ flex: 1, backgroundColor: '#fff' }}>
-          <ScrollView
-            contentContainerStyle={a.rightScroll}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled">
-
-            {/* Brand tile */}
-            <View style={a.rightMark}>
-              <BrandMark size={28} />
+      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ flexGrow: 1 }}>
+        <View style={[w.page, { minHeight: height }]}>
+          <View style={w.top}>
+            <Logo size={30} />
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <Btn label="Log in" kind="ghost" onPress={() => nav.navigate('Login')} />
+              <Btn label="Create an account" kind="line" onPress={() => nav.navigate('SignUp')} />
             </View>
-
-            {/* Headline */}
-            <View style={{ gap: 8 }}>
-              <Text style={a.rightH1} accessibilityRole="header">
-                Your pets' care,{'\n'}all in one place.
-              </Text>
-              <Text style={a.rightSub}>
-                Book visits, view health records, and message {db.clinic.name}.
-              </Text>
-            </View>
-
-            {/* CTA buttons */}
-            <View style={{ gap: 10, width: '100%' }}>
-              <Pressable onPress={() => nav.navigate('Login')} accessibilityRole="button" accessibilityLabel="Log in"
-                style={({ pressed }) => [a.ctaPrimary, pressed && { opacity: 0.88 }]}>
-                <Icon name="login" size={18} color="#fff" strokeWidth={2} />
-                <Text style={a.ctaPrimaryText}>Log in</Text>
-              </Pressable>
-              <Pressable onPress={() => nav.navigate('SignUp')} accessibilityRole="button" accessibilityLabel="Create an account"
-                style={({ pressed }) => [a.ctaOutline, pressed && { opacity: 0.88 }]}>
-                <Icon name="userplus" size={18} color={colors.teal} strokeWidth={2} />
-                <Text style={a.ctaOutlineText}>Create an account</Text>
-              </Pressable>
-            </View>
-
-            {/* Demo accounts */}
-            <DemoAccounts demo={demo} setDemo={setDemo} act={act} />
-
-            {/* Footer trust */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Icon name="shield" size={13} color={colors.ink3} />
-              <Text style={{ fontFamily: FONT, fontSize: 12.5, color: colors.ink3 }}>
-                Your information is safe with us.
-              </Text>
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    );
-  }
-
-  /* Tablet: centered card */
-  if (bp === 'tablet') {
-    return (
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
-        contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-        <View style={{ width: '100%', maxWidth: 420, gap: 28 }}>
-          <Logo size={32} />
-          <View style={{ gap: 8 }}>
-            <Text style={a.h1} accessibilityRole="header">Your pets' care,{'\n'}all in one place.</Text>
-            <Text style={a.lede}>Book visits, view records and reminders, message {db.clinic.name}.</Text>
           </View>
-          <WelcomeButtons nav={nav} />
-          <DemoAccounts demo={demo} setDemo={setDemo} act={act} />
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 72, paddingVertical: 24 }}>
+            <View style={{ flex: 1, minWidth: 0, gap: 28, maxWidth: 600 }}>
+              <Text style={w.clinicLine}>{db.clinic.name}</Text>
+              <Text style={[w.hero, width < 1440 && { fontSize: 76, lineHeight: 76 }]} accessibilityRole="header">Every visit,{'\n'}remembered.</Text>
+              <Text style={w.lede}>{lede}</Text>
+              {ctas}
+              <View style={{ maxWidth: 520 }}><DemoAccounts /></View>
+            </View>
+            <View style={{ width: archW + 80, height: archH + 40, justifyContent: 'flex-start', alignItems: 'flex-end' }}>
+              <PetArch width={archW} height={archH} />
+              <View style={{ position: 'absolute', left: 0, bottom: 0 }}><ChartSlip width={Math.min(420, archW + 20)} /></View>
+            </View>
+          </View>
+          <View style={w.foot}><ClinicFacts row /></View>
         </View>
       </ScrollView>
     );
   }
 
-  /* Phone: logo → photo hero → content */
+  // Tablet and phone: one column, composed top to bottom
+  const phone = bp === 'mobile';
+  const colW = Math.min(width, phone ? width : 640) - (phone ? 40 : 96);
+  const archW = phone ? colW : Math.min(colW, 440);
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#fff' }}
-      contentContainerStyle={[a.phonePage, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 32 }]}>
-
-      <Logo size={28} />
-
-      {/* Photo hero card */}
-      <View style={a.phonePhoto}>
-        <Image source={SCENES.welcomePets} resizeMode="cover"
-          style={{ width: '100%', height: '100%' }} accessibilityLabel="A cat and a dog" />
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#091729', opacity: 0.08 }} />
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
+      contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40, paddingHorizontal: phone ? 20 : 48, alignItems: 'center' }}>
+      <View style={{ width: '100%', maxWidth: 640, gap: phone ? 24 : 32 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Logo size={phone ? 26 : 30} />
+          <LinkBtn label="Log in" icon={false} onPress={() => nav.navigate('Login')} />
+        </View>
+        <View style={{ gap: phone ? 14 : 20 }}>
+          <Text style={[w.hero, phone ? { fontSize: width < 380 ? 44 : 50, lineHeight: width < 380 ? 44 : 50, letterSpacing: -1.8 } : { fontSize: 72, lineHeight: 72 }]} accessibilityRole="header">Every visit,{'\n'}remembered.</Text>
+          <Text style={[w.lede, phone && { fontSize: 16, lineHeight: 24 }]}>{lede}</Text>
+        </View>
+        <View style={{ alignItems: 'center' }}>
+          <PetArch width={archW} height={archW * (phone ? 0.95 : 1.05)} />
+          <View style={{ width: '100%', marginTop: -56, paddingHorizontal: phone ? 0 : 24 }}><ChartSlip /></View>
+        </View>
+        {ctas}
+        <DemoAccounts />
+        <View style={{ paddingTop: 8 }}><ClinicFacts /></View>
       </View>
-
-      <View style={{ gap: 6 }}>
-        <Text style={a.h1} accessibilityRole="header">Your pets' care,{'\n'}all in one place.</Text>
-        <Text style={a.lede}>{db.clinic.name} · Talisay City</Text>
-      </View>
-
-      <WelcomeButtons nav={nav} />
-      <DemoAccounts demo={demo} setDemo={setDemo} act={act} />
     </ScrollView>
   );
 }
 
-function WelcomeButtons({ nav }: { nav: ReturnType<typeof useNav> }) {
+/* ─── AuthFrame wraps Login / SignUp / VerifyCode / ResetPassword ─── */
+// Desktop: the studio arch on the left, the form on the right, one linen surface with a hairline between.
+// Tablet and phone: the form alone, centered.
+export function AuthFrame({ children }: { children: React.ReactNode }) {
+  const { bp } = useBP(); const { height } = useWindowDimensions();
+  if (bp !== 'desktop') return <View style={{ flex: 1, backgroundColor: colors.bg }}><View style={{ flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' }}>{children}</View></View>;
+  const archH = Math.max(380, Math.min(height - 260, 560));
   return (
-    <View style={{ gap: 10 }}>
-      <Pressable onPress={() => nav.navigate('Login')} accessibilityRole="button" accessibilityLabel="Log in"
-        style={({ pressed }) => [a.ctaPrimary, pressed && { opacity: 0.88 }]}>
-        <Icon name="login" size={18} color="#fff" strokeWidth={2} />
-        <Text style={a.ctaPrimaryText}>Log in</Text>
-      </Pressable>
-      <Pressable onPress={() => nav.navigate('SignUp')} accessibilityRole="button" accessibilityLabel="Create an account"
-        style={({ pressed }) => [a.ctaOutline, pressed && { opacity: 0.88 }]}>
-        <Icon name="userplus" size={18} color={colors.teal} strokeWidth={2} />
-        <Text style={a.ctaOutlineText}>Create an account</Text>
-      </Pressable>
+    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
+      <View style={w.frameLeft}>
+        <Logo size={28} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <PetArch width={archH * 0.8} height={archH} />
+        </View>
+        <ClinicFacts />
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={{ flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' }}>{children}</View>
+      </View>
     </View>
   );
 }
 
-function DemoAccounts({ demo, setDemo, act }: { demo: boolean; setDemo: (v: boolean) => void; act: ReturnType<typeof useApp>['act'] }) {
+/** Page body for auth forms: back link, display title, content. No duplicate headers. */
+function AuthPage({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
+  const nav = useNavigation(); const insets = useSafeAreaInsets(); const { bp } = useBP();
+  const phone = bp === 'mobile';
   return (
-    <View style={a.demo}>
-      <Pressable onPress={() => setDemo(!demo)} accessibilityRole="button"
-        accessibilityState={{ expanded: demo }} style={a.demoToggle}>
-        <View style={a.demoIconWrap}>
-          <Icon name="users" size={14} color={colors.teal} />
-        </View>
-        <Text style={a.demoTitle}>Explore demo accounts</Text>
-        <Icon name={demo ? 'chevU' : 'chevD'} size={15} color={colors.ink3} />
-      </Pressable>
-      {demo && (
-        <>
-          {DEMO.map(([id, role, name, icon]) => (
-            <Pressable key={id} onPress={() => act.demoLogin(id)} accessibilityRole="button"
-              accessibilityLabel={`Sign in as ${role}`}
-              style={({ pressed }) => [a.demoRow, pressed && { backgroundColor: colors.subtle }]}>
-              <View style={a.demoIcon}><Icon name={icon} size={14} color={colors.teal} /></View>
-              <View style={{ flex: 1, gap: 1 }}>
-                <Text style={a.demoRole}>{role}</Text>
-                <Text style={a.demoName} numberOfLines={1}>{name}</Text>
-              </View>
-              <Icon name="chevR" size={13} color={colors.ink3} />
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView keyboardShouldPersistTaps="handled" style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: phone ? 'flex-start' : 'center', paddingHorizontal: phone ? 20 : 56, paddingTop: insets.top + (phone ? 8 : 40), paddingBottom: insets.bottom + 40 }}>
+        <View style={{ width: '100%', maxWidth: 420, alignSelf: 'center', gap: 24 }}>
+          {nav.canGoBack() && (
+            <Pressable onPress={() => nav.goBack()} accessibilityRole="button" accessibilityLabel="Back"
+              style={(st: PState) => [w.back, st.hovered && { backgroundColor: colors.hover }]}>
+              <Icon name="chevL" size={18} color={colors.ink2} />
+              <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink2 }}>Back</Text>
             </Pressable>
-          ))}
-          <Pressable onPress={resetDemoData} accessibilityRole="button" style={a.demoReset}>
-            <Text style={{ fontFamily: FONT, fontSize: 12, color: colors.ink3 }}>Reset demo data</Text>
-          </Pressable>
-        </>
-      )}
-    </View>
+          )}
+          <View style={{ gap: 8 }}>
+            <Text style={w.title} accessibilityRole="header">{title}</Text>
+            {sub && <Text style={[type.body, { color: colors.ink2 }]}>{sub}</Text>}
+          </View>
+          {children}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 /* ─── Login ─── */
+/** Anything that starts like a phone number (digits, +, spaces, dashes) is treated as mobile login. */
+const looksLikePhone = (v: string) => /^[+\d][\d\s-]*$/.test(v.trim());
+
 export function Login() {
-  const nav = useNav(); const { act } = useApp();
-  const [mode, setMode] = useState<'email' | 'mobile'>('email');
-  const [f, setF] = useState({ email: '', pw: '', phone: '', code: '' });
+  const nav = useNav(); const { act, toast } = useApp();
+  const [id, setId] = useState(''); const [pw, setPw] = useState(''); const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
   const [err, setErr] = useState<Record<string, string>>({});
-  const set = (k: keyof typeof f, v: string) => { setF({ ...f, [k]: v }); setErr({}); };
+  const phone = looksLikePhone(id);
+
+  const tryCode = (c: string) => { const m = act.loginCode(id, c); if (m) setErr({ code: m }); };
   const submit = () => {
-    const e: Record<string, string> = {};
-    if (mode === 'email') {
-      if (!isEmail(f.email)) e.email = 'Enter the email on your account';
-      if (!f.pw) e.pw = 'Enter your password';
-      if (Object.keys(e).length) return setErr(e);
-      const m = act.loginEmail(f.email, f.pw); if (m) setErr({ form: m });
-      return;
+    const v = id.trim();
+    if (!v) return setErr({ id: 'Enter your email or mobile number' });
+    if (phone) {
+      if (!isPhone(v)) return setErr({ id: 'Use a PH mobile number, for example 0917 555 0142' });
+      if (!sent) { const m = act.requestCode(v); if (m) return setErr({ form: m }); setSent(true); setErr({}); return; }
+      if (code.length !== 6) return setErr({ code: 'Enter all 6 digits' });
+      return tryCode(code);
     }
-    if (!isPhone(f.phone)) return setErr({ phone: 'Use a PH mobile number, e.g. 0917 555 0142' });
-    if (!sent) { const m = act.requestCode(f.phone); if (m) return setErr({ form: m }); setSent(true); return; }
-    if (f.code.length !== 6) return setErr({ code: 'Enter the 6-digit code' });
-    const m = act.loginCode(f.phone, f.code); if (m) setErr({ code: m });
+    const e: Record<string, string> = {};
+    if (!isEmail(v)) e.id = 'That email looks incomplete. Check it and try again.';
+    if (!pw) e.pw = 'Enter your password';
+    if (Object.keys(e).length) return setErr(e);
+    const m = act.loginEmail(v, pw); if (m) setErr({ form: m });
   };
+  const changeId = (v: string) => { setId(v); setErr({}); if (sent) { setSent(false); setCode(''); } };
+
   return (
-    <Screen title="Log in" footer={<Btn label={mode === 'mobile' && !sent ? 'Send code' : 'Log in'} full style={{ flex: 1 }} onPress={submit} />}>
-      <View style={{ gap: 6 }}>
-        <BrandMark size={32} />
-        <View style={{ height: 8 }} />
-        <Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '700', color: colors.ink, letterSpacing: -0.4 }}>Welcome back</Text>
-        <Text style={[type.small, { fontSize: 14, color: colors.ink2, lineHeight: 20 }]}>
-          Log in with your email and password, or with a code sent to your mobile number.
-        </Text>
-      </View>
-      <Tabs options={[['email', 'Email'], ['mobile', 'Mobile number']]} value={mode} onChange={m => { setMode(m as 'email' | 'mobile'); setErr({}); }} />
+    <AuthPage title="Log in" sub="Use the email or mobile number on your account.">
       {err.form && <Banner tone="bad" icon="alert" title="Can't log in" sub={err.form} />}
-      {mode === 'email' ? <>
-        <Field label="Email" icon="mail" placeholder="you@example.com" autoCapitalize="none" keyboardType="email-address" value={f.email} onChangeText={v => set('email', v)} error={err.email} />
-        <Field label="Password" icon="lock" placeholder="Your password" secure value={f.pw} onChangeText={v => set('pw', v)} error={err.pw} onSubmitEditing={submit} />
-        <LinkBtn label="Forgot password?" icon={false} onPress={() => nav.navigate('ResetPassword')} />
-      </> : <>
-        <Field label="Mobile number" icon="phone" placeholder="0917 555 0142" keyboardType="phone-pad" value={f.phone} editable={!sent} onChangeText={v => set('phone', v)} error={err.phone} />
-        {sent && <>
-          <Field label="6-digit code" icon="shield" placeholder="••••••" keyboardType="number-pad" maxLength={6} value={f.code} onChangeText={v => set('code', v)} error={err.code} hint={`Demo code: ${DEMO_CODE}. No real SMS is sent.`} />
-          <LinkBtn label="Use a different number" icon={false} onPress={() => { setSent(false); set('code', ''); }} />
-        </>}
-      </>}
-      <View style={a.loginDemoCreds}>
-        <Text style={[type.label, { marginBottom: 10 }]}>Demo credentials</Text>
-        {[
-          ['Owner', 'maria.santos@example.com'],
-          ['Staff', 'lea@sugbopetcare.example'],
-          ['Admin', 'elena@sugbopetcare.example'],
-          ['Password', 'demo1234'],
-          ['Mobile', `0917 555 0142, code ${DEMO_CODE}`],
-        ].map(([k, v]) => (
-          <View key={k} style={{ flexDirection: 'row', gap: 10, marginBottom: 4 }}>
-            <Text style={[type.small, { width: 72, color: colors.ink3, flexShrink: 0 }]}>{k}</Text>
-            <Text style={[type.small, { flex: 1, color: colors.ink2, fontWeight: '500' }]} numberOfLines={1}>{v}</Text>
+      <View style={{ gap: 18 }}>
+        <Field label="Email or mobile number" icon={phone && id ? 'phone' : 'mail'} placeholder="you@example.com or 0917 555 0142"
+          autoCapitalize="none" autoCorrect={false} autoComplete="username" keyboardType={phone && id ? 'phone-pad' : 'email-address'}
+          value={id} onChangeText={changeId} error={err.id} editable={!sent} onSubmitEditing={submit} />
+        {!phone && (
+          <View style={{ gap: 8 }}>
+            <Field label="Password" icon="lock" placeholder="Your password" secure autoComplete="current-password"
+              value={pw} onChangeText={v => { setPw(v); setErr({}); }} error={err.pw} onSubmitEditing={submit} />
+            <View style={{ alignSelf: 'flex-end' }}><LinkBtn label="Forgot password?" icon={false} onPress={() => nav.navigate('ResetPassword')} /></View>
           </View>
-        ))}
+        )}
+        {phone && sent && (
+          <View style={{ gap: 12 }}>
+            <Text style={type.label}>Enter the code sent to {id.trim()}</Text>
+            <CodeInput value={code} onChange={c => { setCode(c); setErr({}); if (c.length === 6) tryCode(c); }} error={err.code} autoFocus />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <LinkBtn label="Use a different number" icon={false} onPress={() => { setSent(false); setCode(''); }} />
+              <LinkBtn label="Send a new code" icon={false} onPress={() => toast(`A new code was sent (demo: ${DEMO_CODE})`)} />
+            </View>
+            <Text style={type.small}>This is a demo, so no SMS is sent. The code is {DEMO_CODE}.</Text>
+          </View>
+        )}
+        {phone && !sent && id.length > 0 && <Text style={[type.small, { marginTop: -8 }]}>We'll text a 6-digit code to this number.</Text>}
       </View>
-    </Screen>
+      <Btn label={phone ? (sent ? 'Log in' : 'Send code') : 'Log in'} full onPress={submit} style={{ height: 52 }} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <Text style={type.small}>New here?</Text>
+        <LinkBtn label="Create an account" icon={false} onPress={() => nav.navigate('SignUp')} />
+      </View>
+      <DemoAccounts />
+    </AuthPage>
   );
 }
 
@@ -330,10 +326,8 @@ export function SignUp() {
   return (
     <Screen title="Create account" footer={<Btn label="Continue" full style={{ flex: 1 }} onPress={submit} />}>
       <View style={{ gap: 6 }}>
-        <BrandMark size={32} />
-        <View style={{ height: 8 }} />
-        <Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '700', color: colors.ink, letterSpacing: -0.4 }}>Sign up as a pet owner</Text>
-        <Text style={[type.small, { fontSize: 14, color: colors.ink2 }]}>We will send a code to your mobile number to confirm it.</Text>
+        <Text style={w.title}>Sign up as a pet owner</Text>
+        <Text style={[type.body, { color: colors.ink2 }]}>We will send a code to your mobile number to confirm it.</Text>
       </View>
       <Field label="Full name" icon="user" placeholder="Maria Santos" value={f.name} onChangeText={v => set('name', v)} error={err.name} />
       <Field label="Mobile number" icon="phone" placeholder="0917 555 0142" keyboardType="phone-pad" value={f.phone} onChangeText={v => set('phone', v)} error={err.phone} hint="You can log in with a code sent to this number." />
@@ -353,7 +347,8 @@ export function VerifyCode() {
   return (
     <Screen title="Verify your number" footer={<Btn label="Verify and create account" full style={{ flex: 1 }} onPress={submit} />}>
       <Banner icon="shield" title="Enter the code we sent" sub={`A 6-digit code was sent to ${p.phone}.`} />
-      <Field label="6-digit code" placeholder="••••••" keyboardType="number-pad" maxLength={6} value={code} onChangeText={v => { setCode(v); setErr(''); }} error={err} hint={`Demo code: ${DEMO_CODE}. No real SMS is sent.`} />
+      <CodeInput value={code} onChange={v => { setCode(v); setErr(''); }} error={err} autoFocus />
+      <Text style={type.small}>Demo code: {DEMO_CODE}. No real SMS is sent.</Text>
       <LinkBtn label="Send a new code" icon={false} onPress={() => toast(`A new code was sent (demo: ${DEMO_CODE})`)} />
     </Screen>
   );
@@ -374,206 +369,44 @@ export function ResetPassword() {
   return (
     <Screen title="Reset password" footer={<Btn label={['Send code', 'Check code', 'Save new password'][step]} full style={{ flex: 1 }} onPress={next} />}>
       <View style={{ flexDirection: 'row', gap: 6 }}>
-        {[0, 1, 2].map(i => <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= step ? colors.teal : colors.line }} />)}
+        {[0, 1, 2].map(i => <View key={i} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: i < step ? colors.blue : i === step ? colors.accentDeep : colors.line }} />)}
       </View>
       {step === 0 && <><T.Body muted>Enter the mobile number on your account. We will send a 6-digit code.</T.Body>
         <Field label="Mobile number" icon="phone" keyboardType="phone-pad" placeholder="0917 555 0142" value={phone} onChangeText={v => { setPhone(v); setErr(''); }} error={err} /></>}
       {step === 1 && <><T.Body muted>Enter the code sent to {phone}.</T.Body>
-        <Field label="6-digit code" keyboardType="number-pad" maxLength={6} value={code} onChangeText={v => { setCode(v); setErr(''); }} error={err} hint={`Demo code: ${DEMO_CODE}`} /></>}
+        <CodeInput value={code} onChange={v => { setCode(v); setErr(''); }} error={err} autoFocus />
+        <Text style={type.small}>Demo code: {DEMO_CODE}</Text></>}
       {step === 2 && <Field label="New password" icon="lock" secure placeholder="At least 8 characters" value={pw} onChangeText={v => { setPw(v); setErr(''); }} error={err} />}
     </Screen>
   );
 }
 
 /* ─── Styles ─── */
-const a = StyleSheet.create({
-  /* ── Left panel ── */
-  panel: {
-    width: '50%',
-    flexShrink: 0,
-    backgroundColor: '#091729',
-    padding: 48,
-    overflow: 'hidden',
-  },
-  panelH1: {
-    fontFamily: FONT,
-    fontSize: 34,
-    lineHeight: 44,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.8,
-  },
-  panelSub: {
-    fontFamily: FONT,
-    fontSize: 15,
-    lineHeight: 23,
-    color: 'rgba(255,255,255,0.58)',
-  },
-  trust: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  trustDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.teal },
-  trustText: { fontFamily: FONT, fontSize: 12.5, fontWeight: '500', color: 'rgba(255,255,255,0.65)' },
+const w = StyleSheet.create({
+  page:       { width: '100%', maxWidth: 1400, alignSelf: 'center', paddingHorizontal: 56 },
+  top:        { height: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  clinicLine: { fontFamily: FONT, fontSize: 15, fontWeight: '500', color: colors.accent },
+  hero:       { fontFamily: DISPLAY, fontSize: 92, lineHeight: 90, fontWeight: '600', color: colors.ink, letterSpacing: -3.4 },
+  lede:       { fontFamily: FONT, fontSize: 19, lineHeight: 29, color: colors.ink2, maxWidth: 500 },
+  foot:       { borderTopWidth: 1, borderTopColor: colors.line, paddingVertical: 22 },
 
-  /* ── Right panel (desktop Welcome) ── */
-  rightScroll: {
-    flexGrow: 1,
-    padding: 56,
-    gap: 32,
-    justifyContent: 'center',
-    maxWidth: 440,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  rightMark: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: colors.tileTeal,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rightH1: {
-    fontFamily: FONT,
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
-    color: colors.ink,
-    letterSpacing: -0.6,
-  },
-  rightSub: {
-    fontFamily: FONT,
-    fontSize: 14.5,
-    lineHeight: 22,
-    color: colors.ink2,
-  },
+  slip:       { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 12, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16 },
+  slipName:   { fontFamily: DISPLAY, fontSize: 18, fontWeight: '600', color: colors.ink, letterSpacing: -0.3 },
+  slipMeta:   { fontFamily: FONT, fontSize: 13, color: colors.ink2, flexShrink: 1 },
 
-  /* ── CTA buttons (shared Welcome + WelcomeButtons) ── */
-  ctaPrimary: {
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: colors.teal,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  ctaPrimaryText: {
-    fontFamily: FONT,
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  ctaOutline: {
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: colors.lineStrong,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  ctaOutlineText: {
-    fontFamily: FONT,
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.ink,
-  },
+  frameLeft:  { width: '42%', maxWidth: 640, padding: 40, gap: 24, borderRightWidth: 1, borderRightColor: colors.line },
+  title:      { fontFamily: DISPLAY, fontSize: 40, lineHeight: 42, fontWeight: '600', color: colors.ink, letterSpacing: -1.4 },
+  back:       { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', height: 44, paddingLeft: 6, paddingRight: 12, marginLeft: -10, borderRadius: 8 },
 
-  /* ── Demo accounts accordion ── */
-  demo: {
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: colors.bg,
-  },
-  demoToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-  },
-  demoIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: colors.tileTeal,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  demoTitle: {
-    flex: 1,
-    fontFamily: FONT,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.ink2,
-  },
-  demoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-  demoIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: colors.tileTeal,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  demoRole: { fontFamily: FONT, fontSize: 13.5, fontWeight: '600', color: colors.ink },
-  demoName: { fontFamily: FONT, fontSize: 12, color: colors.ink2 },
-  demoReset: {
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-
-  /* ── Phone welcome ── */
-  phonePage: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    gap: 24,
-    maxWidth: 440,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  phonePhoto: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: colors.tileTeal,
-  },
-  h1: {
-    fontFamily: FONT,
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
-    color: colors.ink,
-    letterSpacing: -0.7,
-  },
-  lede: {
-    fontFamily: FONT,
-    fontSize: 15,
-    lineHeight: 23,
-    color: colors.ink2,
-  },
-
-  /* ── Login demo credentials table ── */
-  loginDemoCreds: {
-    backgroundColor: colors.subtle,
-    borderRadius: 10,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
+  demo:       { borderWidth: 1, borderColor: colors.line, borderRadius: 10, backgroundColor: colors.surface, overflow: 'hidden' },
+  demoToggle: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 52 },
+  demoTitle:  { flex: 1, fontFamily: FONT, fontSize: 15, fontWeight: '500', color: colors.ink },
+  demoRow:    { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, minHeight: 60, borderTopWidth: 1, borderTopColor: colors.line },
+  demoRole:   { fontFamily: FONT, fontSize: 14.5, fontWeight: '600', color: colors.ink },
+  demoName:   { fontFamily: FONT, fontSize: 13.5, fontWeight: '400', color: colors.ink2 },
+  demoEmail:  { fontFamily: FONT, fontSize: 12.5, color: colors.ink3, marginTop: 2 },
+  demoGo:     { fontFamily: FONT, fontSize: 13.5, fontWeight: '600', color: colors.accent },
+  demoFoot:   { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.bg },
+  mono:       { fontFamily: FONT, fontWeight: '600', color: colors.ink, fontVariant: ['tabular-nums'] },
+  reset:      { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 10, borderRadius: 6 },
 });

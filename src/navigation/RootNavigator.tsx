@@ -17,7 +17,8 @@ import { TAB_BAR_H } from '../components/ui';
 import { PetDetail, PetForm, VisitDetail, ConsultForm } from '../screens/pets';
 import { Book, BookSuccess, ApptDetail, ClinicAppts } from '../screens/appointments';
 import { BillDetail, PayBill, Receipt, Billing, CreateBill } from '../screens/billing';
-import { StaffHome, Patients, OwnerDetail, CareMonitor } from '../screens/clinic';
+import { Patients, OwnerDetail, CareMonitor } from '../screens/clinic';
+import { StaffHome } from '../screens/staffHome';
 import { Inbox, Chat, OwnerChat } from '../screens/messages';
 import { AdminHome, Reports, Setup, Users, UserForm, ClinicProfile, Services, Hours, Reminders, PaymentSetup, ActivityLog } from '../screens/admin';
 
