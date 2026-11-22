@@ -9,7 +9,7 @@ import { Cell, Cols, DataTable, useBP } from '../components/responsive';
 import type { Appt } from '../types';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, type } from '../theme';
+import { colors, shadow, type, FONT, DISPLAY } from '../theme';
 import {
   APPT, BILL, D, FOLLOW_ICON, ago, ageOf, billBalance, billState, byDateTime, cap, diff, fmtD, followStatus, isEmail, isPhone, money, normPhone, t12,
 } from '../utils/format';
@@ -27,11 +27,11 @@ export function ScheduleTable({ list, showStaff }: { list: Appt[]; showStaff?: b
   return (
     <DataTable rows={list} keyOf={a => a.id} onRowPress={a => nav.navigate('ApptDetail', { id: a.id })} rowLabel={a => `${t12(a.time)} ${sel.pet(db, a.petId)!.name}`}
       columns={[
-        { key: 't', label: 'Time', width: 84, render: a => <Text style={{ fontSize: 14, fontWeight: '600', color: colors.ink }}>{t12(a.time)}</Text> },
+        { key: 't', label: 'Time', width: 84, render: a => <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: colors.ink }}>{t12(a.time)}</Text> },
         { key: 'p', label: 'Patient', flex: 2, render: a => { const p = sel.pet(db, a.petId)!; return <Cell left={<PetAvatar pet={p} size={36} />} title={p.name} sub={sel.owner(db, a.ownerId)!.name} />; } },
         { key: 's', label: 'Service', flex: 2, render: a => a.service },
         ...(showStaff ? [{ key: 'h', label: 'Handled by', flex: 1.3, wideOnly: true, render: (a: Appt) => a.handledBy || '—' }] : []),
-        { key: 'st', label: 'Status', width: 120, render: a => <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} /> },
+        { key: 'st', label: 'Status', width: 120, render: a => <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge /> },
       ]} />
   );
 }
@@ -44,61 +44,6 @@ export function DashSkeleton() {
       <Skeleton h={76} r={14} />
       <Skeleton h={220} r={14} />
     </Stack>
-  );
-}
-
-export function StaffHome() {
-  const nav = useNav(); const { db, user } = useApp(); const due = useDueList();
-  const today = db.appts.filter(a => diff(a.date) === 0 && a.status !== 'cancelled').sort(byDateTime);
-  const waiting = today.filter(a => a.status === 'checked_in');
-  const verify = db.bills.filter(b => billState(b) === 'pending');
-  const unread = sel.unreadMsgs(db, user!);
-  const loading = useFirstLoad('staffHome'); const { wide } = useBP();
-  const shortcuts = <QuickActions items={[
-    ['Walk-in', 'calendar', () => nav.navigate('Book', { staff: '1' })],
-    ['New bill', 'receipt', () => nav.navigate('CreateBill')],
-    ['Due list', 'bell', () => nav.navigate('CareMonitor')],
-    ['Search patients', 'search', () => nav.navigate('Main', { screen: 'Patients' } as never)],
-  ]} />;
-  const dueList = (due.overdue.length + due.soon.length) > 0 ? <Section title="Due and overdue pets" action="See all" onAction={() => nav.navigate('CareMonitor')}>
-    <Group>{[...due.overdue, ...due.soon].slice(0, wide ? 5 : 4).map(({ f, pet, s: st }) => (
-      <Row key={f.id} left={<PetAvatar pet={pet} size={38} />} title={`${pet.name} · ${f.reason}`} sub={`${f.kind} · ${sel.owner(db, pet.ownerId)!.name}`} right={<Pill text={st.label} tone={st.tone} />} onPress={() => nav.navigate('PetDetail', { id: pet.id, tab: 'follow' })} />
-    ))}</Group>
-  </Section> : null;
-  if (loading) return <Screen hideHeader tabbed><HomeHeader /><DashSkeleton /></Screen>;
-  return (
-    <Screen hideHeader tabbed>
-      <HomeHeader sub={`${fmtD(D(0))} · ${today.length} appointments today${waiting.length ? `, ${waiting.length} checked in` : ''}`}
-        action={<Btn label="New appointment" icon="plus" onPress={() => nav.navigate('Book', { staff: '1' })} />} />
-      <Greeting sub={`${today.length} appointments today${waiting.length ? `, ${waiting.length} checked in` : ''}.`} />
-      <StatGrid>
-        <Stat value={today.length} label="Appointments today" icon="calendar" dark onPress={() => nav.navigate('Main', { screen: 'Appointments' } as never)} />
-        <Stat value={verify.length} label="Payments to verify" icon="wallet" alert={verify.length > 0} onPress={() => nav.navigate('Main', { screen: 'Billing' } as never)} />
-        <Stat value={due.overdue.length} label="Overdue follow-ups" icon="alert" alert={due.overdue.length > 0} onPress={() => nav.navigate('CareMonitor')} />
-        <Stat value={unread} label="Unread messages" icon="chat" alert={unread > 0} onPress={() => nav.navigate('Main', { screen: 'Messages' } as never)} />
-      </StatGrid>
-      {wide ? (
-        <Cols ratio={[2, 1]} stackBelow="desktop">
-          <Section title="Today's schedule" action="Full schedule" onAction={() => nav.navigate('Main', { screen: 'Appointments' } as never)}>
-            {today.length === 0 ? <Empty icon="calendar" title="No appointments today" /> : <ScheduleTable list={today} />}
-          </Section>
-          <>
-            <Section title="Shortcuts">{shortcuts}</Section>
-            {dueList}
-          </>
-        </Cols>
-      ) : <>
-        {shortcuts}
-      <Section title="Today's schedule" action="All" onAction={() => nav.navigate('Main', { screen: 'Appointments' } as never)}>
-        {today.length === 0 ? <T.Small>No appointments today.</T.Small> : (
-          <Group>{today.map(a => { const p = sel.pet(db, a.petId)!; return (
-            <Row key={a.id} left={<PetAvatar pet={p} size={40} />} title={`${t12(a.time)} · ${p.name}`} sub={`${sel.owner(db, a.ownerId)!.name} · ${a.service}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />
-          ); })}</Group>
-        )}
-      </Section>
-        {dueList}
-      </>}
-    </Screen>
   );
 }
 
@@ -164,15 +109,35 @@ export function OwnerDetail() {
   return (
     <Screen title="Owner record" right={<View style={{ flexDirection: 'row', gap: 8 }}><IconBtn name="phone" label="Call owner" onPress={() => Linking.openURL(`tel:${o.phone.replace(/\s/g, '')}`)} /><IconBtn name="edit" label="Edit owner" onPress={() => setEdit(true)} /></View>}
       footer={<><Btn label="Message" icon="chat" kind="line" style={{ flex: 1 }} onPress={() => nav.navigate('Chat', { ownerId: o.id })} /><Btn label="Book visit" icon="calendar" style={{ flex: 1 }} onPress={() => nav.navigate('Book', { ownerId: o.id, staff: '1' })} /></>}>
-      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-        <Avatar name={o.name} size={56} />
-        <View style={{ flex: 1, gap: 2 }}><T.H1>{o.name}</T.H1><T.Small>{o.phone}{o.email ? ` · ${o.email}` : ''}</T.Small><T.Small>{o.address || 'No address'}</T.Small></View>
+      <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+        <View style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line, padding: 16, flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <Avatar name={o.name} size={56} />
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 26, fontWeight: '600', color: colors.ink, letterSpacing: -0.6 }} numberOfLines={1}>{o.name}</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 13, color: colors.ink2 }} numberOfLines={1}>{o.phone}{o.email ? ` · ${o.email}` : ''}</Text>
+            {!!o.address && <Text style={{ fontFamily: FONT, fontSize: 13, color: colors.ink2 }} numberOfLines={1}>{o.address}</Text>}
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', backgroundColor: colors.surface, paddingHorizontal: 16, paddingVertical: 12 }}>
+          <View style={{ flex: 1, gap: 1 }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink3 }}>Client since</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: colors.ink }}>{fmtD(o.since)}</Text>
+          </View>
+          <View style={{ flex: 1, gap: 1, alignItems: 'center' }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink3 }}>Pets</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: colors.ink }}>{pets.length}</Text>
+          </View>
+          <View style={{ flex: 1, gap: 1, alignItems: 'flex-end' }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink3 }}>Open bills</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: bills.length > 0 ? colors.bad : colors.ok }}>{bills.length}</Text>
+          </View>
+        </View>
       </View>
       <Section title="Pets">
         {pets.length === 0 ? <T.Small>No pets yet.</T.Small> : <Group>{pets.map(p => <Row key={p.id} left={<PetAvatar pet={p} size={42} />} title={p.name} sub={`${cap(p.species)} · ${p.breed} · ${ageOf(p.birth)}`} right={p.status !== 'active' ? <Pill text={cap(p.status)} /> : undefined} onPress={() => nav.navigate('PetDetail', { id: p.id })} />)}</Group>}
       </Section>
-      {bills.length > 0 && <Section title="Open bills"><Group>{bills.map(b => <Row key={b.id} icon="receipt" title={`${sel.pet(db, b.petId)!.name} · ${money(billBalance(b))}`} sub={fmtD(b.date)} right={<Pill text={BILL[billState(b)][0]} tone={BILL[billState(b)][1]} />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />)}</Group></Section>}
-      {appts.length > 0 && <Section title="Recent appointments"><Group>{appts.map(a => <Row key={a.id} icon="calendar" title={`${sel.pet(db, a.petId)!.name} · ${a.service}`} sub={`${fmtD(a.date)}, ${t12(a.time)}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />)}</Group></Section>}
+      {bills.length > 0 && <Section title="Open bills"><Group>{bills.map(b => <Row key={b.id} icon="receipt" title={`${sel.pet(db, b.petId)!.name} · ${money(billBalance(b))}`} sub={fmtD(b.date)} right={<Pill text={BILL[billState(b)][0]} tone={BILL[billState(b)][1]} badge />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />)}</Group></Section>}
+      {appts.length > 0 && <Section title="Recent appointments"><Group>{appts.map(a => <Row key={a.id} icon="calendar" title={`${sel.pet(db, a.petId)!.name} · ${a.service}`} sub={`${fmtD(a.date)}, ${t12(a.time)}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />)}</Group></Section>}
       <Section title="Internal notes" action="Add note" onAction={() => { setNote(''); setNoteErr(''); setNoteOpen(true); }}>
         {o.notes.length === 0 ? <T.Small>No notes. Missed visits are noted here automatically.</T.Small> : <Group>{o.notes.map(n => <Row key={n.id} icon="sticky" title={n.text} sub={`${n.by} · ${ago(n.at)}`} subLines={2} />)}</Group>}
         <T.Small>Visible to clinic staff and the administrator only.</T.Small>

@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp, sel } from '../store/AppStore';
-import { colors } from '../theme';
+import { colors, FONT } from '../theme';
 import { Icon, IconName } from '../components/Icon';
 import type { Role } from '../types';
 
@@ -17,14 +17,17 @@ import { TAB_BAR_H } from '../components/ui';
 import { PetDetail, PetForm, VisitDetail, ConsultForm } from '../screens/pets';
 import { Book, BookSuccess, ApptDetail, ClinicAppts } from '../screens/appointments';
 import { BillDetail, PayBill, Receipt, Billing, CreateBill } from '../screens/billing';
-import { StaffHome, Patients, OwnerDetail, CareMonitor } from '../screens/clinic';
+import { Patients, OwnerDetail, CareMonitor } from '../screens/clinic';
+import { StaffHome } from '../screens/staffHome';
 import { Inbox, Chat, OwnerChat } from '../screens/messages';
 import { AdminHome, Reports, Setup, Users, UserForm, ClinicProfile, Services, Hours, Reminders, PaymentSetup, ActivityLog } from '../screens/admin';
 
 const Stack = createNativeStackNavigator();
 // Auth pages share a split layout on desktops (brand panel + form). Defined once so screen identity stays stable.
 const framed = (C: React.ComponentType) => function Framed() { return <AuthFrame><C /></AuthFrame>; };
-const [FWelcome, FLogin, FSignUp, FVerify, FReset] = [Welcome, Login, SignUp, VerifyCode, ResetPassword].map(framed);
+// Welcome renders its own full-page layout (incl. the brand panel), so it is NOT framed —
+// framing it would nest a second split layout inside AuthFrame's 480px column.
+const [FLogin, FSignUp, FVerify, FReset] = [Login, SignUp, VerifyCode, ResetPassword].map(framed);
 const Tab = createBottomTabNavigator();
 
 type TabDef = [name: string, label: string, icon: IconName, component: React.ComponentType];
@@ -52,11 +55,11 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
           return (
             <Pressable key={r.key} accessibilityRole="tab" accessibilityLabel={def[1]} accessibilityState={{ selected: on }}
               onPress={() => { if (!on) navigation.navigate(r.name); }} style={({ pressed }) => [ts.item, pressed && { opacity: 0.6 }]}>
-              <View style={[ts.pill, on && { backgroundColor: colors.accentSoft }]}>
-                <Icon name={def[2]} size={22} color={on ? colors.accentDeep : colors.ink2} strokeWidth={on ? 2.2 : 1.8} />
+              <View style={[ts.pill, on && { backgroundColor: colors.tileTeal }]}>
+                <Icon name={def[2]} size={22} color={on ? colors.teal : colors.ink2} strokeWidth={on ? 2.2 : 1.8} />
                 {badge(r.name) && <View style={ts.dot} />}
               </View>
-              <Text style={[ts.label, on && { color: colors.accentDeep, fontWeight: '600' }]} numberOfLines={1}>{def[1]}</Text>
+              <Text style={[ts.label, on && { color: colors.teal, fontWeight: '600' }]} numberOfLines={1}>{def[1]}</Text>
             </Pressable>
           );
         })}
@@ -80,7 +83,7 @@ export function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false, animation: wide ? 'none' : 'slide_from_right', contentStyle: { backgroundColor: colors.bg } }}>
       {!user ? (
         <>
-          <Stack.Screen name="Welcome" component={FWelcome} />
+          <Stack.Screen name="Welcome" component={Welcome} />
           <Stack.Screen name="Login" component={FLogin} />
           <Stack.Screen name="SignUp" component={FSignUp} />
           <Stack.Screen name="VerifyCode" component={FVerify} />
@@ -132,6 +135,6 @@ const ts = StyleSheet.create({
   bar: { width: '100%', maxWidth: 560, height: TAB_BAR_H, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },
   item: { flex: 1, height: TAB_BAR_H - 4, alignItems: 'center', justifyContent: 'center', gap: 3 },
   pill: { width: 52, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  label: { color: colors.ink2, fontWeight: '500', fontSize: 11 },
+  label: { fontFamily: FONT, color: colors.ink2, fontWeight: '500', fontSize: 11 },
   dot: { position: 'absolute', top: 3, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dot, borderWidth: 1.5, borderColor: '#fff' },
 });

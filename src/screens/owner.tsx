@@ -9,8 +9,10 @@ import { PetAvatar } from '../components/PetArt';
 import { AutoGrid, Cell, Cols, DataTable, PState, useBP } from '../components/responsive';
 import { useApp, sel } from '../store/AppStore';
 import { useNav } from '../navigation/nav';
+import { callClinic, openDirections } from './ownerHome';
+import { careNodes, HEALTH_COLOR, petHealth, RingGlyph } from '../components/care';
 import { PET_PHOTOS, SCENES } from '../data/photos';
-import { colors, radius, shadow, space, type, Tone } from '../theme';
+import { colors, radius, shadow, space, type, Tone, FONT, DISPLAY } from '../theme';
 import type { Clinic, DB, Pet } from '../types';
 import {
   APPT, BILL, ageOf, billBalance, billState, billTotal, byDateTime, D, DOWL, firstName, fmtD, fmtDS, followStatus, greeting, hourLabel, isUpcoming, money, MON, parseD, rel, t12, TODAY,
@@ -28,20 +30,15 @@ function petStatus(db: DB, p: Pet): { label: string; tone: Tone } {
   return w ? { label: w.label, tone: w.tone } : { label: 'Up to date', tone: 'ok' };
 }
 
-const callClinic = (mobile: string) => Linking.openURL(`tel:${mobile.replace(/\s/g, '')}`);
-const openDirections = (c: Clinic) => {
-  const q = encodeURIComponent(`${c.name}, ${c.address}`);
-  Linking.openURL(Platform.OS === 'android' ? `geo:${c.lat},${c.lng}?q=${c.lat},${c.lng}(${encodeURIComponent(c.name)})` : `https://www.google.com/maps/search/?api=1&query=${q}`);
-};
 const useTab = () => { const nav = useNav(); return (screen: string) => nav.navigate('Main', { screen } as never); };
 
 /** Calendar-page style date: month above, day below. */
 function DateTile({ date, size = 'md' }: { date: string; size?: 'sm' | 'md' }) {
   const d = parseD(date); const sm = size === 'sm';
   return (
-    <View style={[o.dateTile, sm && { width: 48, height: 52, borderRadius: 12 }]} accessible accessibilityLabel={fmtD(date)}>
+    <View style={[o.dateTile, sm && { width: 46, height: 50, borderRadius: 10 }]} accessible accessibilityLabel={fmtD(date)}>
       <Text style={o.dateMon}>{MON[d.getMonth()]}</Text>
-      <Text style={[o.dateDay, sm && { fontSize: 19, lineHeight: 22 }]}>{d.getDate()}</Text>
+      <Text style={[o.dateDay, sm && { fontSize: 18, lineHeight: 22 }]}>{d.getDate()}</Text>
     </View>
   );
 }
@@ -54,18 +51,25 @@ function PetPhoto({ pet, h }: { pet: Pet; h: number }) {
 }
 
 function PetCard({ pet, compact }: { pet: Pet; compact?: boolean }) {
-  const nav = useNav(); const { db } = useApp(); const st = petStatus(db, pet);
+  const nav = useNav(); const { db } = useApp(); const h = petHealth(db, pet);
+  const next = careNodes(db, pet.id, { past: 0, future: 1 }).find(n => n.state === 'next');
   return (
-    <Pressable onPress={() => nav.navigate('PetDetail', { id: pet.id })} accessibilityRole="button" accessibilityLabel={`${pet.name}, ${st.label}`}
-      style={(s: PState) => [o.petCard, compact && { width: 156 }, s.hovered && { borderColor: colors.lineStrong }, s.pressed && { opacity: 0.9 }]}>
-      <View style={pet.status !== 'active' ? { opacity: 0.6 } : undefined}><PetPhoto pet={pet} h={compact ? 112 : 172} /></View>
-      <View style={{ padding: compact ? 12 : 16, gap: 3 }}>
+    <Pressable onPress={() => nav.navigate('PetDetail', { id: pet.id })} accessibilityRole="button" accessibilityLabel={`${pet.name}, ${h.label}`}
+      style={(s: PState) => [o.petCard, compact && { width: 160 }, s.hovered && { borderColor: colors.lineStrong }, s.pressed && { opacity: 0.9 }]}>
+      <View style={pet.status !== 'active' ? { opacity: 0.5 } : undefined}>
+        <PetPhoto pet={pet} h={compact ? 116 : 200} />
+      </View>
+      <View style={{ padding: compact ? 12 : 16, gap: 4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={[type.h3, { flexShrink: 1 }, !compact && { fontSize: 16 }]} numberOfLines={1}>{pet.name}</Text>
-          <SexMark sex={pet.sex} size={14} />
+          <Text style={[o.petName, compact && { fontSize: 17 }]} numberOfLines={1}>{pet.name}</Text>
+          <SexMark sex={pet.sex} size={13} />
         </View>
-        <Text style={[type.small, compact && { fontSize: 12 }]} numberOfLines={1}>{pet.breed} · {ageOf(pet.birth)}</Text>
-        <View style={{ marginTop: 6 }}><Pill text={st.label} tone={st.tone} /></View>
+        <Text style={[type.small, { fontSize: compact ? 12 : 13 }]} numberOfLines={1}>{pet.breed}, {ageOf(pet.birth)}</Text>
+        {!compact && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+          <RingGlyph health={h.key} size={13} />
+          <Text style={{ fontFamily: FONT, fontSize: 13, fontWeight: '600', color: HEALTH_COLOR[h.key], flexShrink: 1 }} numberOfLines={1}>{h.label}</Text>
+        </View>}
+        {!compact && next && <Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={1}>Next: {next.label}, {fmtD(next.date)}</Text>}
       </View>
     </Pressable>
   );
@@ -76,184 +80,14 @@ function AddPetCard({ onPress, compact }: { onPress: () => void; compact?: boole
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Add a pet"
       style={(s: PState) => [o.addCard, compact ? { width: 120 } : { flex: 1, minHeight: 240 }, s.hovered && { borderColor: colors.accent, backgroundColor: colors.surface }]}>
       <IconTile name="plus" size={compact ? 40 : 44} />
-      <Text style={[type.h3, { color: colors.accentDeep, fontSize: 14 }]}>Add a pet</Text>
+      <Text style={[type.h3, { color: colors.teal, fontSize: 14 }]}>Add a pet</Text>
       {!compact && <Text style={[type.small, { textAlign: 'center' }]}>Dogs and cats</Text>}
     </Pressable>
   );
 }
 
-/* ---------- home ---------- */
-type Action = { label: string; short: string; icon: IconName; sub: string; onPress: () => void; badge?: number; primary?: boolean };
-
-/** The four things owners come to do, one tap away. */
-function ActionStrip({ items }: { items: Action[] }) {
-  const { wide } = useBP();
-  if (!wide) return (
-    <View style={{ flexDirection: 'row' }}>
-      {items.map(a => (
-        <Pressable key={a.label} onPress={a.onPress} accessibilityRole="button" accessibilityLabel={a.badge ? `${a.label}, ${a.badge}` : a.label}
-          style={({ pressed }) => [o.qa, pressed && { opacity: 0.6 }]}>
-          <View>
-            <View style={[o.qaIcon, a.primary && { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep }]}>
-              <Icon name={a.icon} size={22} color={a.primary ? '#fff' : colors.accentDeep} strokeWidth={2} />
-            </View>
-            {!!a.badge && <View style={o.qaBadge}><CountBadge n={a.badge} /></View>}
-          </View>
-          <Text style={o.qaLabel} numberOfLines={1}>{a.short}</Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-  return (
-    <View style={{ flexDirection: 'row', gap: 16 }}>
-      {items.map(a => (
-        <Pressable key={a.label} onPress={a.onPress} accessibilityRole="button" accessibilityLabel={a.label}
-          style={(st: PState) => [o.action, a.primary && o.actionPrimary, st.hovered && (a.primary ? { backgroundColor: '#1D3560' } : { borderColor: colors.lineStrong }), st.pressed && { opacity: 0.9 }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <View style={[o.actionIcon, a.primary && { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
-              <Icon name={a.icon} size={20} color={a.primary ? '#fff' : colors.accentDeep} strokeWidth={2} />
-            </View>
-            {a.badge ? <CountBadge n={a.badge} /> : <Icon name="chevR" size={18} color={a.primary ? 'rgba(255,255,255,0.7)' : colors.ink3} />}
-          </View>
-          <View style={{ gap: 2 }}>
-            <Text style={[type.h3, a.primary && { color: '#fff' }]} numberOfLines={1}>{a.label}</Text>
-            <Text style={[type.small, a.primary && { color: 'rgba(255,255,255,0.72)' }]} numberOfLines={1}>{a.sub}</Text>
-          </View>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
-
-function HomeSkeleton() {
-  return (
-    <Stack gap={24}>
-      <Skeleton h={22} w={160} r={8} />
-      <Skeleton h={96} r={radius.lg} />
-      <Skeleton h={22} w={160} r={8} />
-      <View style={{ flexDirection: 'row', gap: 12 }}>{[0, 1, 2].map(i => <Skeleton key={i} h={200} w={156} r={radius.lg} />)}</View>
-    </Stack>
-  );
-}
-
-export function OwnerHome() {
-  const nav = useNav(); const tab = useTab(); const { db, user } = useApp(); const loading = useFirstLoad('ownerHome'); const { wide, desktop } = useBP();
-  const oid = user!.ownerId!; const c = db.clinic;
-  const pets = sel.petsOf(db, oid).filter(p => p.status === 'active');
-  const upcoming = db.appts.filter(a => a.ownerId === oid && isUpcoming(a)).sort(byDateTime);
-  const offers = upcoming.filter(a => a.status === 'resched');
-  const follows = sel.openFollowUps(db).filter(f => pets.some(p => p.id === f.petId) && ['overdue', 'soon'].includes(followStatus(f).key));
-  const unpaid = db.bills.filter(b => b.ownerId === oid && billState(b) === 'unpaid');
-  const due = unpaid.reduce((s, b) => s + billBalance(b), 0);
-  const unread = sel.unreadMsgs(db, user!);
-  const today = db.settings.days[TODAY.getDay()];
-  const next = upcoming[0];
-  const addPet = () => nav.navigate('PetForm', { ownerId: oid });
-
-  const actions: Action[] = [
-    { label: 'Book a visit', short: 'Book', icon: 'calendar', sub: 'Open times are confirmed right away', onPress: () => nav.navigate('Book'), primary: true },
-    { label: 'Message the clinic', short: 'Message', icon: 'chat', sub: unread ? `${unread} unread ${unread === 1 ? 'message' : 'messages'}` : 'Ask about a pet, booking or bill', onPress: () => tab('Messages'), badge: unread },
-    { label: 'Pay a bill', short: 'Pay', icon: 'wallet', sub: unpaid.length ? `${money(due)} to pay` : 'Nothing to pay right now', onPress: () => tab('Bills'), badge: unpaid.length },
-    { label: 'Clinic info', short: 'Clinic', icon: 'pin', sub: today?.open ? `Open today until ${hourLabel(today.to)}` : 'Closed today', onPress: () => nav.navigate('ClinicInfo') },
-  ];
-
-  const intro = (
-    <View style={{ gap: 4 }}>
-      <Text style={[o.hello, !wide && { fontSize: 24, lineHeight: 30 }]} accessibilityRole="header" numberOfLines={1}>{greeting()}, {firstName(user!.name)}</Text>
-      <Text style={[type.small, { fontSize: 14.5, lineHeight: 20 }]}>{fmtD(D(0))} · {next ? `Next visit ${rel(next.date).toLowerCase()} at ${t12(next.time)}` : 'Your pets are in good hands'}</Text>
-    </View>
-  );
-
-  const attention = offers.length + follows.length + unpaid.length > 0 ? (
-    <Section title="Needs your attention">
-      <Group>
-        {offers.map(a => { const p = sel.pet(db, a.petId)!; return (
-          <Row key={a.id} icon="calendar" title={`New time suggested for ${p.name}`} sub={a.offer ? `${fmtD(a.offer.date)} at ${t12(a.offer.time)}` : undefined}
-            action={<Btn label="Review" small kind="line" onPress={() => nav.navigate('ApptDetail', { id: a.id })} />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />
-        ); })}
-        {unpaid.map(b => { const p = sel.pet(db, b.petId)!; return (
-          <Row key={b.id} icon="receipt" title={`${money(billBalance(b))} to pay`} sub={`${p.name} · visit on ${fmtDS(b.date)}`}
-            action={<Btn label="Pay" small onPress={() => nav.navigate('PayBill', { id: b.id })} />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />
-        ); })}
-        {follows.slice(0, 3).map(f => { const p = sel.pet(db, f.petId)!; const st = followStatus(f); return (
-          <Row key={f.id} left={<PetAvatar pet={p} size={36} />} title={f.reason} sub={`${p.name} · ${st.key === 'overdue' ? 'was due' : 'due'} ${fmtDS(f.date)}`}
-            right={<Pill text={st.label} tone={st.tone} />} onPress={() => nav.navigate('PetDetail', { id: p.id, tab: 'follow' })} />
-        ); })}
-      </Group>
-    </Section>
-  ) : desktop ? (
-    <Section title="Needs your attention">
-      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <IconTile name="check" tone="ok" size={40} />
-        <View style={{ flex: 1 }}><Text style={type.h3}>You're all caught up</Text><T.Small>No bills to pay and no reminders due this week.</T.Small></View>
-      </Card>
-    </Section>
-  ) : null;
-
-  const nextBlock = (
-    <Section title="Next visit" action={upcoming.length > 0 ? 'All appointments' : undefined} onAction={() => tab('Appointments')}>
-      {next ? (() => { const p = sel.pet(db, next.petId)!; return (
-        <Card onPress={() => nav.navigate('ApptDetail', { id: next.id })} label={`${next.service} for ${p.name} on ${fmtD(next.date)} at ${t12(next.time)}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-          <DateTile date={next.date} />
-          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-            <Text style={[type.h2, { fontSize: 17 }]} numberOfLines={1}>{next.service}</Text>
-            <Text style={type.small} numberOfLines={1}>{p.name} · {rel(next.date)}, {t12(next.time)}</Text>
-            <View style={{ marginTop: 4 }}><Pill text={APPT[next.status][0]} tone={APPT[next.status][1]} /></View>
-          </View>
-          {wide && <PetAvatar pet={p} size={48} />}
-          <Icon name="chevR" size={18} color={colors.ink3} />
-        </Card>
-      ); })() : (
-        <Card><Empty icon="calendar" title="No upcoming visits" sub="Book a check-up, vaccine or consultation. Open times are confirmed right away." action={<Btn label="Book a visit" icon="plus" small onPress={() => nav.navigate('Book')} />} /></Card>
-      )}
-    </Section>
-  );
-
-  const petsBlock = (
-    <Section title="Your pets" action={pets.length > 0 ? 'Manage pets' : undefined} onAction={() => tab('Pets')}>
-      {wide ? (
-        <AutoGrid min={200}>{[...pets.map(p => <PetCard key={p.id} pet={p} />), <AddPetCard key="add" onPress={addPet} />]}</AutoGrid>
-      ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.lg, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: 6, gap: 12 }}>
-          {pets.map(p => <PetCard key={p.id} pet={p} compact />)}
-          <AddPetCard compact onPress={addPet} />
-        </ScrollView>
-      )}
-    </Section>
-  );
-
-  const clinicBlock = (
-    <Section title="Your clinic" action="Details" onAction={() => nav.navigate('ClinicInfo')}>
-      <Card style={{ gap: 14 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <BrandTile size={42} />
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={type.h3} numberOfLines={1}>{c.name}</Text>
-            <Text style={type.small} numberOfLines={2}>{c.address}</Text>
-          </View>
-        </View>
-        <Pill text={today?.open ? `Open today · ${hourLabel(today.from)} – ${hourLabel(today.to)}` : 'Closed today'} tone={today?.open ? 'ok' : ''} />
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Btn label="Call" icon="phone" kind="line" small style={{ flex: 1 }} onPress={() => callClinic(c.mobile)} />
-          <Btn label="Directions" icon="nav" kind="line" small style={{ flex: 1 }} onPress={() => openDirections(c)} />
-        </View>
-      </Card>
-    </Section>
-  );
-
-  return (
-    <Screen hideHeader tabbed>
-      {intro}
-      <ActionStrip items={actions} />
-      {loading ? <HomeSkeleton /> : desktop ? (
-        <Cols ratio={[2, 1]} gap={32}>
-          <>{nextBlock}{petsBlock}</>
-          <>{attention}{clinicBlock}</>
-        </Cols>
-      ) : <>{attention}{nextBlock}{petsBlock}{clinicBlock}</>}
-    </Screen>
-  );
-}
+/* ---------- home: see ownerHome.tsx ---------- */
+export { OwnerHome } from './ownerHome';
 
 /* ---------- pets ---------- */
 export function OwnerPets() {
@@ -309,7 +143,7 @@ export function OwnerAppts() {
             { key: 'd', label: 'Date', flex: 1.5, render: a => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}><DateTile date={a.date} size="sm" /><Cell title={fmtD(a.date)} sub={`${t12(a.time)} · ${rel(a.date)}`} /></View> },
             { key: 's', label: 'Service', flex: 1.6, render: a => a.service },
             { key: 'p', label: 'Pet', flex: 1.2, render: a => { const p = sel.pet(db, a.petId)!; return <Cell left={<PetAvatar pet={p} size={32} />} title={p.name} />; } },
-            { key: 'st', label: 'Status', width: 160, render: a => <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} /> },
+            { key: 'st', label: 'Status', width: 160, render: a => <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge /> },
           ]} />
       ) : (
         <Group>
@@ -320,7 +154,7 @@ export function OwnerAppts() {
               <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                 <Text style={type.h3} numberOfLines={1}>{a.service}</Text>
                 <T.Small numberOfLines={1}>{p.name} · {t12(a.time)}</T.Small>
-                <View style={{ marginTop: 3 }}><Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} /></View>
+                <View style={{ marginTop: 3 }}><Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge /></View>
               </View>
               <PetAvatar pet={p} size={40} />
             </Pressable>
@@ -343,29 +177,30 @@ export function OwnerBills() {
   const due = sum(unpaid, billBalance), checking = sum(pending, billBalance), paidTotal = sum(bills.filter(b => billState(b) === 'paid'), billTotal);
   const pet = (b: typeof bills[0]) => sel.pet(db, b.petId)!;
 
-  const mini = (label: string, value: string) => (
-    <View style={{ gap: 2, minWidth: 120 }}><Text style={type.small}>{label}</Text><Text style={[type.h2, { fontSize: 17 }]}>{value}</Text></View>
-  );
   return (
     <Screen title="Bills" back={false} big tabbed sub="Bills from your visits, payments and receipts.">
-      <Card style={wide ? { flexDirection: 'row', alignItems: 'center', gap: 32 } : { gap: 16 }}>
-        <View style={{ flex: wide ? 1 : undefined, gap: 2 }}>
-          <Text style={type.small}>Balance due</Text>
-          <Text style={[o.balance, due > 0 && { color: colors.accentDeep }]}>{money(due)}</Text>
-          <Text style={[type.small, { marginTop: 4 }]}>Pay by GCash, another e-wallet, bank transfer, or cash at the clinic.</Text>
+      <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+        <View style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line, padding: wide ? 20 : 18, flexDirection: wide ? 'row' : 'column', gap: wide ? 32 : 4, alignItems: wide ? 'center' : 'flex-start' }}>
+          <View style={{ flex: wide ? 1 : undefined, gap: 2 }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.ink2 }}>Balance due</Text>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 40, fontWeight: '600', color: colors.ink, letterSpacing: -1 }}>{money(due)}</Text>
+          </View>
+          <View style={wide ? { flexDirection: 'row', gap: 32, paddingLeft: 32, borderLeftWidth: 1, borderLeftColor: colors.line } : { flexDirection: 'row', gap: 32, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.line, width: '100%' }}>
+            <View style={{ gap: 1 }}><Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink2 }}>Being checked</Text><Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '700', color: colors.ink }}>{money(checking)}</Text></View>
+            <View style={{ gap: 1 }}><Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink2 }}>Paid so far</Text><Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '700', color: colors.ink }}>{money(paidTotal)}</Text></View>
+          </View>
         </View>
-        <View style={[{ flexDirection: 'row', gap: 32 }, wide ? { paddingLeft: 32, borderLeftWidth: 1, borderLeftColor: colors.line } : { paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.line }]}>
-          {mini('Being checked', money(checking))}
-          {mini('Paid so far', money(paidTotal))}
+        <View style={{ backgroundColor: colors.surface, paddingHorizontal: 18, paddingVertical: 12 }}>
+          <Text style={[type.small, { fontSize: 12.5 }]}>Pay by GCash, e-wallet, bank transfer, or cash at the clinic.</Text>
         </View>
-      </Card>
+      </View>
 
       <Section title="To pay">
         {open.length ? (
           <Group>
             {open.map(b => { const st = billState(b); return (
               <Row key={b.id} left={<PetAvatar pet={pet(b)} size={40} />} title={money(billBalance(b))} sub={`${pet(b).name} · visit on ${fmtD(b.date)}`}
-                right={st === 'unpaid' ? undefined : <Pill text={BILL[st][0]} tone={BILL[st][1]} />}
+                right={st === 'unpaid' ? undefined : <Pill text={BILL[st][0]} tone={BILL[st][1]} badge />}
                 action={st === 'unpaid' ? <Btn label="Pay now" small onPress={() => nav.navigate('PayBill', { id: b.id })} /> : undefined}
                 onPress={() => nav.navigate('BillDetail', { id: b.id })} />
             ); })}
@@ -381,7 +216,7 @@ export function OwnerBills() {
                 { key: 'd', label: 'Visit date', flex: 1.2, render: b => fmtD(b.date) },
                 { key: 'p', label: 'Pet', flex: 1.4, render: b => <Cell left={<PetAvatar pet={pet(b)} size={32} />} title={pet(b).name} /> },
                 { key: 'a', label: 'Amount', flex: 1, align: 'right', render: b => <Text style={[type.h3, { fontSize: 14 }]}>{money(billTotal(b))}</Text> },
-                { key: 's', label: 'Status', width: 120, render: b => <Pill text={BILL[billState(b)][0]} tone={BILL[billState(b)][1]} /> },
+                { key: 's', label: 'Status', width: 120, render: b => <Pill text={BILL[billState(b)][0]} tone={BILL[billState(b)][1]} badge /> },
               ]} />
           ) : (
             <Group>{paid.map(b => <Row key={b.id} left={<PetAvatar pet={pet(b)} size={40} />} title={money(billTotal(b))} sub={`${pet(b).name} · ${fmtD(b.date)}`} right={<Pill text="Paid" tone="ok" />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />)}</Group>
@@ -447,21 +282,17 @@ export function ClinicInfo() {
 }
 
 const o = StyleSheet.create({
-  hello: { fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
-  action: { flex: 1, minWidth: 0, gap: 18, padding: 18, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
-  actionPrimary: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  actionIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  qa: { flex: 1, alignItems: 'center', gap: 8 },
-  qaIcon: { width: 56, height: 56, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', ...shadow },
-  qaBadge: { position: 'absolute', top: -5, right: -7 },
-  qaLabel: { fontSize: 12.5, fontWeight: '500', color: colors.ink },
-  dateTile: { width: 60, height: 64, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  dateMon: { fontSize: 11, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 0.6 },
-  dateDay: { fontSize: 22, lineHeight: 26, fontWeight: '700', color: colors.accentDeep },
-  petCard: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
+  // Date tile
+  dateTile: { width: 54, height: 58, borderRadius: 8, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
+  dateMon: { fontFamily: FONT, fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.75)' },
+  dateDay: { fontFamily: FONT, fontSize: 22, lineHeight: 26, fontWeight: '700', color: '#fff' },
+
+  // Pet cards
+  petCard: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
   addCard: { alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.lineStrong, backgroundColor: 'transparent' },
+  petName: { fontFamily: DISPLAY, fontSize: 21, lineHeight: 25, fontWeight: '600', color: colors.ink, letterSpacing: -0.4, flexShrink: 1 },
   petRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 16 },
   visit: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
-  balance: { fontSize: 32, lineHeight: 38, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
+  balance: { fontFamily: FONT, fontSize: 30, lineHeight: 36, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },
   clinicImg: { width: '100%', height: 190, backgroundColor: colors.subtle },
 });

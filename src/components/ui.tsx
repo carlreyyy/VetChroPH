@@ -1,6 +1,6 @@
-// Shared building blocks (design system v3). Every screen is composed from these so all roles look the same.
-// Principles: white cards with a hairline border and one soft shadow, one navy for actions, status as dot + text,
-// one radius scale (8 / 12 / 16 / 20), sentence-case labels.
+// Shared building blocks (design system v5, "The Care Line"). Every screen is composed from these.
+// Principles: paper on linen separated by hairlines (no resting shadows), navy for the main action, clinic blue for
+// links and selection, status as dot + text, sentence-case labels, 44 px touch targets.
 import React from 'react';
 import {
   ActivityIndicator, Animated, Image, ImageSourcePropType, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleProp, StyleSheet, Text,
@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radius, shadow, space, toneColors, type, Tone } from '../theme';
+import { colors, radius, shadow, space, toneColors, type, Tone, FONT, DISPLAY } from '../theme';
 import { Icon, IconName } from './Icon';
 import { initials } from '../utils/format';
 import { PEOPLE_PHOTOS } from '../data/photos';
@@ -85,19 +85,20 @@ export function PageHeader({ title, back = true, right, sub }: { title?: string;
   const nav = useNavigation();
   const canBack = back && nav.canGoBack();
   return (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: 10 }}>
       {canBack && (
         <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => nav.goBack()}
           style={(st: PState) => [s.backLink, st.hovered && { backgroundColor: colors.hover }]}>
-          <Icon name="chevL" size={16} color={colors.ink2} /><Text style={{ fontSize: 13.5, fontWeight: '500', color: colors.ink2 }}>Back</Text>
+          <Icon name="chevL" size={15} color={colors.ink3} />
+          <Text style={{ fontFamily: FONT, fontSize: 13, fontWeight: '500', color: colors.ink3 }}>Back</Text>
         </Pressable>
       )}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 44 }}>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={s.pageTitle} numberOfLines={1} accessibilityRole="header">{title}</Text>
-          {sub && <Text style={[type.small, { fontSize: 14.5, lineHeight: 20, marginTop: 4 }]}>{sub}</Text>}
+          <Text style={s.pageTitle} numberOfLines={2} accessibilityRole="header">{title}</Text>
+          {sub && <Text style={[type.small, { fontSize: 14, lineHeight: 20, color: colors.ink2, marginTop: 3 }]}>{sub}</Text>}
         </View>
-        {right}
+        {right && <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flexShrink: 0 }}>{right}</View>}
       </View>
     </View>
   );
@@ -138,12 +139,12 @@ export function Btn({ label, onPress, kind = 'primary', icon, iconRight, small, 
   );
 }
 const BTN: Record<BtnKind, { bg: string; fg: string; border: string; hover?: string }> = {
-  primary: { bg: colors.accentDeep, fg: '#fff', border: colors.accentDeep, hover: '#1D3560' },
-  soft: { bg: colors.accentSoft, fg: colors.accentDeep, border: colors.accentSoft, hover: '#DCE9F7' },
-  line: { bg: colors.surface, fg: colors.accentDeep, border: colors.lineStrong, hover: colors.hover },
-  ghost: { bg: 'transparent', fg: colors.accentDeep, border: 'transparent', hover: colors.hover },
-  danger: { bg: colors.surface, fg: colors.bad, border: '#EBC2BD', hover: '#FDF6F5' },
-  dangerFill: { bg: colors.bad, fg: '#fff', border: colors.bad, hover: '#A93224' },
+  primary:    { bg: colors.accentDeep, fg: '#fff',        border: colors.accentDeep, hover: '#203A66' },
+  soft:       { bg: colors.accentSoft, fg: colors.accentDeep, border: colors.accentSoft, hover: '#D5E1EE' },
+  line:       { bg: colors.surface,    fg: colors.accentDeep, border: colors.lineStrong, hover: colors.hover },
+  ghost:      { bg: 'transparent',     fg: colors.accentDeep, border: 'transparent',    hover: colors.hover },
+  danger:     { bg: colors.surface,    fg: colors.bad,    border: '#E3BDB4',            hover: colors.badBg },
+  dangerFill: { bg: colors.bad,        fg: '#fff',        border: colors.bad,            hover: '#8F2F22' },
 };
 
 export function IconBtn({ name, onPress, label, badge, count, size = 22, framed }: { name: IconName; onPress?: () => void; label: string; badge?: boolean; count?: number; size?: number; framed?: boolean }) {
@@ -160,8 +161,8 @@ export function IconBtn({ name, onPress, label, badge, count, size = 22, framed 
 export function LinkBtn({ label, onPress, icon }: { label: string; onPress: () => void; icon?: boolean }) {
   return (
     <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" style={(st: PState) => [{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: 2 }, st.hovered && { opacity: 0.75 }, st.pressed && { opacity: 0.5 }]}>
-      <Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>{label}</Text>
-      {icon !== false && <Icon name="chevR" size={15} color={colors.accentDeep} />}
+      <Text style={{ fontFamily: FONT, color: colors.teal, fontWeight: '600', fontSize: 13.5 }}>{label}</Text>
+      {icon !== false && <Icon name="chevR" size={15} color={colors.teal} />}
     </Pressable>
   );
 }
@@ -223,10 +224,10 @@ export function IconTile({ name, size = 36, danger, tone, solid }: { name: IconN
 export function Section({ title, action, onAction, children, sub }: { title: string; action?: string; onAction?: () => void; children?: React.ReactNode; sub?: string }) {
   return (
     <View style={{ gap: space.md }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 24 }}>
-        <View style={{ flex: 1, minWidth: 0 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, minHeight: 22 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text style={s.sectionTitle} accessibilityRole="header">{title}</Text>
-          {!!sub && <Text style={[type.small, { marginTop: 2 }]}>{sub}</Text>}
+          {!!sub && <Text style={[type.small, { fontSize: 13, marginTop: 1 }]}>{sub}</Text>}
         </View>
         {action && onAction && <LinkBtn label={action} onPress={onAction} />}
       </View>
@@ -235,19 +236,19 @@ export function Section({ title, action, onAction, children, sub }: { title: str
   );
 }
 
-/** Status as a small dot and colored text. Replaces filled pills, which made screens noisy. */
-export function Pill({ text, tone = '', chip }: { text: string; tone?: Tone; chip?: boolean }) {
-  const c = tone ? toneColors(tone).fg : colors.ink2;
-  if (chip) return (
-    <View style={[s.chipPill, { backgroundColor: tone ? toneColors(tone).bg : colors.subtle }]}>
-      <View style={[s.pillDot, { backgroundColor: c }]} />
-      <Text style={[s.pillText, { color: c, fontSize: 12.5 }]} numberOfLines={1}>{text}</Text>
+/** Status display. `chip` = subtle tinted bg. `badge` = solid filled (GeneX-style). Default = dot + text. */
+export function Pill({ text, tone = '', chip, badge }: { text: string; tone?: Tone; chip?: boolean; badge?: boolean }) {
+  const tc = toneColors(tone);
+  if (chip || badge) return (
+    <View style={[s.chipPill, { backgroundColor: tone ? tc.bg : colors.subtle }]}>
+      <View style={[s.pillDot, { backgroundColor: tone ? tc.fg : colors.ink3 }]} />
+      <Text style={[s.pillText, { color: tone ? tc.fg : colors.ink2, fontSize: 12.5 }]} numberOfLines={1}>{text}</Text>
     </View>
   );
   return (
     <View style={s.pill}>
-      <View style={[s.pillDot, { backgroundColor: tone ? c : colors.ink3 }]} />
-      <Text style={[s.pillText, { color: c }]} numberOfLines={1}>{text}</Text>
+      <View style={[s.pillDot, { backgroundColor: tone ? tc.fg : colors.ink3 }]} />
+      <Text style={[s.pillText, { color: tone ? tc.fg : colors.ink2 }]} numberOfLines={1}>{text}</Text>
     </View>
   );
 }
@@ -257,35 +258,43 @@ export const CountBadge = ({ n, tone = 'dot' }: { n: number; tone?: 'dot' | 'nav
   ? <View style={[s.count, tone === 'navy' && { backgroundColor: colors.accentDeep }]}><Text style={s.countText}>{n > 99 ? '99+' : n}</Text></View>
   : null;
 
-/** One metric inside a StatGrid. */
-export function Stat({ value, label, onPress, alert }: { value: string | number; label: string; onPress?: () => void; alert?: boolean; dark?: boolean; icon?: IconName }) {
+/** One metric inside a StatGrid. tileColor accepts a hex for vibrant accent tiles. */
+export function Stat({ value, label, onPress, alert, dark, icon, tileColor, tileBg }: { value: string | number; label: string; onPress?: () => void; alert?: boolean; dark?: boolean; icon?: IconName; tileColor?: string; tileBg?: string }) {
+  if (dark) return (
+    <Pressable disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}`}
+      style={(st: PState) => [s.stat, s.statCard, s.statDark, onPress && st.hovered && { backgroundColor: '#214080' }]}>
+      <View style={s.statIconDark}><Icon name={icon || 'calendar'} size={16} color="rgba(255,255,255,0.85)" strokeWidth={1.8} /></View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[s.statValue, { color: '#fff', fontSize: 26, letterSpacing: -0.6 }]} numberOfLines={1}>{value}</Text>
+        <Text style={[type.small, { fontSize: 12, color: 'rgba(255,255,255,0.65)' }]} numberOfLines={2}>{label}</Text>
+      </View>
+    </Pressable>
+  );
+  const ic = alert ? colors.bad : tileColor || colors.accent;
+  const ibg = alert ? colors.badBg : tileBg || colors.accentSoft;
   return (
-    <Pressable disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}`} style={(st: PState) => [s.stat, onPress && { backgroundColor: hoverBg(st) }]}>
-      <Text style={[s.statValue, alert && { color: colors.bad }]} numberOfLines={1}>{value}</Text>
-      <Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={2}>{label}</Text>
+    <Pressable disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}`}
+      style={(st: PState) => [s.stat, s.statCard, onPress && st.hovered && { borderColor: colors.lineStrong, backgroundColor: colors.subtle }]}>
+      {icon && <View style={[s.statIcon, { backgroundColor: ibg }]}><Icon name={icon} size={16} color={ic} strokeWidth={1.8} /></View>}
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[s.statValue, { color: alert ? colors.bad : tileColor || colors.ink }]} numberOfLines={1}>{value}</Text>
+        <Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={2}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
-/** Metrics in one bordered strip: 2×2 on phones, one row on tablets. */
+/** Metrics as individual cards in a row (2 per row on phone). */
 export function StatGrid({ children }: { children: React.ReactNode }) {
-  const wide = useWide();
   const items = React.Children.toArray(children).filter(Boolean);
-  const perRow = wide ? items.length : 2;
-  const rows: React.ReactNode[][] = [];
-  items.forEach((c, i) => { (rows[Math.floor(i / perRow)] ||= []).push(c); });
   return (
-    <View style={s.group}>
-      {rows.map((r, ri) => (
-        <View key={ri} style={[{ flexDirection: 'row' }, ri > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line }]}>
-          {r.map((c, ci) => <View key={ci} style={[{ flex: 1 }, ci > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: colors.line }]}>{c}</View>)}
-        </View>
-      ))}
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+      {items.map((c, i) => <View key={i} style={{ flex: 1, minWidth: 130 }}>{c}</View>)}
     </View>
   );
 }
 
-/** Row of shortcut actions. */
-export function QuickActions({ items }: { items: [label: string, icon: IconName, onPress: () => void, badge?: number][] }) {
+/** Row of shortcut actions. tileColor/tileBg can be passed as 5th/6th tuple element. */
+export function QuickActions({ items }: { items: [label: string, icon: IconName, onPress: () => void, badge?: number, tileColor?: string, tileBg?: string][] }) {
   const { wide } = useBP();
   if (wide) return (
     <Group>{items.map(([l, i, fn, n]) => (
@@ -294,13 +303,15 @@ export function QuickActions({ items }: { items: [label: string, icon: IconName,
   );
   return (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      {items.map(([l, i, fn, n]) => (
+      {items.map(([l, i, fn, n, tc, tb]) => (
         <Pressable key={l} onPress={fn} accessibilityRole="button" accessibilityLabel={l} style={(st: PState) => [s.qa, { backgroundColor: hoverBg(st, colors.surface) }]}>
-          <View>
-            <Icon name={i} size={20} color={colors.accentDeep} />
+          <View style={{ position: 'relative' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: tb || colors.accentSoft }}>
+              <Icon name={i} size={20} color={tc || colors.accent} />
+            </View>
             {!!n && <View style={s.qaBadge}><Text style={s.countText}>{n}</Text></View>}
           </View>
-          <Text style={{ fontSize: 12, lineHeight: 15, minHeight: 30, fontWeight: '500', color: colors.ink, textAlign: 'center' }} numberOfLines={2}>{l}</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 12, lineHeight: 15, minHeight: 30, fontWeight: '500', color: colors.ink, textAlign: 'center' }} numberOfLines={2}>{l}</Text>
         </Pressable>
       ))}
     </View>
@@ -310,10 +321,10 @@ export function QuickActions({ items }: { items: [label: string, icon: IconName,
 export function Empty({ icon = 'info', title, sub, action }: { icon?: IconName; title: string; sub?: string; action?: React.ReactNode }) {
   return (
     <View style={s.empty}>
-      <View style={s.emptyIcon}><Icon name={icon} size={22} color={colors.accent} /></View>
-      <Text style={[type.h3, { textAlign: 'center' }]}>{title}</Text>
-      {sub && <Text style={[type.small, { textAlign: 'center', maxWidth: 300 }]}>{sub}</Text>}
-      {action && <View style={{ marginTop: 8 }}>{action}</View>}
+      <View style={s.emptyIcon}><Icon name={icon} size={20} color={colors.accent} strokeWidth={1.8} /></View>
+      <Text style={[type.h3, { textAlign: 'center', letterSpacing: -0.2 }]}>{title}</Text>
+      {sub && <Text style={[type.small, { textAlign: 'center', maxWidth: 280, lineHeight: 20 }]}>{sub}</Text>}
+      {action && <View style={{ marginTop: 10 }}>{action}</View>}
     </View>
   );
 }
@@ -361,7 +372,7 @@ export function Avatar({ name, size = 40, photo }: { name: string; size?: number
   if (src) return <Image source={src} accessibilityIgnoresInvertColors style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.subtle }} />;
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: size * 0.36 }}>{initials(name)}</Text>
+      <Text style={{ fontFamily: FONT, color: colors.accentDeep, fontWeight: '600', fontSize: size * 0.36 }}>{initials(name)}</Text>
     </View>
   );
 }
@@ -394,7 +405,7 @@ export function Tabs<K extends string>({ options, value, onChange }: { options: 
         const on = k === value;
         return (
           <Pressable key={k} accessibilityRole="tab" accessibilityLabel={l} accessibilityState={{ selected: on }} onPress={() => onChange(k)} style={(st: PState) => [s.tab, on && s.tabOn, !on && st.hovered && { borderBottomColor: colors.lineStrong }]}>
-            <Text style={[s.tabText, on && { color: colors.accentDeep, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
+            <Text style={[s.tabText, on && { color: colors.teal, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
             {!!n && <View style={s.count}><Text style={s.countText}>{n}</Text></View>}
           </Pressable>
         );
@@ -412,8 +423,8 @@ export function SegControl<K extends string>({ options, value, onChange, style }
         return (
           <Pressable key={k} onPress={() => onChange(k)} accessibilityRole="tab" accessibilityLabel={l} accessibilityState={{ selected: on }}
             style={(st: PState) => [s.segcItem, on ? s.segcOn : st.hovered ? { backgroundColor: 'rgba(255,255,255,0.6)' } : null]}>
-            <Text style={[s.segcText, on && { color: colors.accentDeep, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
-            {n != null && n > 0 && <Text style={[s.segcN, on && { color: colors.accentDeep }]}>{n}</Text>}
+            <Text style={[s.segcText, on && { color: colors.teal, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
+            {n != null && n > 0 && <Text style={[s.segcN, on && { color: colors.teal }]}>{n}</Text>}
           </Pressable>
         );
       })}
@@ -446,7 +457,7 @@ export function Seg<K extends string>({ label, options, value, onChange, error, 
           return (
             <Pressable key={k} onPress={() => onChange(k)} accessibilityRole="radio" accessibilityState={{ selected: on }}
               style={(st: PState) => [s.seg, wrap && { flexBasis: '30%', flexGrow: 1 }, on ? s.segOn : st.hovered ? { borderColor: colors.lineStrong } : null]}>
-              <Text style={[s.segText, on && { color: colors.accentDeep, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
+              <Text style={[s.segText, on && { color: colors.teal, fontWeight: '600' }]} numberOfLines={1}>{l}</Text>
             </Pressable>
           );
         })}
@@ -459,7 +470,7 @@ export function Seg<K extends string>({ label, options, value, onChange, error, 
 export function Toggle({ value, onChange, label }: { value: boolean; onChange: () => void; label: string }) {
   return (
     <Pressable accessibilityRole="switch" accessibilityLabel={label} accessibilityState={{ checked: value }} onPress={onChange} hitSlop={8}
-      style={[s.sw, value && { backgroundColor: colors.accentDeep }]}>
+      style={[s.sw, value && { backgroundColor: colors.teal }]}>
       <View style={[s.swKnob, value && { transform: [{ translateX: 18 }] }]} />
     </Pressable>
   );
@@ -469,7 +480,7 @@ export function Check({ value, onChange, label, error }: { value: boolean; onCha
   return (
     <View style={{ gap: 6 }}>
       <Pressable onPress={onChange} accessibilityRole="checkbox" accessibilityState={{ checked: value }} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-        <View style={[s.check, value && { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep }]}>{value && <Icon name="check" size={14} color="#fff" strokeWidth={2.6} />}</View>
+        <View style={[s.check, value && { backgroundColor: colors.teal, borderColor: colors.teal }]}>{value && <Icon name="check" size={14} color="#fff" strokeWidth={2.6} />}</View>
         <Text style={[type.body, { flex: 1, fontSize: 14, lineHeight: 20 }]}>{label}</Text>
       </Pressable>
       {error && <FieldError text={error} />}
@@ -495,6 +506,39 @@ export function Field({ label, error, hint, icon, secure, style, ...p }: TextInp
     </View>
   );
 }
+/**
+ * Six-box verification code. One real (invisible) input sits on top of the boxes, so typing, pasting and SMS
+ * autofill all work; the boxes only draw what was typed and where the next digit goes.
+ */
+export function CodeInput({ value, onChange, error, autoFocus, length = 6 }: { value: string; onChange: (v: string) => void; error?: string; autoFocus?: boolean; length?: number }) {
+  const [focus, setFocus] = React.useState(!!autoFocus);
+  const digits = value.split('');
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ position: 'relative' }}>
+        <View style={{ flexDirection: 'row', gap: 8 }} pointerEvents="none">
+          {Array.from({ length }).map((_, i) => {
+            const active = focus && i === Math.min(value.length, length - 1);
+            return (
+              <View key={i} style={[s.codeBox, !!digits[i] && { borderColor: colors.ink2 }, active && s.codeBoxOn, !!error && { borderColor: colors.bad }]}>
+                <Text style={s.codeDigit}>{digits[i] || ''}</Text>
+                {active && !digits[i] && <View style={s.codeCaret} />}
+              </View>
+            );
+          })}
+        </View>
+        <TextInput value={value} autoFocus={autoFocus} maxLength={length} keyboardType="number-pad" inputMode="numeric"
+          autoComplete="one-time-code" textContentType="oneTimeCode" accessibilityLabel={`${length}-digit code`}
+          onChangeText={v => onChange(v.replace(/\D/g, '').slice(0, length))}
+          onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+          caretHidden selectionColor="transparent"
+          style={[StyleSheet.absoluteFill, { opacity: 0, color: 'transparent', fontSize: 1 }, { outlineStyle: 'none' } as never]} />
+      </View>
+      {error && <FieldError text={error} />}
+    </View>
+  );
+}
+
 export const FieldError = ({ text }: { text: string }) => (
   <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}><Icon name="alert" size={13} color={colors.bad} /><Text style={[type.small, { fontSize: 12.5, color: colors.bad, flex: 1 }]}>{text}</Text></View>
 );
@@ -510,12 +554,12 @@ export function Picker<K extends string>({ label, options, value, onChange, erro
           return (
             <View key={k}>
               {i > 0 && <Divider inset={space.lg} />}
-              <Pressable onPress={() => onChange(k)} style={[s.pickRow, on && { backgroundColor: colors.accentSoft }]} accessibilityRole="radio" accessibilityState={{ selected: on }}>
+              <Pressable onPress={() => onChange(k)} style={[s.pickRow, on && { backgroundColor: colors.tileTeal }]} accessibilityRole="radio" accessibilityState={{ selected: on }}>
                 <View style={{ flex: 1 }}>
                   <Text style={s.rowTitle}>{l}</Text>
                   {sub && <Text style={s.rowSub}>{sub}</Text>}
                 </View>
-                <View style={[s.radio, on && { borderColor: colors.accentDeep }]}>{on && <View style={s.radioDot} />}</View>
+                <View style={[s.radio, on && { borderColor: colors.teal }]}>{on && <View style={s.radioDot} />}</View>
               </Pressable>
             </View>
           );
@@ -528,72 +572,102 @@ export function Picker<K extends string>({ label, options, value, onChange, erro
 
 const HAIR = StyleSheet.hairlineWidth;
 export const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  scroll: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: 40, gap: space.xxl },
-  footerWrap: { paddingHorizontal: space.lg, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: HAIR, borderTopColor: colors.line },
-  footer: { flexDirection: 'row', gap: 10 },
-  inlineFooter: { paddingTop: 24, borderTopWidth: 1, borderTopColor: colors.line },
+  screen:        { flex: 1, backgroundColor: colors.bg },
+  scroll:        { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: 40, gap: space.xxl },
+  footerWrap:    { paddingHorizontal: space.lg, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: HAIR, borderTopColor: colors.line },
+  footer:        { flexDirection: 'row', gap: 10 },
+  inlineFooter:  { paddingTop: 24, borderTopWidth: 1, borderTopColor: colors.line },
   inlineActions: { flexDirection: 'row', gap: 12, width: '100%', maxWidth: 440, alignSelf: 'flex-end' },
-  pageTitle: { fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
-  backLink: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: 4, paddingLeft: 4, paddingRight: 10, marginLeft: -6, borderRadius: 8 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.lg, paddingVertical: 6, minHeight: 52 },
-  headerTitle: { fontSize: 17, fontWeight: '600', color: colors.ink, letterSpacing: -0.2 },
-  bigTitle: { fontSize: 24, lineHeight: 30, fontWeight: '700', color: colors.ink, letterSpacing: -0.5 },
-  sectionTitle: { fontSize: 17, lineHeight: 22, fontWeight: '600', color: colors.ink, letterSpacing: -0.2 },
+
+  // Page headers
+  pageTitle:   { fontFamily: DISPLAY, fontSize: 34, lineHeight: 38, fontWeight: '600', color: colors.ink, letterSpacing: -1 },
+  backLink:    { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: 4, paddingLeft: 4, paddingRight: 10, marginLeft: -6, borderRadius: 8 },
+  header:      { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.lg, paddingVertical: 6, minHeight: 52 },
+  headerTitle: { fontFamily: FONT, fontSize: 17, fontWeight: '600', color: colors.ink, letterSpacing: -0.2 },
+  bigTitle:    { fontFamily: DISPLAY, fontSize: 28, lineHeight: 32, fontWeight: '600', color: colors.ink, letterSpacing: -0.8 },
+  sectionTitle: { fontFamily: DISPLAY, fontSize: 19, lineHeight: 24, fontWeight: '600', color: colors.ink, letterSpacing: -0.3 },
   back: { width: 36, height: 36, alignItems: 'flex-start', justifyContent: 'center', marginLeft: -4 },
-  btn: { height: 44, borderRadius: radius.md, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, flexShrink: 1 },
-  btnSm: { height: 36, paddingHorizontal: 14, borderRadius: 10 },
-  btnText: { fontSize: 15, fontWeight: '600' },
-  iconBtn: { width: 40, height: 40, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+
+  // Buttons
+  btn:    { height: 46, borderRadius: radius.md, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, flexShrink: 1 },
+  btnSm:  { height: 40, paddingHorizontal: 14, borderRadius: 8 },
+  btnText: { fontFamily: FONT, fontSize: 14, fontWeight: '600' },
+
+  // Icon buttons
+  iconBtn:       { width: 44, height: 44, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   iconBtnFramed: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
-  badge: { position: 'absolute', top: 8, right: 9, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dot, borderWidth: 1.5, borderColor: colors.surface },
-  iconCount: { position: 'absolute', top: 4, right: 3, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.surface },
-  card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: space.lg, ...shadow },
+  badge:         { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dot, borderWidth: 1.5, borderColor: colors.surface },
+  iconCount:     { position: 'absolute', top: 3, right: 2, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.surface },
+
+  // Containers
+  card:     { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: space.lg },
   cardTint: { backgroundColor: colors.subtle, borderColor: colors.subtle, shadowOpacity: 0, elevation: 0 },
-  group: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
-  qa: { flex: 1, alignItems: 'center', gap: 7, paddingVertical: 12, paddingHorizontal: 4, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
-  qaBadge: { position: 'absolute', top: -6, right: -10, minWidth: 17, height: 17, borderRadius: 9, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: space.lg, minHeight: 56 },
-  rowTitle: { fontSize: 15, fontWeight: '500', color: colors.ink },
-  rowSub: { fontSize: 13, color: colors.ink2, marginTop: 2, lineHeight: 18 },
-  unreadDot: { position: 'absolute', left: 6, top: '50%', marginTop: -3, width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accentDeep },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  pillDot: { width: 6, height: 6, borderRadius: 3 },
-  pillText: { fontSize: 12.5, fontWeight: '600' },
-  chipPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 10, height: 26, borderRadius: radius.sm },
-  stat: { paddingVertical: 14, paddingHorizontal: 16, gap: 3, minHeight: 78 },
-  statValue: { fontSize: 24, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
-  empty: { alignItems: 'center', gap: 6, paddingVertical: 36, paddingHorizontal: 20 },
-  emptyIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  kv: { flexDirection: 'row', justifyContent: 'space-between', gap: 16, paddingVertical: 12, borderBottomWidth: HAIR, borderBottomColor: colors.line },
-  kvValue: { fontSize: 14, fontWeight: '500', color: colors.ink, textAlign: 'right', flexShrink: 1 },
-  banner: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: radius.md, padding: 14 },
-  tabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.line },
-  tab: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, borderBottomWidth: 2, borderBottomColor: 'transparent', marginBottom: -1 },
-  tabOn: { borderBottomColor: colors.accentDeep },
-  tabText: { fontSize: 14, fontWeight: '500', color: colors.ink2 },
-  segc: { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: '#EBF0F6', borderRadius: radius.md, padding: 3, gap: 2 },
-  segcItem: { height: 34, paddingHorizontal: 16, borderRadius: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  segcOn: { backgroundColor: colors.surface, ...shadow, shadowOpacity: 0.08 },
-  segcText: { fontSize: 14, fontWeight: '500', color: colors.ink2 },
-  segcN: { fontSize: 12.5, fontWeight: '600', color: colors.ink3 },
-  count: { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
-  countText: { color: '#fff', fontSize: 10.5, fontWeight: '700' },
-  chip: { height: 34, paddingHorizontal: 14, borderRadius: 17, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, justifyContent: 'center' },
-  chipOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  chipText: { fontSize: 13.5, fontWeight: '500', color: colors.ink },
-  seg: { flex: 1, height: 44, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-  segOn: { backgroundColor: colors.accentSoft, borderColor: colors.accentDeep },
-  segText: { fontSize: 14, fontWeight: '500', color: colors.ink },
-  sw: { width: 44, height: 26, borderRadius: 13, backgroundColor: colors.lineStrong, padding: 3 },
-  swKnob: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' },
-  check: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
-  inp: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, paddingHorizontal: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.lineStrong, borderRadius: radius.md },
+  group:    { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
+  qa:       { flex: 1, alignItems: 'center', gap: 7, paddingVertical: 12, paddingHorizontal: 4, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, ...shadow },
+  qaBadge:  { position: 'absolute', top: -6, right: -10, minWidth: 17, height: 17, borderRadius: 9, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+
+  // Rows
+  row:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: space.lg, minHeight: 56 },
+  rowTitle:   { fontFamily: FONT, fontSize: 14.5, fontWeight: '500', color: colors.ink },
+  rowSub:     { fontFamily: FONT, fontSize: 13, color: colors.ink2, marginTop: 2, lineHeight: 18 },
+  unreadDot:  { position: 'absolute', left: 6, top: '50%', marginTop: -3, width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accent },
+
+  // Pills / badges
+  pill:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  pillDot:  { width: 6, height: 6, borderRadius: 3 },
+  pillText: { fontFamily: FONT, fontSize: 12.5, fontWeight: '600' },
+  chipPill: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 9, height: 24, borderRadius: 6 },
+
+  // Stats
+  stat:        { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, minHeight: 90 },
+  statCard:    { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, ...shadow },
+  statDark:    { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
+  statValue:   { fontFamily: FONT, fontSize: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 },
+  statIcon:    { width: 40, height: 40, borderRadius: 10, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  statIconDark:{ width: 40, height: 40, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+
+  // Empty / misc
+  empty:     { alignItems: 'center', gap: 8, paddingVertical: 40, paddingHorizontal: 24 },
+  emptyIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  kv:        { flexDirection: 'row', justifyContent: 'space-between', gap: 16, paddingVertical: 12, borderBottomWidth: HAIR, borderBottomColor: colors.line },
+  kvValue:   { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink, textAlign: 'right', flexShrink: 1 },
+  banner:    { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: radius.md, padding: 14 },
+
+  // Tabs & segmented controls
+  tabs:     { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.line },
+  tab:      { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, borderBottomWidth: 2, borderBottomColor: 'transparent', marginBottom: -1 },
+  tabOn:    { borderBottomColor: colors.teal },
+  tabText:  { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink2 },
+  segc:     { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: colors.subtle, borderRadius: 10, padding: 3, gap: 2 },
+  segcItem: { height: 32, paddingHorizontal: 14, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  segcOn:   { backgroundColor: colors.surface, ...shadow, shadowOpacity: 0.07 },
+  segcText: { fontFamily: FONT, fontSize: 13.5, fontWeight: '500', color: colors.ink2 },
+  segcN:    { fontFamily: FONT, fontSize: 12, fontWeight: '600', color: colors.ink3 },
+  count:    { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.dot, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+  countText: { fontFamily: FONT, color: '#fff', fontSize: 10.5, fontWeight: '700' },
+  chip:     { height: 32, paddingHorizontal: 13, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, justifyContent: 'center' },
+  chipOn:   { backgroundColor: colors.teal, borderColor: colors.teal },
+  chipText: { fontFamily: FONT, fontSize: 13, fontWeight: '500', color: colors.ink },
+  seg:      { flex: 1, height: 42, borderRadius: 8, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  segOn:    { backgroundColor: colors.tileTeal, borderColor: colors.teal },
+  segText:  { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink },
+
+  // Toggle & checkbox
+  sw:      { width: 44, height: 26, borderRadius: 13, backgroundColor: colors.lineStrong, padding: 3 },
+  swKnob:  { width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' },
+  check:   { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+
+  // Inputs
+  inp:      { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 50, paddingHorizontal: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.lineStrong, borderRadius: 8 },
   inpMulti: { alignItems: 'flex-start', paddingVertical: 13 },
-  inpFocus: { borderColor: colors.accentDeep },
-  inpErr: { borderColor: colors.bad },
-  inpText: { flex: 1, fontSize: 15, color: colors.ink, paddingVertical: 0, minWidth: 0, outlineStyle: 'none' } as never,
-  pickRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: space.lg },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accentDeep },
+  inpFocus: { borderColor: colors.accent, boxShadow: `0 0 0 3px ${colors.accentSoft}` } as never,
+  inpErr:   { borderColor: colors.bad },
+  inpText:  { fontFamily: FONT, flex: 1, fontSize: 15, color: colors.ink, paddingVertical: 0, minWidth: 0, outlineStyle: 'none' } as never,
+  codeBox:  { flex: 1, maxWidth: 58, height: 60, borderRadius: 8, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  codeBoxOn:{ borderColor: colors.accent, borderWidth: 2 },
+  codeDigit:{ fontFamily: DISPLAY, fontSize: 26, fontWeight: '600', color: colors.ink, fontVariant: ['tabular-nums'] },
+  codeCaret:{ position: 'absolute', width: 2, height: 26, borderRadius: 1, backgroundColor: colors.accentDeep },
+  pickRow:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: space.lg },
+  radio:    { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.teal },
 });

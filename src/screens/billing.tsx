@@ -12,7 +12,7 @@ import { Icon } from '../components/Icon';
 import { PetAvatar, QrArt } from '../components/PetArt';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, shadow, type } from '../theme';
+import { colors, radius, shadow, type, FONT, DISPLAY } from '../theme';
 import type { BillItem, PayAccount } from '../types';
 import { BILL, billBalance, billPaid, billState, billTotal, diff, fmtD, fmtDY, money } from '../utils/format';
 
@@ -35,10 +35,28 @@ export function BillDetail() {
 
   return (
     <Screen title="Bill" footer={footer}>
-      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-        <PetAvatar pet={pet} size={52} />
-        <View style={{ flex: 1 }}><T.H2>{pet.name}</T.H2><T.Small>{fmtDY(b.date)}{clinic ? ` · ${owner.name}` : ''}</T.Small></View>
-        <Pill text={BILL[st][0]} tone={BILL[st][1]} />
+      {/* Premium bill hero card */}
+      <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+        <View style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line, padding: 16, flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 13, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="receipt" size={24} color={colors.accent} strokeWidth={1.9} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 32, fontWeight: '600', color: colors.ink, letterSpacing: -0.6 }}>{money(billTotal(b))}</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 13, color: colors.ink2 }}>{fmtDY(b.date)}{clinic ? ` · ${owner.name}` : ''}</Text>
+          </View>
+          <Pill text={BILL[st][0]} tone={BILL[st][1]} badge />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', padding: 14, backgroundColor: colors.surface }}>
+          <PetAvatar pet={pet} size={40} />
+          <View style={{ flex: 1, gap: 1 }}>
+            <Text style={type.h3}>{pet.name}</Text>
+            <Text style={type.small} numberOfLines={1}>{pet.breed}</Text>
+          </View>
+          <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '700', color: bal > 0 ? colors.bad : colors.ok }}>
+            {bal > 0 ? `Due: ${money(bal)}` : 'Paid in full'}
+          </Text>
+        </View>
       </View>
       {clinic && pending && <Banner tone="warn" icon="shield" title="Check the clinic account first" sub={`Open the clinic's ${pending.method} account and look for reference ${pending.ref} for ${money(pending.amount)}. Screenshots can be edited, so always check the real account.`} />}
       {!clinic && pending && <Banner tone="warn" icon="clock" title="Payment proof sent" sub="The clinic is checking its account. You will get a notification when it is confirmed." />}
@@ -59,7 +77,7 @@ export function BillDetail() {
         </Group>
       </Section>}
       {clinic && pending && <Card style={{ alignItems: 'center', gap: 8 }}>
-        <View style={bl.proof}><Icon name="image" size={30} color={colors.accentDeep} /><T.Small>{pending.proof}</T.Small></View>
+        <View style={bl.proof}><Icon name="image" size={30} color={colors.warmOrange} /><T.Small>{pending.proof}</T.Small></View>
         <T.Small>Screenshot uploaded by {pending.by} on {fmtD(pending.date)}</T.Small>
       </Card>}
       {!clinic && bal > 0 && !pending && <T.Small>You can also pay in cash at the clinic. Bills are paid in full.</T.Small>}
@@ -70,7 +88,7 @@ export function BillDetail() {
       }} />}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {['Reference not found in our account', 'Amount does not match', 'Screenshot is unclear'].map(x => (
-            <Pressable key={x} onPress={() => { setWhy(x); setWhyErr(''); }} style={[bl.chip, why === x && { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep }]}><Text style={{ fontWeight: '600', fontSize: 13, color: why === x ? '#fff' : colors.ink }}>{x}</Text></Pressable>
+            <Pressable key={x} onPress={() => { setWhy(x); setWhyErr(''); }} style={[bl.chip, why === x && { backgroundColor: colors.bad, borderColor: colors.bad }]}><Text style={{ fontFamily: FONT, fontWeight: '600', fontSize: 13, color: why === x ? '#fff' : colors.ink }}>{x}</Text></Pressable>
           ))}
         </View>
         <Field label="Reason the owner will see" multiline value={why} onChangeText={v => { setWhy(v); setWhyErr(''); }} error={whyErr} />
@@ -104,20 +122,26 @@ export function PayBill() {
   };
   return (
     <Screen title="Pay bill" sub="Pay with an e-wallet or bank transfer, then send your proof of payment." footer={<Btn label="Submit payment proof" icon="upload" style={{ flex: 1 }} onPress={submit} />}>
-      <View style={bl.amount}>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={type.small}>Amount due</Text>
-          <Text style={{ fontSize: 30, lineHeight: 36, fontWeight: '700', color: colors.accentDeep, letterSpacing: -0.8 }}>{money(bal)}</Text>
+      <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+        <View style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line, padding: 18, flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="wallet" size={24} color={colors.accent} strokeWidth={1.9} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.ink2 }}>Amount due</Text>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 38, fontWeight: '600', color: colors.ink, letterSpacing: -0.8 }}>{money(bal)}</Text>
+          </View>
+        </View>
+        <View style={{ backgroundColor: colors.surface, paddingHorizontal: 18, paddingVertical: 12 }}>
           <Text style={type.small}>{sel.pet(db, b.petId)!.name} · visit on {fmtD(b.date)}</Text>
         </View>
-        <View style={bl.amountIcon}><Icon name="wallet" size={22} color={colors.accentDeep} /></View>
       </View>
       <Section title="Payment method">
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {accounts.map(x => { const on = x.id === accId; return (
             <Pressable key={x.id} onPress={() => { setAccId(x.id); setF({ ...f, proof: '' }); }} style={[bl.method, on && bl.methodOn]} accessibilityRole="radio" accessibilityLabel={x.provider} accessibilityState={{ selected: on }}>
               {on && <View style={bl.methodCheck}><Icon name="check" size={10} color={colors.accentDeep} strokeWidth={3.2} /></View>}
-              <Icon name={KIND_ICON[x.kind]} size={24} color={on ? '#fff' : colors.accentDeep} />
+              <Icon name={KIND_ICON[x.kind]} size={24} color={on ? '#fff' : colors.accent} />
               <Text style={[type.h3, { fontSize: 13.5, textAlign: 'center' }, on && { color: '#fff' }]} numberOfLines={1}>{x.kind === 'Bank transfer' ? 'Bank transfer' : x.provider}</Text>
             </Pressable>
           ); })}
@@ -125,14 +149,14 @@ export function PayBill() {
       </Section>
       {acc && <View style={bl.payCard}>
         {bank
-          ? <View style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}><View style={bl.bankIcon}><Icon name="bank" size={24} color={colors.accentDeep} /></View><Text style={[type.small, { marginTop: 6 }]}>{acc.provider} account number</Text><Text style={{ fontSize: 22, fontWeight: '700', letterSpacing: 0.6, color: colors.ink }}>{acc.number}</Text></View>
+          ? <View style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}><View style={bl.bankIcon}><Icon name="bank" size={24} color={colors.warmOrange} /></View><Text style={[type.small, { marginTop: 6 }]}>{acc.provider} account number</Text><Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '700', letterSpacing: 0.6, color: colors.ink }}>{acc.number}</Text></View>
           : <><View style={bl.qrBox}><QrArt size={168} seed={acc.qrSeed} /></View><Text style={[type.h3, { fontSize: 14, marginTop: 2 }]}>Scan to pay with {acc.provider}</Text></>}
         <View style={{ height: 1, alignSelf: 'stretch', backgroundColor: colors.line, marginVertical: 4 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: 10 }}>
           <View style={{ flex: 1 }}><Text style={type.h3}>{acc.accountName}</Text><T.Small>{acc.provider} · {acc.number} · Business account</T.Small></View>
         </View>
         <Pressable onPress={() => toast(`Copied ${acc.number}`)} accessibilityRole="button" accessibilityLabel="Copy account number" hitSlop={8} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6 }, pressed && { opacity: 0.6 }]}>
-          <Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 14, textDecorationLine: 'underline' }}>Copy account number</Text><Icon name="copy" size={16} color={colors.accentDeep} />
+          <Text style={{ fontFamily: FONT, color: colors.warmOrange, fontWeight: '600', fontSize: 14, textDecorationLine: 'underline' }}>Copy account number</Text><Icon name="copy" size={16} color={colors.warmOrange} />
         </Pressable>
       </View>}
       <Section title="How to pay">
@@ -144,8 +168,8 @@ export function PayBill() {
       </Section>
       <Section title="Proof of payment">
         <Field label="Reference number" placeholder="e.g. 5102 441 902" value={f.ref} onChangeText={v => { setF({ ...f, ref: v }); setErr({ ...err, ref: '' }); }} error={err.ref} />
-        <Pressable onPress={chooseProof} style={[bl.drop, !!err.proof && { borderColor: colors.bad }, !!f.proof && { borderStyle: 'solid', borderColor: colors.accentDeep, backgroundColor: '#F6F8FC' }]} accessibilityRole="button">
-          <Icon name={f.proof ? 'check' : 'upload'} size={20} color={colors.accentDeep} />
+        <Pressable onPress={chooseProof} style={[bl.drop, !!err.proof && { borderColor: colors.bad }, !!f.proof && { borderStyle: 'solid', borderColor: colors.warmOrange, backgroundColor: '#FFF8F3' }]} accessibilityRole="button">
+          <Icon name={f.proof ? 'check' : 'upload'} size={20} color={colors.warmOrange} />
           <Text style={type.h3}>{f.proof || 'Upload payment screenshot'}</Text>
           <T.Small>{f.proof ? 'Click to choose another' : 'JPEG or PNG, up to 10 MB'}</T.Small>
         </Pressable>
@@ -203,14 +227,14 @@ export function Billing() {
             { key: 'p', label: 'Patient', flex: 2, render: b => { const p = sel.pet(db, b.petId)!; return <Cell left={<PetAvatar pet={p} size={34} />} title={p.name} sub={sel.owner(db, b.ownerId)!.name} />; } },
             { key: 'pay', label: 'Payment', flex: 2, wideOnly: true, render: b => { const pay = b.payments.find(x => x.status === 'pending'); return pay ? <Cell title={`${pay.method} · Ref ${pay.ref}`} sub={`Sent ${fmtD(pay.date)}`} /> : '—'; } },
             { key: 't', label: 'Total', width: 110, align: 'right', render: b => money(billTotal(b)) },
-            { key: 's', label: 'Status', width: 130, render: b => { const st = billState(b); return <Pill text={BILL[st][0]} tone={BILL[st][1]} />; } },
+            { key: 's', label: 'Status', width: 130, render: b => { const st = billState(b); return <Pill text={BILL[st][0]} tone={BILL[st][1]} badge />; } },
           ]} />
       : list.length === 0 ? <Empty icon="receipt" title={tab === 'verify' ? 'No payments to check' : 'Nothing here'} sub={tab === 'verify' ? 'E-wallet and bank transfer proofs from owners appear here.' : undefined} /> : (
         <Group>
           {list.map(b => { const p = sel.pet(db, b.petId)!; const pay = b.payments.find(x => x.status === 'pending'); const st = billState(b); return (
             <Row key={b.id} left={<PetAvatar pet={p} size={40} />} title={`${p.name} · ${sel.owner(db, b.ownerId)!.name}`}
               sub={pay ? `${money(pay.amount)} · ${pay.method} · Ref ${pay.ref}` : `${money(billTotal(b))} · ${fmtD(b.date)}`}
-              right={<Pill text={BILL[st][0]} tone={BILL[st][1]} />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />
+              right={<Pill text={BILL[st][0]} tone={BILL[st][1]} badge />} onPress={() => nav.navigate('BillDetail', { id: b.id })} />
           ); })}
         </Group>
       )}
@@ -269,15 +293,15 @@ const bl = StyleSheet.create({
   chip: { paddingHorizontal: 12, height: 34, justifyContent: 'center', borderRadius: 17, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
   qrBox: { padding: 10, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: '#fff' },
   amount: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: 20, ...shadow },
-  amountIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  amountIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.tileOrange, alignItems: 'center', justifyContent: 'center' },
   payCard: { alignItems: 'center', gap: 10, padding: 16, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, ...shadow },
-  bankIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  copy: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 34, borderRadius: radius.md, backgroundColor: colors.accentSoft },
+  bankIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.tileOrange, alignItems: 'center', justifyContent: 'center' },
+  copy: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 34, borderRadius: radius.md, backgroundColor: colors.tileOrange },
   steps: { gap: 12, padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
   method: { flex: 1, height: 80, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, padding: 8, gap: 6, alignItems: 'center', justifyContent: 'center', ...shadow },
   methodCheck: { position: 'absolute', top: 6, right: 6, width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   methodOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  step: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center', marginTop: -1 },
+  step: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.warmOrange, alignItems: 'center', justifyContent: 'center', marginTop: -1 },
   drop: { borderWidth: 1, borderStyle: 'dashed', borderColor: colors.lineStrong, borderRadius: radius.lg, padding: 18, alignItems: 'center', gap: 4, backgroundColor: colors.surface },
   dash: { borderBottomWidth: 1, borderStyle: 'dashed', borderColor: colors.line },
 });

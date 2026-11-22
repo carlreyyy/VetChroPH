@@ -6,7 +6,7 @@
 // Vaccines and deworming are not a separate module: their next due dates are follow-ups that drive reminders.
 import React, { useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Icon } from '../components/Icon';
+import { Icon, IconName } from '../components/Icon';
 import { PET_COVERS } from '../data/photos';
 import { Cols, useBP } from '../components/responsive';
 import { pickFile, fileSize } from '../utils/files';
@@ -16,8 +16,9 @@ import { Banner, Btn, Card, Chips, Empty, Field, Group, Hint, IconBtn, Pill, Row
 import { Sheet, useConfirm } from '../components/overlays';
 import { PetArt, PetAvatar, coatsFor } from '../components/PetArt';
 import { useApp, sel } from '../store/AppStore';
+import { CareLine, careNodes, HEALTH_COLOR, petHealth, RingGlyph } from '../components/care';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, shadow, type } from '../theme';
+import { colors, radius, shadow, type, FONT, DISPLAY } from '../theme';
 import type { FollowKind, Pet, Species } from '../types';
 import { D, FOLLOW_ICON, ago, ageOf, cap, diff, fmtD, fmtDS, fmtDY, followStatus, parseD } from '../utils/format';
 
@@ -45,12 +46,25 @@ export function PetDetail() {
   ) : null;
   const src = PET_COVERS[pet.id];
   const canEdit = role === 'owner' ? pet.ownerId === user!.ownerId : true;
+  const INFO_FACTS: [IconName, string, string][] = [
+    ['paw', 'Species', cap(pet.species)],
+    [pet.sex === 'Male' ? 'male' : 'female', 'Sex', pet.sex],
+    ['scale', 'Weight', `${pet.weight} kg`],
+    ['calendar', 'Birthday', fmtDY(pet.birth)],
+    ['clock', 'Age', ageOf(pet.birth)],
+    ['info', 'Breed', pet.breed],
+  ];
   const infoBlock = <>
           <View style={bp.wide ? pd.infoFlat : pd.info}>
-            {([['Species', cap(pet.species)], ['Breed', pet.breed], ['Sex', pet.sex], ['Weight', `${pet.weight} kg`], ['Birthday', fmtDY(pet.birth)], ['Age', ageOf(pet.birth)]] as const).map(([k, v], idx) => (
-              <View key={k} style={[pd.fact, idx % 2 === 1 && { paddingLeft: 16 }, idx >= 2 && { borderTopWidth: 1, borderTopColor: colors.line }]}>
-                <Text style={[type.small, { fontSize: 12.5 }]}>{k}</Text>
-                <Text style={[type.h3, { fontSize: 14.5 }]} numberOfLines={1}>{v}</Text>
+            {INFO_FACTS.map(([icon, label, value], idx) => (
+              <View key={label} style={[pd.factRow, idx === 0 && { borderTopWidth: 0 }]}>
+                <View style={pd.factIcon}>
+                  <Icon name={icon} size={14} color={colors.teal} strokeWidth={2.2} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: FONT, fontSize: 11.5, color: colors.ink3 }}>{label}</Text>
+                  <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: colors.ink }} numberOfLines={1}>{value}</Text>
+                </View>
               </View>
             ))}
           </View>
@@ -64,6 +78,16 @@ export function PetDetail() {
           {clinic && pet.status === 'active' && <Btn label="Mark as inactive or deceased" kind="line" onPress={() => setSheet('status')} />}
           {clinic && pet.status !== 'active' && <Btn label="Mark as active again" kind="line" onPress={() => act.setPetStatus(pet.id, 'active')} />}
 </>;
+  const health = petHealth(db, pet);
+  const careBand = pet.status === 'active' ? (
+    <View style={pd.care}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <RingGlyph health={health.key} size={16} />
+        <Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '600', color: HEALTH_COLOR[health.key] }}>{health.label}</Text>
+      </View>
+      <CareLine nodes={careNodes(db, pet.id, { past: 3, future: 3 })} />
+    </View>
+  ) : null;
   const historyBlock = <>
           {visits.length === 0 ? <Empty icon="clip" title="No visits yet" sub="Consultation records appear here after each visit." /> : (
             <Group>
@@ -139,6 +163,7 @@ export function PetDetail() {
             </View>
           </View>
           <>
+            {careBand}
             <Tabs options={[['history', 'History'], ['follow', 'Reminders', openF.filter(f => diff(f.date) < 0).length], ['docs', 'Files']]} value={wTab} onChange={setTab} />
             {wTab === 'history' && historyBlock}{wTab === 'follow' && followBlock}{wTab === 'docs' && docsBlock}
           </>
@@ -166,6 +191,7 @@ export function PetDetail() {
             <Text style={[type.small, { fontSize: 14 }]}>{pet.breed} · {ageOf(pet.birth)} · {pet.weight} kg</Text>
             <View style={{ marginTop: 4 }}><Pill chip text={pet.status === 'active' ? 'Active' : pet.status === 'deceased' ? 'Deceased' : 'Inactive'} tone={pet.status === 'active' ? 'ok' : ''} /></View>
           </View>
+        {careBand}
         <Tabs options={[['info', 'Info'], ['history', 'History'], ['follow', 'Reminders', openF.filter(f => diff(f.date) < 0).length], ['docs', 'Files']]} value={tab} onChange={setTab} />
         {tab === 'info' && infoBlock}{tab === 'history' && historyBlock}{tab === 'follow' && followBlock}{tab === 'docs' && docsBlock}
 
@@ -286,7 +312,7 @@ export function PetForm() {
             {!unknownBirth
               ? <Field label="Birthdate" placeholder="YYYY-MM-DD" value={f.birth} onChangeText={v => set('birth', v)} error={err.birth} />
               : <Field label="Estimated age (years)" keyboardType="decimal-pad" value={f.ageYears} onChangeText={v => set('ageYears', v)} error={err.ageYears} />}
-            <Pressable onPress={() => setUnknownBirth(x => !x)} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'flex-start' }}><Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>{unknownBirth ? 'I know the birthdate' : "I don't know the exact birthdate"}</Text></Pressable>
+            <Pressable onPress={() => setUnknownBirth(x => !x)} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'flex-start' }}><Text style={{ color: colors.teal, fontWeight: '600', fontSize: 13.5 }}>{unknownBirth ? 'I know the birthdate' : "I don't know the exact birthdate"}</Text></Pressable>
           </View>,
           <Field label="Weight (kg)" keyboardType="decimal-pad" placeholder="e.g. 8.5" value={f.weight} onChangeText={v => set('weight', v)} error={err.weight} />,
         )}
@@ -302,9 +328,13 @@ export function VisitDetail() {
   const follows = db.followups.filter(f => f.petId === pet.id && f.status === 'open');
   return (
     <Screen title="Visit record" right={user!.role === 'admin' ? <Btn label="Edit" icon="edit" small kind="line" onPress={() => nav.navigate('ConsultForm', { petId: pet.id, visitId: v.id })} /> : undefined}>
-      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-        <PetAvatar pet={pet} size={52} />
-        <View style={{ flex: 1 }}><T.H2>{pet.name}</T.H2><T.Small>{fmtDY(v.date)} · {v.vet}</T.Small></View>
+      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center', padding: 16, backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.line }}>
+        <PetAvatar pet={pet} size={48} square />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ fontFamily: FONT, fontSize: 17, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 }} numberOfLines={1}>{pet.name}</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 13, color: colors.ink2 }}>{fmtDY(v.date)} · {v.vet}</Text>
+          {!!v.diagnosis && <Text style={{ fontFamily: FONT, fontSize: 13, color: colors.ink, marginTop: 1 }} numberOfLines={1}>{v.diagnosis}</Text>}
+        </View>
       </View>
       {!v.diagnosis && <Banner tone="warn" icon="clock" title="Waiting for the veterinarian" sub={`${v.enteredBy || 'Staff'} entered the reason for visit. The veterinarian completes the rest.`} />}
       <Card style={{ gap: 14 }}>
@@ -378,24 +408,27 @@ export function ConsultForm() {
 }
 
 const pd = StyleSheet.create({
+  care: { gap: 16, paddingVertical: 18, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line },
   hero: { backgroundColor: colors.subtle, overflow: 'hidden' },
   heroBtns: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between' },
   round: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.94)', borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
   sheet: { marginTop: -26, borderTopLeftRadius: 26, borderTopRightRadius: 26, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 22, gap: 18 },
   nameCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, paddingVertical: 14 },
-  name: { fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: colors.ink },
-  info: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, ...shadow },
-  infoFlat: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: colors.line },
+  name: { fontFamily: FONT, fontSize: 26, fontWeight: '700', letterSpacing: -0.6, color: colors.ink },
+  info: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 16, paddingBottom: 4, ...shadow },
+  infoFlat: { borderTopWidth: 1, borderTopColor: colors.line },
   fact: { width: '50%', paddingVertical: 12, gap: 2 },
+  factRow:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line },
+  factIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   side: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   sideImg: { width: '100%', height: 230 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
   cell: { width: '50%', flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 13 },
-  cellIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  cellIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
   footer: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   visit: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
   dateBox: { width: 46, height: 50, borderRadius: 10, backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center' },
-  dateMon: { fontSize: 11, fontWeight: '600', color: colors.ink2, textTransform: 'uppercase', letterSpacing: 0.4 },
-  dateDay: { fontSize: 18, fontWeight: '700', color: colors.ink, marginTop: -1 },
+  dateMon: { fontFamily: FONT, fontSize: 12, fontWeight: '500', color: colors.ink2 },
+  dateDay: { fontFamily: FONT, fontSize: 18, fontWeight: '700', color: colors.ink, marginTop: -1 },
   drop: { borderWidth: 1, borderStyle: 'dashed', borderColor: colors.lineStrong, borderRadius: 12, padding: 20, alignItems: 'center', gap: 4, backgroundColor: colors.surface },
 });

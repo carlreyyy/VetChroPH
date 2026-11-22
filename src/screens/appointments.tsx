@@ -3,7 +3,7 @@
 // time, cancel with a reason, check the client in, or mark a no-show (which adds a note to the owner record, D10).
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Avatar, Banner, Btn, Card, Chips, Divider, Empty, Field, FieldError, Group, Hint, IconTile, KV, Pill, Row, Screen, Section, Seg, Stack, T } from '../components/ui';
+import { Avatar, Banner, Btn, Card, Chips, Divider, Empty, Field, FieldError, Group, Hint, IconTile, KV, Pill, Row, Screen, Section, Seg, Stack, T, SegControl } from '../components/ui';
 import { Sheet, useConfirm } from '../components/overlays';
 import { PetAvatar } from '../components/PetArt';
 import { Cols, PState, useBP } from '../components/responsive';
@@ -11,7 +11,7 @@ import { ScheduleTable } from './clinic';
 import { Icon, IconName } from '../components/Icon';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, shadow, space, type } from '../theme';
+import { colors, radius, shadow, space, type, FONT, DISPLAY } from '../theme';
 import type { Appt } from '../types';
 import { APPT, D, DOW, MON, byDateTime, diff, fmtD, fmtDS, isUpcoming, money, normPhone, parseD, rel, t12, ymd } from '../utils/format';
 
@@ -55,7 +55,7 @@ function Stepper({ steps, at }: { steps: string[]; at: number }) {
     <View style={bk.stepper} accessibilityLabel={`Step ${at + 1} of ${steps.length}: ${steps[at]}`}>
       {steps.map((l, i) => (
         <React.Fragment key={l}>
-          {i > 0 && <View style={[bk.stepLine, i <= at && { backgroundColor: colors.accentDeep }]} />}
+          {i > 0 && <View style={[bk.stepLine, i <= at && { backgroundColor: colors.teal }]} />}
           <View style={{ alignItems: 'center', gap: 5, width: 64 }}>
             <View style={[bk.stepDot, i < at && bk.stepDone, i === at && bk.stepNow]}>
               {i < at ? <Icon name="check" size={14} color="#fff" strokeWidth={2.8} /> : <Text style={[bk.stepNum, i === at && { color: '#fff' }]}>{i + 1}</Text>}
@@ -196,7 +196,7 @@ export function Book() {
           <View style={{ gap: 10 }}>
             {db.services.filter(x => x.active).map(x => { const on = f.service === x.name; return (
               <Pressable key={x.id} onPress={() => { setF({ ...f, service: x.name }); setErr({ ...err, service: '' }); }} accessibilityRole="radio" accessibilityLabel={x.name} accessibilityState={{ selected: on }} style={(st: PState) => [bk.svc, on ? bk.svcOn : st.hovered ? { borderColor: colors.lineStrong } : null]}>
-                <View style={[bk.svcIcon, on && { backgroundColor: '#fff' }]}><Icon name={SVC_ICON[x.category] || 'steth'} size={19} color={colors.accentDeep} strokeWidth={2.1} /></View>
+                <View style={[bk.svcIcon, on && { backgroundColor: '#fff' }]}><Icon name={SVC_ICON[x.category] || 'steth'} size={19} color={colors.teal} strokeWidth={2.1} /></View>
                 <View style={{ flex: 1, minWidth: 0 }}><Text style={type.h3}>{x.name}</Text><Text style={type.small}>{x.category} · about {x.minutes} min</Text></View>
                 <Text style={[type.h3, { fontSize: 14 }]}>{money(x.price)}</Text>
                 <View style={[bk.radio, on && bk.radioOn]}>{on && <Icon name="check" size={13} color="#fff" strokeWidth={3} />}</View>
@@ -227,7 +227,7 @@ export function Book() {
           <Group>
             <Row left={<PetAvatar pet={pet} size={44} />} title={pet.name} sub={`${pet.breed} · ${owner?.name || ''}`} />
             <Row icon={SVC_ICON[service?.category || ''] || 'steth'} title={f.service} sub={service ? `About ${service.minutes} min` : undefined} right={<Text style={[type.h3, { fontSize: 14 }]}>{service ? money(service.price) : ''}</Text>} />
-            <Row icon="calendar" title={fmtD(f.date)} sub={`${t12(f.time)} · ${rel(f.date)}`} onPress={() => setStep(steps.indexOf('Schedule'))} right={<Text style={{ color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>Change</Text>} />
+            <Row icon="calendar" title={fmtD(f.date)} sub={`${t12(f.time)} · ${rel(f.date)}`} onPress={() => setStep(steps.indexOf('Schedule'))} right={<Text style={{ color: colors.teal, fontWeight: '600', fontSize: 13.5 }}>Change</Text>} />
             <Row icon="pin" title={db.clinic.name} sub={db.clinic.address} />
           </Group>
         </Section>
@@ -259,10 +259,17 @@ export function BookSuccess() {
       <Btn label="View appointment" full onPress={() => nav.replace('ApptDetail', { id: a.id })} />
       <Btn label={user!.role === 'owner' ? 'Back to home' : 'Back to schedule'} kind="line" full onPress={() => nav.goBack()} />
     </View>}>
-      <View style={{ alignItems: 'center', gap: 8, paddingTop: 40, paddingBottom: 4 }}>
-        <View style={bk.halo}><View style={bk.success}><Icon name="check" size={32} color="#fff" strokeWidth={2.8} /></View></View>
-        <Text style={[type.display, { fontSize: 24, fontWeight: '800', textAlign: 'center' }]}>Appointment confirmed</Text>
-        <Text style={[type.body, { color: colors.ink2, textAlign: 'center', maxWidth: 300 }]}>{user!.role === 'owner' ? 'Your booking is confirmed. We will remind you 1 day and 2 hours before.' : 'The booking is confirmed and the owner was notified.'}</Text>
+      <View style={{ alignItems: 'center', gap: 10, paddingTop: 40, paddingBottom: 4 }}>
+        {/* Triple-ring celebration halo */}
+        <View style={bk.ring2}>
+          <View style={bk.halo}>
+            <View style={bk.success}><Icon name="check" size={34} color="#fff" strokeWidth={2.8} /></View>
+          </View>
+        </View>
+        <View style={{ alignItems: 'center', gap: 6, marginTop: 4 }}>
+          <Text style={{ fontFamily: FONT, fontSize: 24, fontWeight: '700', color: colors.ink, letterSpacing: -0.5, textAlign: 'center' }}>Appointment confirmed</Text>
+          <Text style={[type.body, { color: colors.ink2, textAlign: 'center', maxWidth: 300, lineHeight: 22 }]}>{user!.role === 'owner' ? 'Your booking is confirmed. We will remind you 1 day and 2 hours before.' : 'The booking is confirmed and the owner was notified.'}</Text>
+        </View>
       </View>
       <View style={bk.summary}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, backgroundColor: colors.subtle }}>
@@ -272,7 +279,7 @@ export function BookSuccess() {
         </View>
         {([['steth', 'Service', a.service + (db.services.find(x => x.name === a.service) ? ` · ${money(db.services.find(x => x.name === a.service)!.price)}` : '')], ['calendar', 'Date and time', `${fmtD(a.date)} · ${t12(a.time)}`], ['pin', 'Clinic', db.clinic.name]] as const).map(([i, l, v]) => (
           <View key={l} style={bk.sumRow}>
-            <View style={bk.sumIcon}><Icon name={i} size={16} color={colors.accentDeep} /></View>
+            <View style={bk.sumIcon}><Icon name={i} size={16} color={colors.teal} /></View>
             <View style={{ flex: 1 }}><Text style={[type.small, { fontSize: 12 }]}>{l}</Text><Text style={[type.h3, { fontSize: 14.5 }]}>{v}</Text></View>
           </View>
         ))}
@@ -310,13 +317,26 @@ export function ApptDetail() {
   return (
     <Screen title="Appointment" footer={footer}>
       {p.fresh && <Banner tone="ok" icon="check" title="Appointment confirmed" sub={clinic ? 'The owner was notified.' : `The time was open, so it is confirmed. You will get reminders 1 day and 2 hours before.`} />}
-      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-        <PetAvatar pet={pet} size={60} square />
-        <View style={{ flex: 1, gap: 4 }}>
-          <T.H1>{pet.name}</T.H1>
-          <T.Small>{a.service}</T.Small>
+      {/* Premium hero card: navy date/service band + white pet row */}
+      <View style={ad.hero}>
+        <View style={ad.heroTop}>
+          <View style={ad.dateTile}>
+            <Text style={ad.dateDay}>{parseD(a.date).getDate()}</Text>
+            <Text style={ad.dateMon}>{MON[parseD(a.date).getMonth()]}</Text>
+          </View>
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={ad.heroSvc} numberOfLines={1}>{a.service}</Text>
+            <Text style={ad.heroTime}>{t12(a.time)} · {rel(a.date)}</Text>
+          </View>
+          <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge />
         </View>
-        <Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} />
+        <View style={ad.heroPet}>
+          <PetAvatar pet={pet} size={48} square />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={type.h3}>{pet.name}</Text>
+            <Text style={type.small} numberOfLines={1}>{pet.breed}{clinic ? ` · ${owner.name}` : a.reason ? ` · ${a.reason}` : ''}</Text>
+          </View>
+        </View>
       </View>
       {a.status === 'resched' && a.offer && <Banner tone="info" icon="calendar" title="New time suggested" sub={`${fmtD(a.offer.date)} at ${t12(a.offer.time)}. ${clinic ? 'Waiting for the owner.' : 'Accept it or decline below.'}`} />}
       {a.status === 'cancelled' && a.note && <Banner icon="info" title="Cancelled" sub={a.note} />}
@@ -379,7 +399,7 @@ function MonthCalendar({ value, onChange, disabled, dots = true, selected = true
             const on = selected && d === value, today = diff(d) === 0, n = dots ? count(d) : 0, off = disabled?.(d);
             return (
               <Pressable key={i} disabled={off} onPress={() => onChange(d)} style={[cal.cell, today && !on && cal.cellToday, on && cal.cellOn]} accessibilityRole="button" accessibilityLabel={`${fmtD(d)}${dots ? `, ${n} appointments` : ''}`} accessibilityState={{ selected: on, disabled: off }}>
-                <Text style={[cal.num, off && { color: colors.ink3, fontWeight: '400' }, today && !on && { color: colors.accentDeep, fontWeight: '700' }, on && { color: '#fff', fontWeight: '700' }]}>{parseD(d).getDate()}</Text>
+                <Text style={[cal.num, off && { color: colors.ink3, fontWeight: '400' }, today && !on && { color: colors.teal, fontWeight: '700' }, on && { color: '#fff', fontWeight: '700' }]}>{parseD(d).getDate()}</Text>
                 <View style={[cal.dot, { opacity: n ? 1 : 0 }, on && { backgroundColor: '#fff' }]} />
               </Pressable>
             );
@@ -411,23 +431,21 @@ export function ClinicAppts() {
   return (
     <Screen title="Schedule" back={false} big tabbed sub={wide ? 'Appointments booked online, by phone and walk-ins.' : undefined} right={<View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
       {wide ? <View style={{ width: 210 }}><Seg options={[['list', 'List'], ['cal', 'Calendar']]} value={view} onChange={setView} /></View> : <Pressable onPress={() => setView(view === 'list' ? 'cal' : 'list')} accessibilityRole="button" accessibilityLabel={view === 'list' ? 'Show calendar' : 'Show list'} style={ca.toggle}>
-        <Icon name={view === 'list' ? 'calgrid' : 'list'} size={19} color={colors.accentDeep} />
+        <Icon name={view === 'list' ? 'calgrid' : 'list'} size={19} color={colors.teal} />
       </Pressable>}
       <Btn label={wide ? 'New appointment' : 'New'} icon="plus" small={!wide} onPress={() => nav.navigate('Book', { staff: '1' })} />
     </View>}>
-      {admin && <Card>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <T.H3>Appointment monitoring</T.H3>
-          <View style={{ flexDirection: 'row', gap: 4, backgroundColor: colors.subtle, padding: 3, borderRadius: 12 }}>
-            {(['day', 'week'] as const).map(r => <Pressable key={r} onPress={() => setRange(r)} style={{ paddingHorizontal: 12, height: 30, justifyContent: 'center', borderRadius: 10, backgroundColor: range === r ? colors.surface : 'transparent' }}><Text style={{ fontWeight: '700', fontSize: 12.5, color: range === r ? colors.ink : colors.ink2 }}>{r === 'day' ? 'Today' : 'Last 7 days'}</Text></Pressable>)}
-          </View>
+      {admin && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 16, paddingVertical: 14, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line }}>
+          <SegControl options={[['day', 'Today'], ['week', 'Last 7 days']]} value={range} onChange={setRange} />
+          <Text style={[type.body, { flex: 1, minWidth: 260, color: colors.ink2 }]}>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: '600', color: colors.ink }}>{count(['confirmed', 'checked_in', 'completed', 'resched'])}</Text> booked,{'  '}
+            <Text style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: '600', color: colors.ok }}>{count(['completed'])}</Text> completed,{'  '}
+            <Text style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: '600', color: colors.ink }}>{count(['cancelled'])}</Text> cancelled,{'  '}
+            <Text style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: '600', color: count(['missed']) ? colors.bad : colors.ink }}>{count(['missed'])}</Text> missed
+          </Text>
         </View>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {([['Confirmed', ['confirmed', 'checked_in', 'completed', 'resched'], colors.accentDeep], ['Completed', ['completed'], colors.ok], ['Cancelled', ['cancelled'], colors.ink2], ['Missed', ['missed'], colors.bad]] as const).map(([l, st, c]) => (
-            <View key={l} style={{ flex: 1, alignItems: 'center', gap: 2 }}><Text style={{ fontSize: 22, fontWeight: '700', color: c }}>{count([...st])}</Text><Text style={[type.small, { fontSize: 12 }]}>{l}</Text></View>
-          ))}
-        </View>
-      </Card>}
+      )}
       {wide ? (view === 'cal' ? (
         <Cols ratio={[380, 1]}>
           <MonthCalendar value={day} onChange={setDay} />
@@ -470,7 +488,7 @@ export function ClinicAppts() {
                       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                         <Text style={type.h3} numberOfLines={1}>{p.name} <Text style={{ color: colors.ink2, fontWeight: '400' }}>· {o.name}</Text></Text>
                         <T.Small numberOfLines={1}>{a.service}{a.by === 'staff' ? ' · Phone/walk-in' : ''}{a.handledBy && admin ? ` · ${a.handledBy}` : ''}</T.Small>
-                        <View style={{ marginTop: 2 }}><Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} /></View>
+                        <View style={{ marginTop: 2 }}><Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge /></View>
                       </View>
                     </Pressable>
                   );
@@ -487,57 +505,68 @@ export function ClinicAppts() {
 
 const sp = StyleSheet.create({
   day: { width: 56, height: 68, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  dayOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  dayDow: { fontSize: 12, fontWeight: '500', color: colors.ink2 },
-  dayNum: { fontSize: 18, fontWeight: '700', color: colors.ink },
+  dayOn: { backgroundColor: colors.teal, borderColor: colors.teal },
+  dayDow: { fontFamily: FONT, fontSize: 12, fontWeight: '500', color: colors.ink2 },
+  dayNum: { fontFamily: FONT, fontSize: 18, fontWeight: '700', color: colors.ink },
   slots: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   slot: { width: '31.6%', height: 42, borderRadius: 21, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  slotOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
+  slotOn: { backgroundColor: colors.teal, borderColor: colors.teal },
   slotOff: { backgroundColor: colors.subtle, borderColor: colors.subtle },
-  slotText: { fontSize: 14, fontWeight: '500', color: colors.ink },
+  slotText: { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink },
 });
 const bk = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 4 },
   stepLine: { flex: 1, height: 2, backgroundColor: '#C8D6E8', marginTop: 13, marginHorizontal: -16, maxWidth: 80 },
   stepDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: '#9FB4CF', backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  stepNow: { borderColor: colors.accentDeep, backgroundColor: colors.accentDeep },
-  stepDone: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
-  stepNum: { fontSize: 13, fontWeight: '700', color: colors.accentDeep },
-  stepLabel: { fontSize: 12, color: colors.ink2 },
+  stepNow: { borderColor: colors.teal, backgroundColor: colors.teal },
+  stepDone: { backgroundColor: colors.teal, borderColor: colors.teal },
+  stepNum: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: colors.teal },
+  stepLabel: { fontFamily: FONT, fontSize: 12, color: colors.ink2 },
   ring: { padding: 3, borderRadius: 34, borderWidth: 2, borderColor: 'transparent' },
-  title: { fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 },
+  title: { fontFamily: FONT, fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 },
   svc: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, ...shadow },
-  svcOn: { borderColor: colors.accentDeep, borderWidth: 1.5, paddingVertical: 11.5, paddingHorizontal: 13.5, backgroundColor: colors.accentSoft },
-  tip: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: colors.subtle, borderWidth: 1, borderColor: colors.accentSoft },
-  tipIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
+  svcOn: { borderColor: colors.teal, borderWidth: 1.5, paddingVertical: 11.5, paddingHorizontal: 13.5, backgroundColor: colors.tileTeal },
+  tip: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: colors.subtle, borderWidth: 1, borderColor: colors.tileTeal },
+  tipIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.teal, alignItems: 'center', justifyContent: 'center' },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
-  radioOn: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
+  radioOn: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.teal, alignItems: 'center', justifyContent: 'center' },
   petChip: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingLeft: 8, paddingRight: 14, borderRadius: 28, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
-  petChipOn: { borderColor: colors.accentDeep, borderWidth: 1.5, paddingVertical: 7.5, paddingLeft: 7.5, paddingRight: 13.5, backgroundColor: colors.accentSoft },
-  tick: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center', marginLeft: 2 },
-  picked: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: colors.accentSoft, alignSelf: 'flex-start' },
+  petChipOn: { borderColor: colors.teal, borderWidth: 1.5, paddingVertical: 7.5, paddingLeft: 7.5, paddingRight: 13.5, backgroundColor: colors.tileTeal },
+  tick: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.teal, alignItems: 'center', justifyContent: 'center', marginLeft: 2 },
+  picked: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: colors.tileTeal, alignSelf: 'flex-start' },
   svcIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center' },
-  halo: { width: 96, height: 96, borderRadius: 48, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  success: { width: 68, height: 68, borderRadius: 34, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
+  ring2:   { width: 128, height: 128, borderRadius: 64, borderWidth: 2, borderColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
+  halo: { width: 100, height: 100, borderRadius: 50, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
+  success: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.teal, alignItems: 'center', justifyContent: 'center' },
   summary: { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
   sumRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line },
-  sumIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  sumIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' },
 });
 const cal = StyleSheet.create({
   row: { flexDirection: 'row' },
-  dow: { flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '500', color: colors.ink2, paddingVertical: 6 },
+  dow: { fontFamily: FONT, flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '500', color: colors.ink2, paddingVertical: 6 },
   cell: { flex: 1, height: 40, marginVertical: 2, marginHorizontal: 3, alignItems: 'center', justifyContent: 'center', borderRadius: 20, gap: 2 },
-  cellOn: { backgroundColor: colors.accentDeep },
-  cellToday: { borderWidth: 1.5, borderColor: colors.accent },
-  num: { fontSize: 14, fontWeight: '500', color: colors.ink },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.accent },
+  cellOn: { backgroundColor: colors.teal },
+  cellToday: { borderWidth: 1.5, borderColor: colors.teal },
+  num: { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.teal },
   nav: { width: 34, height: 34, borderRadius: 11, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-  navT: { fontSize: 20, lineHeight: 22, color: colors.ink, fontWeight: '600' },
+  navT: { fontFamily: FONT, fontSize: 20, lineHeight: 22, color: colors.ink, fontWeight: '600' },
 });
 const ca = StyleSheet.create({
   toggle: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
   time: { width: 46, alignItems: 'flex-start' },
-  ampm: { fontSize: 11, color: colors.ink3, fontWeight: '500' },
-  timeText: { fontSize: 15, fontWeight: '600', color: colors.ink },
+  ampm: { fontFamily: FONT, fontSize: 11, color: colors.ink3, fontWeight: '500' },
+  timeText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: colors.ink },
+});
+const ad = StyleSheet.create({
+  hero:     { borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
+  heroTop:  { padding: 18, flexDirection: 'row', gap: 16, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.line },
+  dateTile: { width: 56, alignItems: 'flex-start', justifyContent: 'center' },
+  dateMon:  { fontFamily: FONT, fontSize: 13, fontWeight: '500', color: colors.ink2 },
+  dateDay:  { fontFamily: DISPLAY, fontSize: 36, lineHeight: 38, fontWeight: '600', color: colors.ink, letterSpacing: -1.2, fontVariant: ['tabular-nums'] },
+  heroSvc:  { fontFamily: DISPLAY, fontSize: 22, lineHeight: 26, fontWeight: '600', color: colors.ink, letterSpacing: -0.5 },
+  heroTime: { fontFamily: FONT, fontSize: 14, color: colors.ink2 },
+  heroPet:  { padding: 14, flexDirection: 'row', gap: 12, alignItems: 'center' },
 });

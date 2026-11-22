@@ -14,7 +14,7 @@ import { Avatar, CountBadge, IconBtn } from '../components/ui';
 import { Logo } from '../components/Brand';
 import { Icon, IconName } from '../components/Icon';
 import { useConfirm } from '../components/overlays';
-import { colors, shadowPop, type } from '../theme';
+import { colors, shadowPop, type, FONT } from '../theme';
 import { billState } from '../utils/format';
 import type { RootList } from './linking';
 
@@ -96,7 +96,7 @@ function TopNav({ route, navRef }: { route: string; navRef: Nav }) {
         <View style={n.right}>
           <IconBtn name="bell" label="Notifications" count={badges.notifs} onPress={() => goScreen(navRef, 'Notifications')} />
           <Pressable onPress={() => setMenu(true)} accessibilityRole="button" accessibilityLabel="Account menu" accessibilityState={{ expanded: menu }}
-            style={(st: PState) => [n.me, (menu || st.hovered) && { backgroundColor: colors.hover }, (route === 'Profile' || route === 'NotifSettings') && { backgroundColor: colors.accentSoft }]}>
+            style={(st: PState) => [n.me, (menu || st.hovered) && { backgroundColor: colors.hover }, (route === 'Profile' || route === 'NotifSettings') && { backgroundColor: colors.tileTeal }]}>
             <Avatar name={user!.name} size={32} />
             <Icon name="chevD" size={16} color={colors.ink2} />
           </Pressable>
@@ -158,20 +158,20 @@ function AppBar({ navRef }: { navRef: Nav }) {
 }
 
 const n = StyleSheet.create({
-  wrap: { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line, zIndex: 10 },
-  inner: { width: '100%', alignSelf: 'center', height: NAV_H, flexDirection: 'row', alignItems: 'center' },
-  links: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2, height: '100%' },
-  link: { height: 40, paddingHorizontal: 12, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  linkText: { fontSize: 14.5, fontWeight: '500', color: colors.ink2 },
-  linkOn: { color: colors.accentDeep, fontWeight: '600' },
-  underline: { position: 'absolute', left: 12, right: 12, bottom: -12, height: 2, borderRadius: 1, backgroundColor: colors.accentDeep },
-  right: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  me: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 4, paddingRight: 6, height: 40, borderRadius: 12 },
-  menu: { position: 'absolute', width: 280, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, paddingVertical: 6, ...shadowPop },
-  mHead: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10 },
-  mLine: { height: 1, backgroundColor: colors.line, marginVertical: 6 },
-  mItem: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 40, paddingHorizontal: 14, marginHorizontal: 6, borderRadius: 10 },
-  mText: { fontSize: 14, fontWeight: '500', color: colors.ink },
-  bar: { backgroundColor: colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.lineStrong },
-  barInner: { height: BAR_H, flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 16, paddingRight: 12 },
+  wrap:      { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line, zIndex: 10 },
+  inner:     { width: '100%', alignSelf: 'center', height: NAV_H, flexDirection: 'row', alignItems: 'center' },
+  links:     { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 0, height: '100%' },
+  link:      { height: 36, paddingHorizontal: 12, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  linkText:  { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink2 },
+  linkOn:    { color: colors.teal, fontWeight: '600' },
+  underline: { position: 'absolute', left: 12, right: 12, bottom: -13, height: 2.5, borderRadius: 2, backgroundColor: colors.teal },
+  right:     { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  me:        { flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 6, paddingRight: 8, height: 38, borderRadius: 10 },
+  menu:      { position: 'absolute', width: 272, backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.line, paddingVertical: 6, ...shadowPop },
+  mHead:     { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  mLine:     { height: 1, backgroundColor: colors.line, marginVertical: 4 },
+  mItem:     { flexDirection: 'row', alignItems: 'center', gap: 12, height: 40, paddingHorizontal: 14, marginHorizontal: 6, borderRadius: 8 },
+  mText:     { fontFamily: FONT, fontSize: 14, fontWeight: '500', color: colors.ink },
+  bar:       { backgroundColor: colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.lineStrong },
+  barInner:  { height: BAR_H, flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 16, paddingRight: 12 },
 });

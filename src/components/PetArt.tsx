@@ -70,8 +70,8 @@ export function PetAvatar({ pet, size = 44, square }: { pet: { id?: string; spec
   const r = square ? Math.min(14, size * 0.24) : size / 2;
   if (src) return <Image source={src} accessibilityIgnoresInvertColors style={{ width: size, height: size, borderRadius: r, backgroundColor: colors.subtle }} />;
   return (
-    <View style={{ width: size, height: size, borderRadius: r, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name="paw" size={size * 0.42} color={colors.accent} />
+    <View style={{ width: size, height: size, borderRadius: r, backgroundColor: colors.tileTeal, alignItems: 'center', justifyContent: 'center' }}>
+      <Icon name="paw" size={size * 0.42} color={colors.teal} />
     </View>
   );
 }

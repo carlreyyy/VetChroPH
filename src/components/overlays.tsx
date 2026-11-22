@@ -2,7 +2,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Animated, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radius, space, type } from '../theme';
+import { colors, radius, space, type, FONT } from '../theme';
 import { Icon, IconName } from './Icon';
 import { Btn, IconBtn } from './ui';
 import { useApp } from '../store/AppStore';
@@ -101,5 +101,5 @@ const st = StyleSheet.create({
   dIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 4 },
   toast: { position: 'absolute', left: 18, right: 18, maxWidth: 520, alignSelf: 'center', backgroundColor: colors.ink, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', gap: 10, alignItems: 'center', elevation: 6, shadowColor: '#101828', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
   toastIcon: { width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
-  toastText: { color: '#fff', fontSize: 14, fontWeight: '500', flex: 1 },
+  toastText: { fontFamily: FONT, color: '#fff', fontSize: 14, fontWeight: '500', flex: 1 },
 });
