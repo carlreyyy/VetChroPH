@@ -24,7 +24,9 @@ import { AdminHome, Reports, Setup, Users, UserForm, ClinicProfile, Services, Ho
 const Stack = createNativeStackNavigator();
 // Auth pages share a split layout on desktops (brand panel + form). Defined once so screen identity stays stable.
 const framed = (C: React.ComponentType) => function Framed() { return <AuthFrame><C /></AuthFrame>; };
-const [FWelcome, FLogin, FSignUp, FVerify, FReset] = [Welcome, Login, SignUp, VerifyCode, ResetPassword].map(framed);
+// Welcome renders its own full-page layout (incl. the brand panel), so it is NOT framed —
+// framing it would nest a second split layout inside AuthFrame's 480px column.
+const [FLogin, FSignUp, FVerify, FReset] = [Login, SignUp, VerifyCode, ResetPassword].map(framed);
 const Tab = createBottomTabNavigator();
 
 type TabDef = [name: string, label: string, icon: IconName, component: React.ComponentType];
@@ -80,7 +82,7 @@ export function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false, animation: wide ? 'none' : 'slide_from_right', contentStyle: { backgroundColor: colors.bg } }}>
       {!user ? (
         <>
-          <Stack.Screen name="Welcome" component={FWelcome} />
+          <Stack.Screen name="Welcome" component={Welcome} />
           <Stack.Screen name="Login" component={FLogin} />
           <Stack.Screen name="SignUp" component={FSignUp} />
           <Stack.Screen name="VerifyCode" component={FVerify} />
