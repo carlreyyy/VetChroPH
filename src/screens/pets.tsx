@@ -7,9 +7,10 @@
 import React, { useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Icon, IconName } from '../components/Icon';
-import { PET_COVERS } from '../data/photos';
+import { petPhoto } from '../data/photos';
 import { Cols, useBP } from '../components/responsive';
-import { pickFile, fileSize } from '../utils/files';
+import { pickPhoto, takePhoto, RULES_ANY } from '../utils/files';
+import { FileThumb, FileViewer, UploadBox } from '../components/files';
 import { SexMark } from './owner';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Banner, Btn, Card, Chips, Empty, Field, Group, Hint, IconBtn, Pill, Row, Screen, Section, Seg, T, Tabs, useWide } from '../components/ui';
@@ -19,7 +20,7 @@ import { useApp, sel } from '../store/AppStore';
 import { CareLine, careNodes, HEALTH_COLOR, petHealth, RingGlyph } from '../components/care';
 import { useNav, useParams } from '../navigation/nav';
 import { colors, radius, shadow, type, FONT, DISPLAY } from '../theme';
-import type { FollowKind, Pet, Species } from '../types';
+import type { Doc, FileRef, FollowKind, Pet, Species } from '../types';
 import { D, FOLLOW_ICON, ago, ageOf, cap, diff, fmtD, fmtDS, fmtDY, followStatus, parseD } from '../utils/format';
 
 type PetTab = 'info' | 'history' | 'follow' | 'docs';
@@ -32,6 +33,7 @@ export function PetDetail() {
   const role = user!.role; const clinic = role !== 'owner';
   const [tab, setTab] = useState<PetTab>(p.tab || 'info');
   const [sheet, setSheet] = useState<'' | 'note' | 'follow' | 'doc' | 'status'>('');
+  const [view, setView] = useState<Doc | null>(null); const [docKind, setDocKind] = useState('all');
   const visits = db.visits.filter(v => v.petId === pet.id).sort((a, b) => b.date.localeCompare(a.date));
   const notes = db.notes.filter(n => n.petId === pet.id).sort((a, b) => b.date.localeCompare(a.date));
   const follows = db.followups.filter(f => f.petId === pet.id);
@@ -44,7 +46,7 @@ export function PetDetail() {
     : role === 'admin' ? <><Btn label="Book" kind="line" style={{ flex: 1 }} onPress={() => nav.navigate('Book', { petId: pet.id, staff: '1' })} /><Btn label="New consultation" style={{ flex: 1.5 }} onPress={() => nav.navigate('ConsultForm', { petId: pet.id })} /></>
     : <><Btn label="Reason for visit" kind="line" style={{ flex: 1.3 }} onPress={() => nav.navigate('ConsultForm', { petId: pet.id })} /><Btn label="Book" style={{ flex: 1 }} onPress={() => nav.navigate('Book', { petId: pet.id, staff: '1' })} /></>
   ) : null;
-  const src = PET_COVERS[pet.id];
+  const src = petPhoto(pet, true);
   const canEdit = role === 'owner' ? pet.ownerId === user!.ownerId : true;
   const INFO_FACTS: [IconName, string, string][] = [
     ['paw', 'Species', cap(pet.species)],
@@ -125,19 +127,24 @@ export function PetDetail() {
             <Group>{doneF.map(f => <Row key={f.id} icon={FOLLOW_ICON[f.kind]} title={f.reason} sub={`${f.kind} · ${fmtD(f.date)} · set by ${f.setBy}`} right={<Pill text="Done" tone="ok" />} />)}</Group>
           </Section>}
 </>;
+  const KIND_TABS: [string, string, number?][] = [['all', 'All', docs.length], ...Array.from(new Set(docs.map(d => d.kind))).map(k => [k, k, docs.filter(d => d.kind === k).length] as [string, string, number])];
+  const shownDocs = docKind === 'all' ? docs : docs.filter(d => d.kind === docKind);
   const docsBlock = <>
-          {docs.length === 0 ? <Empty icon="file" title="No files yet" sub="Lab results, vaccination cards and photos (JPEG, PNG or PDF). Owners and the clinic can both upload and view." /> : (
-            <Group>{docs.map(d => (
-              <Row key={d.id} icon={d.name.endsWith('.pdf') ? 'file' : 'image'} title={d.name} sub={`${d.kind} · ${d.size} · ${fmtD(d.date)} · ${d.by}`} subLines={2}
-                right={(clinic || d.by === user!.name) ? <IconBtn name="trash" size={17} label="Remove file" onPress={() => confirm({ title: 'Remove this file?', body: d.name, ok: 'Remove', tone: 'bad', icon: 'trash', onOk: () => act.removeDoc(d.id) })} /> : undefined} />
+          <Hint icon="upload">{`${RULES_ANY}. ${clinic ? 'Owners and the clinic can both upload and view files.' : 'You and the clinic can both upload and view files.'} Tap a file to open it.`}</Hint>
+          {docs.length > 1 && <Chips options={KIND_TABS} value={docKind} onChange={setDocKind} />}
+          {docs.length === 0 ? <Empty icon="file" title="No files yet" sub="Lab results, vaccination cards and photos (JPEG, PNG or PDF)." /> : (
+            <Group>{shownDocs.map(d => (
+              <Row key={d.id} left={<FileThumb file={d} />} title={d.name} sub={`${d.kind}${d.visitId ? ' · From a visit' : ''} · ${d.size}\n${fmtD(d.date)} · ${d.by}`} subLines={2} onPress={() => setView(d)}
+                action={(clinic || d.by === user!.name) ? <IconBtn name="trash" size={17} label="Remove file" onPress={() => confirm({ title: 'Remove this file?', body: d.name, ok: 'Remove', tone: 'bad', icon: 'trash', onOk: () => act.removeDoc(d.id) })} /> : undefined} />
             ))}</Group>
           )}
-          <Btn label="Upload a file" icon="upload" kind="soft" onPress={() => setSheet('doc')} />
+          {pet.status === 'active' && <Btn label="Upload a file" icon="upload" kind="soft" onPress={() => setSheet('doc')} />}
 </>;
   const sheets = <>
       <NoteSheet visible={sheet === 'note'} onClose={() => setSheet('')} pet={pet} />
       <FollowSheet visible={sheet === 'follow'} onClose={() => setSheet('')} pet={pet} />
       <DocSheet visible={sheet === 'doc'} onClose={() => setSheet('')} petId={pet.id} />
+      <FileViewer file={view} meta={view ? `${view.kind} · ${view.by}` : undefined} onClose={() => setView(null)} />
       <Sheet visible={sheet === 'status'} onClose={() => setSheet('')} title={`Change ${pet.name}'s status`}>
         <T.Body muted>The pet stays on file and its medical history is never deleted. It is hidden from booking and reminders.</T.Body>
         <Btn label="Mark as inactive" kind="line" onPress={() => { act.setPetStatus(pet.id, 'inactive'); setSheet(''); }} />
@@ -240,26 +247,18 @@ function FollowSheet({ visible, onClose, pet }: { visible: boolean; onClose: () 
   );
 }
 
-function DocSheet({ visible, onClose, petId }: { visible: boolean; onClose: () => void; petId: string }) {
+const DOC_KINDS = ['Laboratory result', 'Vaccination card', 'X-ray or imaging', 'Pet photo', 'Other'];
+/** Upload sheet used by the pet's Files tab and by a visit record (visitId attaches the file to that visit). */
+export function DocSheet({ visible, onClose, petId, visitId }: { visible: boolean; onClose: () => void; petId: string; visitId?: string }) {
   const { act } = useApp();
-  const [kind, setKind] = useState('Laboratory result'); const [file, setFile] = useState(''); const [size, setSize] = useState(''); const [err, setErr] = useState('');
-  const choose = async () => {
-    const r = await pickFile();
-    if (typeof r === 'string') return setErr(r);
-    if (r) { setFile(r.name); setSize(fileSize(r.size)); setErr(''); return; }
-    if (Platform.OS !== 'web') { setFile(samples[kind]); setErr(''); }
-  };
-  const samples: Record<string, string> = { 'Laboratory result': 'lab-result.pdf', 'Vaccination card': 'vaccination-card.jpg', 'Pet photo': 'pet-photo.jpg', Other: 'document.pdf' };
-  const save = () => { if (!file) return setErr('Choose a file first'); act.addDoc(petId, kind, file, size || undefined); setFile(''); setSize(''); onClose(); };
+  const [kind, setKind] = useState(visitId ? 'Laboratory result' : 'Vaccination card'); const [file, setFile] = useState<FileRef | null>(null); const [err, setErr] = useState('');
+  const close = () => { setFile(null); setErr(''); onClose(); };
+  const save = () => { if (!file) return setErr('Choose a file first'); act.addDoc(petId, kind, file, visitId); close(); };
   return (
-    <Sheet visible={visible} onClose={onClose} title="Upload a file" footer={<Btn label="Upload" icon="upload" style={{ flex: 1 }} onPress={save} />}>
-      <Seg label="What is it?" wrap options={Object.keys(samples).map(k => [k, k] as [string, string])} value={kind} onChange={k => { setKind(k); setFile(''); }} />
-      <Pressable onPress={choose} style={[pd.drop, !!err && { borderColor: colors.dot }]} accessibilityRole="button">
-        <Text style={type.h3}>{file || 'Choose a file or take a photo'}</Text>
-        <T.Small>{file ? `${size ? `${size} · ` : ''}Click to choose a different file` : 'JPEG, PNG or PDF, up to 10 MB'}</T.Small>
-      </Pressable>
-      {!!err && <T.Small color={colors.bad}>{err}</T.Small>}
-      <T.Small>Prototype: the file's name and size are recorded; the file itself is not stored until a backend is connected.</T.Small>
+    <Sheet visible={visible} onClose={close} title={visitId ? 'Attach a file to this visit' : 'Upload a file'} footer={<Btn label="Upload" icon="upload" style={{ flex: 1 }} onPress={save} />}>
+      <Seg label="What is it?" wrap options={DOC_KINDS.map(k => [k, k] as [string, string])} value={kind} onChange={setKind} />
+      <UploadBox file={file} error={err} title="Choose a file or photo" onPick={(f, e) => { setFile(f); setErr(e || ''); }} />
+      <T.Small>{`Only JPEG, PNG and PDF files up to 10 MB are accepted. The file is saved to the pet's record, and ${visitId ? 'the owner can view it from this visit' : 'the clinic and the owner can both view it'}.`}</T.Small>
     </Sheet>
   );
 }
@@ -271,8 +270,9 @@ export function PetForm() {
     name: existing?.name || '', species: (existing?.species || 'dog') as Species, breed: existing?.breed || '', sex: existing?.sex || 'Male',
     birth: existing?.birth || '', ageYears: '', weight: existing ? String(existing.weight) : '', coat: existing?.coat || 'golden',
   });
-  const [unknownBirth, setUnknownBirth] = useState(false);
+  const [unknownBirth, setUnknownBirth] = useState(false); const [photo, setPhoto] = useState(existing?.photo || '');
   const [err, setErr] = useState<Record<string, string>>({});
+  const choosePhoto = async (camera?: boolean) => { const r = await (camera ? takePhoto() : pickPhoto()); if (typeof r === 'string') setErr(x => ({ ...x, photo: r })); else if (r?.uri) { setPhoto(r.uri); setErr(x => ({ ...x, photo: '' })); } };
   const set = (k: keyof typeof f, v: string) => { setF({ ...f, [k]: v }); setErr({ ...err, [k]: '' }); };
   const dup = !existing && f.name.trim() && sel.petsOf(db, p.ownerId!).some(x => x.name.toLowerCase() === f.name.trim().toLowerCase());
   const save = () => {
@@ -284,7 +284,7 @@ export function PetForm() {
     if (!(Number(f.weight) > 0)) e.weight = 'Enter the weight in kg';
     if (Object.keys(e).length) return setErr(e);
     const birth = unknownBirth ? D(-Math.round(Number(f.ageYears) * 365)) : f.birth;
-    const saved = act.savePet({ id: existing?.id, ownerId: p.ownerId!, name: f.name.trim(), species: f.species, breed: f.breed.trim() || 'Mixed breed', sex: f.sex as Pet['sex'], birth, weight: Number(f.weight), coat: f.coat });
+    const saved = act.savePet({ id: existing?.id, ownerId: p.ownerId!, name: f.name.trim(), species: f.species, breed: f.breed.trim() || 'Mixed breed', sex: f.sex as Pet['sex'], birth, weight: Number(f.weight), coat: f.coat, ...(photo ? { photo } : {}) });
     if (existing) nav.goBack(); else nav.replace('PetDetail', { id: saved.id });
   };
   const pair = (a: React.ReactNode, b: React.ReactNode) => bp.wide
@@ -296,8 +296,18 @@ export function PetForm() {
       {user!.role !== 'owner' && !existing && <Banner icon="user" title={`Owner: ${sel.owner(db, p.ownerId!)?.name}`} />}
       <Card style={{ gap: 18 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <PetAvatar pet={{ id: existing?.id, species: f.species }} size={64} square />
-          <View style={{ flex: 1 }}><Text style={type.h2}>{f.name.trim() || (existing ? existing.name : 'New pet')}</Text><T.Small>The clinic currently accepts dogs and cats.</T.Small></View>
+          <Pressable onPress={() => choosePhoto()} accessibilityRole="button" accessibilityLabel="Change pet photo">
+            <PetAvatar pet={{ id: existing?.id, species: f.species, photo: photo || undefined }} size={72} square />
+            <View style={pd.camBadge}><Icon name="camera" size={14} color="#fff" /></View>
+          </Pressable>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={type.h2}>{f.name.trim() || (existing ? existing.name : 'New pet')}</Text>
+            <View style={{ flexDirection: 'row', gap: 14, flexWrap: 'wrap' }}>
+              <Pressable onPress={() => choosePhoto()} accessibilityRole="button" hitSlop={6}><Text style={pd.photoLink}>{photo || existing ? 'Change photo' : 'Add a photo'}</Text></Pressable>
+              {Platform.OS !== 'web' && <Pressable onPress={() => choosePhoto(true)} accessibilityRole="button" hitSlop={6}><Text style={pd.photoLink}>Take a photo</Text></Pressable>}
+            </View>
+            {err.photo ? <T.Small color={colors.bad}>{err.photo}</T.Small> : <T.Small>JPEG or PNG. The clinic currently accepts dogs and cats.</T.Small>}
+          </View>
         </View>
         {pair(
           <Field label="Pet name" placeholder="e.g. Bingo" value={f.name} onChangeText={v => set('name', v)} error={err.name} hint={dup ? 'This owner already has a pet with this name. You can still save.' : undefined} />,
@@ -317,7 +327,6 @@ export function PetForm() {
           <Field label="Weight (kg)" keyboardType="decimal-pad" placeholder="e.g. 8.5" value={f.weight} onChangeText={v => set('weight', v)} error={err.weight} />,
         )}
       </Card>
-      <Hint icon="camera">Prototype: pet photos come from the sample data. The real app lets you take or choose a photo.</Hint>
     </Screen>
   );
 }
@@ -326,6 +335,8 @@ export function VisitDetail() {
   const nav = useNav(); const { db, user } = useApp(); const p = useParams<{ id: string }>();
   const v = db.visits.find(x => x.id === p.id)!; const pet = sel.pet(db, v.petId)!;
   const follows = db.followups.filter(f => f.petId === pet.id && f.status === 'open');
+  const files = db.docs.filter(d => d.visitId === v.id); const clinic = user!.role !== 'owner';
+  const [view, setView] = useState<Doc | null>(null); const [attach, setAttach] = useState(false);
   return (
     <Screen title="Visit record" right={user!.role === 'admin' ? <Btn label="Edit" icon="edit" small kind="line" onPress={() => nav.navigate('ConsultForm', { petId: pet.id, visitId: v.id })} /> : undefined}>
       <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center', padding: 16, backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.line }}>
@@ -342,6 +353,13 @@ export function VisitDetail() {
           <View key={k} style={{ gap: 3 }}><Text style={type.label}>{k}</Text><T.Body>{val || '—'}</T.Body></View>
         ))}
       </Card>
+      <Section title="Attachments" sub="Lab results, X-rays and photos for this visit" action={clinic ? 'Attach file' : undefined} onAction={() => setAttach(true)}>
+        {files.length === 0 ? <T.Small>{clinic ? 'No files yet. Attach lab results or images from this visit.' : 'No files attached to this visit.'}</T.Small> : (
+          <Group>{files.map(d => <Row key={d.id} left={<FileThumb file={d} />} title={d.name} sub={`${d.kind} · ${d.size} · ${d.by}`} onPress={() => setView(d)} />)}</Group>
+        )}
+      </Section>
+      <DocSheet visible={attach} onClose={() => setAttach(false)} petId={pet.id} visitId={v.id} />
+      <FileViewer file={view} meta={view ? `${view.kind} · ${fmtD(view.date)}` : undefined} onClose={() => setView(null)} />
       {follows.length > 0 && <Section title="Coming up for this pet"><Group>{follows.slice(0, 3).map(f => <Row key={f.id} icon={FOLLOW_ICON[f.kind]} title={f.reason} sub={`${f.kind} · ${fmtD(f.date)}`} />)}</Group></Section>}
       {v.edits.length > 0 && <Section title="Edit history">
         <Group>{v.edits.slice().reverse().map((e, i) => <Row key={i} icon="history" title={`Edited by ${e.by}`} sub={ago(e.at)} />)}</Group>
@@ -408,6 +426,8 @@ export function ConsultForm() {
 }
 
 const pd = StyleSheet.create({
+  camBadge: { position: 'absolute', right: -4, bottom: -4, width: 26, height: 26, borderRadius: 13, backgroundColor: colors.teal, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  photoLink: { fontFamily: FONT, color: colors.teal, fontWeight: '600', fontSize: 13.5 },
   care: { gap: 16, paddingVertical: 18, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line },
   hero: { backgroundColor: colors.subtle, overflow: 'hidden' },
   heroBtns: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between' },

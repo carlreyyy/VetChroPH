@@ -9,7 +9,7 @@ import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View, ViewStyle, StyleProp } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, FONT, DISPLAY } from '../theme';
-import { PET_PHOTOS } from '../data/photos';
+import { petPhoto } from '../data/photos';
 import { Icon, IconName } from './Icon';
 import type { PState } from './responsive';
 import type { DB, Pet } from '../types';
@@ -35,7 +35,7 @@ export function HealthRing({ pet, health, size = 56, ring = 3 }: { pet: Pet; hea
   const gap = ring + 2; const inner = size - gap * 2;
   const r = (size - ring) / 2; const c = 2 * Math.PI * r;
   const dash = health === 'soon' ? `${c / 2} ${c / 2}` : health === 'overdue' ? `${c / 10} ${c / 14}` : undefined;
-  const src = PET_PHOTOS[pet.id];
+  const src = petPhoto(pet);
   return (
     <View style={{ width: size, height: size }} accessible accessibilityLabel={`${pet.name}, ${health === 'ok' ? 'up to date' : health === 'soon' ? 'care due soon' : health === 'overdue' ? 'care overdue' : 'inactive'}`}>
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>

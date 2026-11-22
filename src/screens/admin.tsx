@@ -7,11 +7,12 @@ import { Icon } from '../components/Icon';
 import { Avatar, Banner, Btn, Card, Check, Chips, Empty, Field, Group, LinkBtn, Pill, Row, Screen, Section, Seg, SegControl, Stack, T, Tabs, Toggle, useFirstLoad } from '../components/ui';
 import { CollectionBars, HealthRing, LedgerRow } from '../components/care';
 import { Sheet, useConfirm } from '../components/overlays';
-import { QrArt } from '../components/PetArt';
+import { ClinicQr } from '../components/PetArt';
 import { PetAvatar } from '../components/PetArt';
 import { HomeHeader, ROLE_LABEL } from './common';
 import { DashSkeleton, ScheduleTable, useDueList } from './clinic';
 import { Cell, Cols, DataTable, useBP } from '../components/responsive';
+import { pickFile } from '../utils/files';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
 import { colors, radius, shadow, type, FONT, DISPLAY } from '../theme';
@@ -444,9 +445,12 @@ export function PaymentSetup() {
       <Sheet visible={!!edit} onClose={() => setEdit(null)} title={edit ? `Edit ${edit.provider}` : ''} footer={<Btn label="Save account" style={{ flex: 1 }} onPress={save} />}>
         {edit && <>
           {edit.kind !== 'Bank transfer' && <Card style={{ alignItems: 'center', gap: 10, shadowOpacity: 0 }}>
-            <View style={{ padding: 10, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line }}><QrArt size={140} seed={edit.qrSeed} /></View>
-            <Btn label="Replace QR image" icon="upload" small kind="soft" onPress={() => setEdit({ ...edit, qrSeed: edit.qrSeed + 4 })} />
-            <T.Small>Prototype: a sample QR is used. The real app uploads the clinic's QR image.</T.Small>
+            <View style={{ padding: 10, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line }}><ClinicQr acc={edit} size={140} /></View>
+            <Btn label={edit.qrUri ? 'Replace QR image' : 'Upload QR image'} icon="upload" small kind="soft" onPress={async () => {
+              const r = await pickFile({ imagesOnly: true });
+              if (typeof r === 'string') setErr({ ...err, qr: r }); else if (r?.uri) { setEdit({ ...edit, qrUri: r.uri }); setErr({ ...err, qr: '' }); }
+            }} />
+            {err.qr ? <T.Small color={colors.bad}>{err.qr}</T.Small> : <T.Small>{`Download the QR from your ${edit.provider} business account and upload it here (JPEG or PNG). Owners see it when they pay.`}</T.Small>}
           </Card>}
           <Field label={edit.kind === 'Bank transfer' ? 'Bank' : 'E-wallet'} value={edit.provider} onChangeText={v => setEdit({ ...edit, provider: v })} />
           <Field label="Account name" value={edit.accountName} onChangeText={v => setEdit({ ...edit, accountName: v })} error={err.accountName} />

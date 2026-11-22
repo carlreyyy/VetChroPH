@@ -17,6 +17,8 @@ export interface Owner {
 export interface Pet {
   id: string; ownerId: string; name: string; species: Species; breed: string; sex: 'Male' | 'Female';
   birth: string; weight: number; coat: string; status: 'active' | 'inactive' | 'deceased';
+  /** Photo chosen by the owner or clinic (file or data URI). Falls back to the sample photo. */
+  photo?: string;
 }
 export interface Visit {
   id: string; petId: string; date: string; complaint: string; findings: string; diagnosis: string;
@@ -46,21 +48,30 @@ export type PayMethod = 'Cash' | 'GCash' | 'Other e-wallet' | 'Bank transfer';
 export interface Payment {
   id: string; method: PayMethod; amount: number; ref: string; proof: string;
   status: 'pending' | 'confirmed' | 'rejected'; date: string; by: string; verifiedBy?: string; reason?: string;
+  /** The uploaded proof-of-payment screenshot. */
+  proofFile?: FileRef;
 }
 export interface Bill {
   id: string; petId: string; ownerId: string; apptId: string | null; date: string; items: BillItem[]; payments: Payment[];
 }
-export interface Doc { id: string; petId: string; name: string; kind: string; size: string; date: string; by: string }
+/**
+ * An uploaded file (objective 2). Accepted types: JPEG and PNG images, and PDF documents, up to 10 MB.
+ * `uri` points to the picked file on the device; `sample` names a bundled sample used by the demo data.
+ */
+export type FileType = 'image' | 'pdf';
+export interface FileRef { name: string; size: string; type: FileType; uri?: string; sample?: string }
+/** A file kept on a pet's record. `visitId` attaches it to one visit (for example a lab result). */
+export interface Doc extends FileRef { id: string; petId: string; kind: string; date: string; by: string; visitId?: string }
 export interface Service { id: string; name: string; category: string; price: number; minutes: number; active: boolean }
 export interface Notif {
   id: string; at: number; unread: boolean; title: string; body: string; icon: string; tone: '' | 'ok' | 'warn' | 'bad';
   link?: { screen: string; params?: Record<string, string> };
 }
-export interface Msg { id: string; at: number; from: 'owner' | 'clinic'; by: string; text: string; read: boolean }
+export interface Msg { id: string; at: number; from: 'owner' | 'clinic'; by: string; text: string; read: boolean; file?: FileRef }
 export interface Activity { id: string; at: number; who: string; text: string }
 export interface DayHours { open: boolean; from: number; to: number }
 /** Payment accounts the clinic accepts (consultation D12: GCash QR, other e-wallet QR, bank transfer). */
-export interface PayAccount { id: string; kind: Exclude<PayMethod, 'Cash'>; provider: string; accountName: string; number: string; on: boolean; qrSeed: number }
+export interface PayAccount { id: string; kind: Exclude<PayMethod, 'Cash'>; provider: string; accountName: string; number: string; on: boolean; qrSeed: number; /** The clinic's own QR image, uploaded by the administrator. */ qrUri?: string }
 export interface Clinic {
   name: string; address: string; phone: string; mobile: string; email: string; about: string;
   lat: number; lng: number; payUpdated: string; accounts: PayAccount[];

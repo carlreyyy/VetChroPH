@@ -149,18 +149,19 @@ export function seedDB(): DB {
   db.bills = [
     { id: 'b1', petId: 'p3', ownerId: 'o2', apptId: 'a10', date: D(0), items: [It('Wellness Check-up', 450), It('Deworming', 250)], payments: [{ id: 'y1', method: 'Cash', amount: 700, ref: '', proof: '', status: 'confirmed', date: D(0), by: 'Lea Ramirez', verifiedBy: 'Lea Ramirez' }] },
     { id: 'b2', petId: 'p1', ownerId: 'o1', apptId: 'a3', date: D(-2), items: [It('General Consultation', 350), It('Minor Procedure', 500)], payments: [] },
-    { id: 'b3', petId: 'p2', ownerId: 'o1', apptId: 'a4', date: D(-30), items: [It('General Consultation', 350), It('Wound Care & Dressing', 300)], payments: [{ id: 'y3', method: 'GCash', amount: 650, ref: '5102 441 902', proof: 'gcash-receipt.png', status: 'confirmed', date: D(-30), by: 'Maria Santos', verifiedBy: 'Lea Ramirez' }] },
+    { id: 'b3', petId: 'p2', ownerId: 'o1', apptId: 'a4', date: D(-30), items: [It('General Consultation', 350), It('Wound Care & Dressing', 300)], payments: [{ id: 'y3', method: 'GCash', amount: 650, ref: '5102 441 902', proof: 'gcash-receipt.png', proofFile: { name: 'gcash-receipt.png', size: '310 KB', type: 'image', sample: 'ewalletProof' }, status: 'confirmed', date: D(-30), by: 'Maria Santos', verifiedBy: 'Lea Ramirez' }] },
     { id: 'b4', petId: 'p1', ownerId: 'o1', apptId: 'a5', date: D(-45), items: [It('Follow-up Check', 200)], payments: [{ id: 'y4', method: 'Cash', amount: 200, ref: '', proof: '', status: 'confirmed', date: D(-45), by: 'Lea Ramirez', verifiedBy: 'Lea Ramirez' }] },
-    { id: 'b6', petId: 'p5', ownerId: 'o3', apptId: 'a18', date: D(-1), items: [It('General Consultation', 350), It('Anti-rabies Vaccine', 350)], payments: [{ id: 'y6', method: 'GCash', amount: 700, ref: '4821 903 117', proof: 'gcash-screenshot.png', status: 'pending', date: D(-1), by: 'Ramon Gonzales' }] },
-    { id: 'b7', petId: 'p6', ownerId: 'o4', apptId: 'a19', date: D(-2), items: [It('General Consultation', 350)], payments: [{ id: 'y7', method: 'Bank transfer', amount: 350, ref: 'BDO 3390 774 201', proof: 'bank-transfer.png', status: 'pending', date: D(-2), by: 'Aileen Uy' }] },
+    { id: 'b6', petId: 'p5', ownerId: 'o3', apptId: 'a18', date: D(-1), items: [It('General Consultation', 350), It('Anti-rabies Vaccine', 350)], payments: [{ id: 'y6', method: 'GCash', amount: 700, ref: '4821 903 117', proof: 'gcash-screenshot.png', proofFile: { name: 'gcash-screenshot.png', size: '420 KB', type: 'image', sample: 'ewalletProof' }, status: 'pending', date: D(-1), by: 'Ramon Gonzales' }] },
+    { id: 'b7', petId: 'p6', ownerId: 'o4', apptId: 'a19', date: D(-2), items: [It('General Consultation', 350)], payments: [{ id: 'y7', method: 'Bank transfer', amount: 350, ref: 'BDO 3390 774 201', proof: 'bank-transfer.png', proofFile: { name: 'bank-transfer.png', size: '380 KB', type: 'image', sample: 'bankProof' }, status: 'pending', date: D(-2), by: 'Aileen Uy' }] },
     { id: 'b9', petId: 'p9', ownerId: 'o6', apptId: 'a22', date: D(-3), items: [It('General Consultation', 350), It('Wound Care & Dressing', 300)], payments: [] },
     { id: 'b8', petId: 'p4', ownerId: 'o2', apptId: null, date: D(-70), items: [It('General Consultation', 350)], payments: [{ id: 'y8', method: 'Cash', amount: 350, ref: '', proof: '', status: 'confirmed', date: D(-70), by: 'Marco Pacaña', verifiedBy: 'Marco Pacaña' }] },
   ];
 
   db.docs = [
-    { id: 'd1', petId: 'p1', name: 'vaccination-card.jpg', kind: 'Vaccination card', size: '1.2 MB', date: D(-300), by: 'Maria Santos' },
-    { id: 'd2', petId: 'p1', name: 'skin-test-result.pdf', kind: 'Laboratory result', size: '240 KB', date: D(-118), by: 'Lea Ramirez' },
-    { id: 'd3', petId: 'p2', name: 'vaccination-card.png', kind: 'Vaccination card', size: '860 KB', date: D(-200), by: 'Maria Santos' },
+    { id: 'd1', petId: 'p1', name: 'vaccination-card.jpg', type: 'image', sample: 'vaccCard', kind: 'Vaccination card', size: '1.2 MB', date: D(-300), by: 'Maria Santos' },
+    { id: 'd2', petId: 'p1', name: 'skin-test-result.pdf', type: 'pdf', sample: 'labPage', kind: 'Laboratory result', size: '240 KB', date: D(-118), by: 'Lea Ramirez', visitId: 'v2' },
+    { id: 'd4', petId: 'p1', name: 'left-ear-before-visit.jpg', type: 'image', sample: 'bingoEar', kind: 'Pet photo', size: '1.8 MB', date: D(-2), by: 'Maria Santos', visitId: 'v4' },
+    { id: 'd3', petId: 'p2', name: 'vaccination-card.png', type: 'image', sample: 'vaccCard', kind: 'Vaccination card', size: '860 KB', date: D(-200), by: 'Maria Santos' },
   ];
 
   // Past visits so monitoring and the daily and monthly reports have data: dense for 2 weeks, lighter for 5 months.
@@ -187,8 +188,10 @@ export function seedDB(): DB {
   db.messages = {
     o1: [
       { id: 'm1', at: hoursAgo(28), from: 'owner', by: 'Maria Santos', text: 'Hi! Can Bingo still eat his usual food while on the ear drops?', read: true },
+      { id: 'm1b', at: hoursAgo(27.9), from: 'owner', by: 'Maria Santos', text: 'This is his left ear this morning.', read: true, file: { name: 'bingo-left-ear.jpg', size: '1.8 MB', type: 'image', sample: 'bingoEar' } },
       { id: 'm2', at: hoursAgo(27.5), from: 'clinic', by: 'Lea Ramirez', text: 'Hi Maria! Yes, his usual food is fine. Just keep the ear dry for the week.', read: true },
       { id: 'm3', at: hoursAgo(2), from: 'clinic', by: VET, text: 'Reminder: please bring Mochi\'s stool sample on Thursday if you can.', read: false },
+      { id: 'm3b', at: hoursAgo(1.9), from: 'clinic', by: 'Lea Ramirez', text: 'Here is Bingo\'s skin test result from his last visit.', read: false, file: { name: 'skin-test-result.pdf', size: '240 KB', type: 'pdf', sample: 'labPage' } },
     ],
     o2: [
       { id: 'm4', at: hoursAgo(0.7), from: 'owner', by: 'Joanne Tan', text: 'Good morning. Is 2:00 PM on the new date okay for Max? I saw the suggested time.', read: false },

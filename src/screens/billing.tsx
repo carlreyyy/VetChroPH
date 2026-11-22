@@ -2,18 +2,18 @@
 // The app never confirms an e-wallet or bank payment by itself: the owner uploads proof and the clinic checks its own account.
 // Consultation D14: bills are paid in full (no partial payments).
 import React, { useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { pickFile } from '../utils/files';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { FileThumb, FileViewer, UploadBox } from '../components/files';
 import { Banner, Btn, Card, Empty, Field, Group, IconBtn, KV, Pill, Row, Screen, Section, Stack, T, Tabs } from '../components/ui';
 import { Sheet, useConfirm } from '../components/overlays';
 import { BrandTile } from '../components/Brand';
 import { Cell, Cols, DataTable, useBP } from '../components/responsive';
 import { Icon } from '../components/Icon';
-import { PetAvatar, QrArt } from '../components/PetArt';
+import { ClinicQr, PetAvatar } from '../components/PetArt';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
 import { colors, radius, shadow, type, FONT, DISPLAY } from '../theme';
-import type { BillItem, PayAccount } from '../types';
+import type { BillItem, FileRef, PayAccount } from '../types';
 import { BILL, billBalance, billPaid, billState, billTotal, diff, fmtD, fmtDY, money } from '../utils/format';
 
 const PAY_TONE = { pending: 'warn', confirmed: 'ok', rejected: 'bad' } as const;
@@ -21,6 +21,7 @@ const PAY_LABEL = { pending: 'Waiting for check', confirmed: 'Confirmed', reject
 
 export function BillDetail() {
   const nav = useNav(); const confirm = useConfirm(); const { db, user, act } = useApp();
+  const [proofView, setProofView] = useState<FileRef | null>(null);
   const { id } = useParams<{ id: string }>(); const b = sel.bill(db, id!)!;
   const pet = sel.pet(db, b.petId)!; const owner = sel.owner(db, b.ownerId)!;
   const clinic = user!.role !== 'owner'; const st = billState(b); const bal = billBalance(b);
@@ -70,16 +71,25 @@ export function BillDetail() {
       {b.payments.length > 0 && <Section title="Payments">
         <Group>
           {b.payments.map(p => (
-            <Row key={p.id} icon={p.method === 'Cash' ? 'banknote' : p.method === 'Bank transfer' ? 'bank' : 'qr'} title={`${money(p.amount)} · ${p.method}`}
+            <Row key={p.id} icon={p.method === 'Cash' ? 'banknote' : p.method === 'Bank transfer' ? 'bank' : 'qr'} left={p.proofFile ? <FileThumb file={p.proofFile} size={40} /> : undefined} title={`${money(p.amount)} · ${p.method}`}
               sub={[fmtD(p.date), p.ref && `Ref ${p.ref}`, p.proof && `Proof: ${p.proof}`, p.verifiedBy && `Checked by ${p.verifiedBy}`, p.reason && `Reason: ${p.reason}`].filter(Boolean).join(' · ')} subLines={3}
+              onPress={p.proofFile ? () => setProofView(p.proofFile!) : undefined}
               right={<Pill text={PAY_LABEL[p.status]} tone={PAY_TONE[p.status]} />} />
           ))}
         </Group>
       </Section>}
-      {clinic && pending && <Card style={{ alignItems: 'center', gap: 8 }}>
-        <View style={bl.proof}><Icon name="image" size={30} color={colors.warmOrange} /><T.Small>{pending.proof}</T.Small></View>
-        <T.Small>Screenshot uploaded by {pending.by} on {fmtD(pending.date)}</T.Small>
-      </Card>}
+      {clinic && pending && <Section title="Proof of payment" sub="Tap the screenshot to view it full size">
+        <Pressable onPress={() => pending.proofFile && setProofView(pending.proofFile)} accessibilityRole="button" accessibilityLabel="View payment screenshot" style={bl.proofCard}>
+          {pending.proofFile ? <FileThumb file={pending.proofFile} size={92} /> : <View style={bl.proof}><Icon name="image" size={30} color={colors.warmOrange} /></View>}
+          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+            <Text style={type.h3} numberOfLines={1}>{pending.proof || 'Screenshot'}</Text>
+            <T.Small>Ref {pending.ref} · {money(pending.amount)}</T.Small>
+            <T.Small>Uploaded by {pending.by} on {fmtD(pending.date)}</T.Small>
+          </View>
+          <Icon name="chevR" size={18} color={colors.ink3} />
+        </Pressable>
+      </Section>}
+      <FileViewer file={proofView} meta="Proof of payment" onClose={() => setProofView(null)} />
       {!clinic && bal > 0 && !pending && <T.Small>You can also pay in cash at the clinic. Bills are paid in full.</T.Small>}
       {clinic && <Group><Row icon="user" title={owner.name} sub={owner.phone} onPress={() => nav.navigate('OwnerDetail', { id: owner.id })} /></Group>}
 
@@ -105,20 +115,14 @@ export function PayBill() {
   const accounts = db.clinic.accounts.filter(x => x.on);
   const [accId, setAccId] = useState(accounts[0]?.id || '');
   const acc = accounts.find(x => x.id === accId) as PayAccount;
-  const [f, setF] = useState({ ref: '', proof: '' }); const [err, setErr] = useState<Record<string, string>>({});
-  const chooseProof = async () => {
-    const r = await pickFile('.jpg,.jpeg,.png');
-    if (typeof r === 'string') return setErr({ ...err, proof: r });
-    const name = r ? r.name : Platform.OS !== 'web' ? (bank ? 'bank-transfer.png' : `${acc?.provider.toLowerCase()}-screenshot.jpg`) : '';
-    if (name) { setF(x => ({ ...x, proof: name })); setErr(x => ({ ...x, proof: '' })); }
-  };
+  const [f, setF] = useState<{ ref: string; proof: FileRef | null }>({ ref: '', proof: null }); const [err, setErr] = useState<Record<string, string>>({});
   const bank = acc?.kind === 'Bank transfer';
   const submit = () => {
     const e: Record<string, string> = {};
     if (f.ref.replace(/\W/g, '').length < 6) e.ref = 'Enter the reference number from your e-wallet or bank app';
     if (!f.proof) e.proof = 'Upload your payment screenshot';
     if (Object.keys(e).length) return setErr(e);
-    act.submitProof(b.id, acc.kind, f.ref.trim(), f.proof); nav.goBack();
+    act.submitProof(b.id, acc.kind, f.ref.trim(), f.proof!); nav.goBack();
   };
   return (
     <Screen title="Pay bill" sub="Pay with an e-wallet or bank transfer, then send your proof of payment." footer={<Btn label="Submit payment proof" icon="upload" style={{ flex: 1 }} onPress={submit} />}>
@@ -139,7 +143,7 @@ export function PayBill() {
       <Section title="Payment method">
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {accounts.map(x => { const on = x.id === accId; return (
-            <Pressable key={x.id} onPress={() => { setAccId(x.id); setF({ ...f, proof: '' }); }} style={[bl.method, on && bl.methodOn]} accessibilityRole="radio" accessibilityLabel={x.provider} accessibilityState={{ selected: on }}>
+            <Pressable key={x.id} onPress={() => { setAccId(x.id); setF({ ...f, proof: null }); }} style={[bl.method, on && bl.methodOn]} accessibilityRole="radio" accessibilityLabel={x.provider} accessibilityState={{ selected: on }}>
               {on && <View style={bl.methodCheck}><Icon name="check" size={10} color={colors.accentDeep} strokeWidth={3.2} /></View>}
               <Icon name={KIND_ICON[x.kind]} size={24} color={on ? '#fff' : colors.accent} />
               <Text style={[type.h3, { fontSize: 13.5, textAlign: 'center' }, on && { color: '#fff' }]} numberOfLines={1}>{x.kind === 'Bank transfer' ? 'Bank transfer' : x.provider}</Text>
@@ -150,7 +154,7 @@ export function PayBill() {
       {acc && <View style={bl.payCard}>
         {bank
           ? <View style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}><View style={bl.bankIcon}><Icon name="bank" size={24} color={colors.warmOrange} /></View><Text style={[type.small, { marginTop: 6 }]}>{acc.provider} account number</Text><Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '700', letterSpacing: 0.6, color: colors.ink }}>{acc.number}</Text></View>
-          : <><View style={bl.qrBox}><QrArt size={168} seed={acc.qrSeed} /></View><Text style={[type.h3, { fontSize: 14, marginTop: 2 }]}>Scan to pay with {acc.provider}</Text></>}
+          : <><View style={bl.qrBox}><ClinicQr acc={acc} size={168} /></View><Text style={[type.h3, { fontSize: 14, marginTop: 2 }]}>Scan to pay with {acc.provider}</Text></>}
         <View style={{ height: 1, alignSelf: 'stretch', backgroundColor: colors.line, marginVertical: 4 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: 10 }}>
           <View style={{ flex: 1 }}><Text style={type.h3}>{acc.accountName}</Text><T.Small>{acc.provider} · {acc.number} · Business account</T.Small></View>
@@ -168,12 +172,8 @@ export function PayBill() {
       </Section>
       <Section title="Proof of payment">
         <Field label="Reference number" placeholder="e.g. 5102 441 902" value={f.ref} onChangeText={v => { setF({ ...f, ref: v }); setErr({ ...err, ref: '' }); }} error={err.ref} />
-        <Pressable onPress={chooseProof} style={[bl.drop, !!err.proof && { borderColor: colors.bad }, !!f.proof && { borderStyle: 'solid', borderColor: colors.warmOrange, backgroundColor: '#FFF8F3' }]} accessibilityRole="button">
-          <Icon name={f.proof ? 'check' : 'upload'} size={20} color={colors.warmOrange} />
-          <Text style={type.h3}>{f.proof || 'Upload payment screenshot'}</Text>
-          <T.Small>{f.proof ? 'Click to choose another' : 'JPEG or PNG, up to 10 MB'}</T.Small>
-        </Pressable>
-        {!!err.proof && <T.Small color={colors.bad}>{err.proof}</T.Small>}
+        <UploadBox imagesOnly file={f.proof} error={err.proof} title="Upload payment screenshot" accent={colors.warmOrange}
+          onPick={(file, e) => { setF(x => ({ ...x, proof: file })); setErr(x => ({ ...x, proof: e || '' })); }} />
       </Section>
       <Banner icon="info" title="Paying does not confirm it in the app" sub="The clinic checks its own account, then confirms your payment and issues a receipt." />
     </Screen>
@@ -289,6 +289,7 @@ export function CreateBill() {
 
 const bl = StyleSheet.create({
   item: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line, gap: 12 },
+  proofCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
   proof: { width: '100%', height: 140, borderRadius: radius.lg, backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center', gap: 6 },
   chip: { paddingHorizontal: 12, height: 34, justifyContent: 'center', borderRadius: 17, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
   qrBox: { padding: 10, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: '#fff' },

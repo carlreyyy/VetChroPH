@@ -2,12 +2,15 @@
 // In the prototype messages are kept in memory and appear instantly. Real-time delivery across phones
 // needs the backend (for example a realtime database channel) and is listed as a limitation in the README.
 import React, { useEffect, useRef, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar, Empty, Field, Group, Row, Screen, T, TAB_BAR_H, useWide } from '../components/ui';
 import { BrandTile } from '../components/Brand';
 import { useBP, hoverBg, PState } from '../components/responsive';
 import { Icon } from '../components/Icon';
+import { FileThumb, FileViewer, fileSource } from '../components/files';
+import { isPdf, pickFile } from '../utils/files';
+import type { FileRef } from '../types';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
 import { colors, radius, type, FONT } from '../theme';
@@ -17,10 +20,13 @@ function Thread({ ownerId, tabbed }: { ownerId: string; tabbed?: boolean }) {
   const { db, user, act } = useApp(); const insets = useSafeAreaInsets(); const wide = useWide(); const { mobile } = useBP();
   const msgs = db.messages[ownerId] || [];
   const mine = user!.role === 'owner' ? 'owner' : 'clinic';
-  const [text, setText] = useState('');
+  const [text, setText] = useState(''); const [file, setFile] = useState<FileRef | null>(null); const [fileErr, setFileErr] = useState('');
+  const [view, setView] = useState<FileRef | null>(null);
   const ref = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const attach = async () => { const r = await pickFile(); if (typeof r === 'string') setFileErr(r); else if (r) { setFile(r); setFileErr(''); } };
   useEffect(() => { act.readThread(ownerId); }, [msgs.length]); // eslint-disable-line react-hooks/exhaustive-deps
-  const send = () => { if (!text.trim()) return; act.sendMessage(ownerId, text); setText(''); };
+  const canSend = !!text.trim() || !!file;
+  const send = () => { if (!canSend) return; act.sendMessage(ownerId, text, file || undefined); setText(''); setFile(null); setFileErr(''); };
   let lastDay = '';
   return (
     <View style={{ flex: 1 }}>
@@ -39,9 +45,10 @@ function Thread({ ownerId, tabbed }: { ownerId: string; tabbed?: boolean }) {
                 {!own && <View style={{ width: 30 }}>{last && <Avatar name={m.by} size={30} />}</View>}
                 <View style={[{ maxWidth: wide ? 480 : '78%', gap: 3 }, own ? { alignItems: 'flex-end' } : { alignItems: 'flex-start' }]}>
                   {!own && first && <Text style={ms.sender}>{m.by}{m.from === 'clinic' ? ' · Clinic' : ''}</Text>}
-                  <View style={[ms.bubble, own ? ms.own : ms.other, own && !last && { borderBottomRightRadius: 16 }, !own && !last && { borderBottomLeftRadius: 16 }]}>
+                  {m.file && <Attachment file={m.file} own={own} onPress={() => setView(m.file!)} />}
+                  {!!m.text && <View style={[ms.bubble, own ? ms.own : ms.other, own && !last && { borderBottomRightRadius: 16 }, !own && !last && { borderBottomLeftRadius: 16 }]}>
                     <Text style={[type.body, { fontSize: 14.5, lineHeight: 20 }, own && { color: '#fff' }]}>{m.text}</Text>
-                  </View>
+                  </View>}
                   {last && <Text style={ms.time}>{clock(m.at)}{own && m.read ? ' · Seen' : ''}</Text>}
                 </View>
               </View>
@@ -49,13 +56,36 @@ function Thread({ ownerId, tabbed }: { ownerId: string; tabbed?: boolean }) {
           );
         })}
       </ScrollView>
+      <FileViewer file={view} onClose={() => setView(null)} />
+      {(file || !!fileErr) && <View style={ms.pending}>
+        {file ? <><FileThumb file={file} size={40} /><View style={{ flex: 1, minWidth: 0 }}><Text style={type.h3} numberOfLines={1}>{file.name}</Text><T.Small>{file.size} · Ready to send</T.Small></View>
+          <Pressable onPress={() => setFile(null)} accessibilityRole="button" accessibilityLabel="Remove attachment" hitSlop={8}><Icon name="x" size={18} color={colors.ink2} /></Pressable></>
+          : <><Icon name="alert" size={18} color={colors.bad} /><T.Small color={colors.bad}>{fileErr}</T.Small></>}
+      </View>}
       <View style={[ms.bar, { paddingBottom: tabbed && mobile ? TAB_BAR_H + Math.max(insets.bottom, 8) + 10 : Math.max(insets.bottom, 12) }]}>
+        <Pressable onPress={attach} accessibilityRole="button" accessibilityLabel="Attach a photo or file" style={ms.clip}><Icon name="clip2" size={20} color={colors.ink2} /></Pressable>
         <TextInput value={text} onChangeText={setText} placeholder={mine === 'owner' ? 'Message the clinic' : 'Write a message'} placeholderTextColor={colors.ink3} style={[ms.input, { outlineStyle: 'none' } as never]} multiline numberOfLines={1} onSubmitEditing={send} accessibilityLabel="Message" />
-        <Pressable onPress={send} disabled={!text.trim()} accessibilityRole="button" accessibilityLabel="Send" style={[ms.send, !text.trim() && { opacity: 0.4 }]}>
+        <Pressable onPress={send} disabled={!canSend} accessibilityRole="button" accessibilityLabel="Send" style={[ms.send, !canSend && { opacity: 0.4 }]}>
           <Icon name="send" size={19} color="#fff" />
         </Pressable>
       </View>
     </View>
+  );
+}
+
+/** A photo or file sent in the chat. Photos show inline; PDFs show as a file card. Tap to open. */
+function Attachment({ file, own, onPress }: { file: FileRef; own: boolean; onPress: () => void }) {
+  const src = fileSource(file);
+  if (!isPdf(file) && src) return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`Open photo ${file.name}`}>
+      <Image source={src} style={ms.photo} resizeMode="cover" />
+    </Pressable>
+  );
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`Open ${file.name}`} style={[ms.fileCard, own && { borderColor: colors.accentDeep }]}>
+      <FileThumb file={file} size={44} />
+      <View style={{ flexShrink: 1, minWidth: 0 }}><Text style={type.h3} numberOfLines={1}>{file.name}</Text><T.Small>{isPdf(file) ? 'PDF' : 'Image'} · {file.size}</T.Small></View>
+    </Pressable>
   );
 }
 
@@ -157,7 +187,7 @@ export function Inbox() {
       {threads.length === 0 && starters.length === 0 ? <Empty icon="chat" title="No conversations" sub="Messages from pet owners appear here." /> : (
         <Group>
           {threads.map(t => (
-            <Row key={t.o.id} left={<Avatar name={t.o.name} />} title={t.o.name} sub={`${t.last.from === 'clinic' ? 'You: ' : ''}${t.last.text}`} unread={t.unread > 0}
+            <Row key={t.o.id} left={<Avatar name={t.o.name} />} title={t.o.name} sub={`${t.last.from === 'clinic' ? 'You: ' : ''}${t.last.text || (t.last.file ? `Sent a file: ${t.last.file.name}` : '')}`} unread={t.unread > 0}
               right={<View style={{ alignItems: 'flex-end', gap: 6 }}><Text style={[type.small, { fontSize: 12 }]}>{ago(t.last.at)}</Text>{t.unread > 0 && <View style={ms.count}><Text style={ms.countText}>{t.unread}</Text></View>}</View>}
               onPress={() => nav.navigate('Chat', { ownerId: t.o.id })} />
           ))}
@@ -185,6 +215,10 @@ const ms = StyleSheet.create({
   time: { fontSize: 11, color: colors.ink3, marginHorizontal: 2 },
   bar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.surface },
   input: { fontFamily: FONT, flex: 1, minHeight: 44, maxHeight: 110, borderRadius: 22, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.subtle, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, fontSize: 15, color: colors.ink },
+  clip: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.subtle },
+  pending: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.surface },
+  photo: { width: 210, height: 210, borderRadius: 16, backgroundColor: colors.subtle },
+  fileCard: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, paddingRight: 14, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, maxWidth: 280 },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
   split: { flex: 1, flexDirection: 'row', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 16, overflow: 'hidden', marginBottom: 24 },
   list: { width: 340, borderRightWidth: 1, borderRightColor: colors.line },
