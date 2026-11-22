@@ -175,9 +175,8 @@ const sb = StyleSheet.create({
     marginBottom: 10,
   },
   groupTitle: {
-    fontFamily: FONT, fontSize: 10.5, fontWeight: '600',
-    color: sidebar.textMuted, letterSpacing: 0.6,
-    textTransform: 'uppercase', paddingHorizontal: 10, marginBottom: 4,
+    fontFamily: FONT, fontSize: 12.5, fontWeight: '500',
+    color: sidebar.textMuted, paddingHorizontal: 10, marginBottom: 4,
   },
   item: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

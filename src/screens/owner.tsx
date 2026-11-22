@@ -10,8 +10,9 @@ import { AutoGrid, Cell, Cols, DataTable, PState, useBP } from '../components/re
 import { useApp, sel } from '../store/AppStore';
 import { useNav } from '../navigation/nav';
 import { callClinic, openDirections } from './ownerHome';
+import { careNodes, HEALTH_COLOR, petHealth, RingGlyph } from '../components/care';
 import { PET_PHOTOS, SCENES } from '../data/photos';
-import { colors, radius, shadow, space, type, Tone, FONT } from '../theme';
+import { colors, radius, shadow, space, type, Tone, FONT, DISPLAY } from '../theme';
 import type { Clinic, DB, Pet } from '../types';
 import {
   APPT, BILL, ageOf, billBalance, billState, billTotal, byDateTime, D, DOWL, firstName, fmtD, fmtDS, followStatus, greeting, hourLabel, isUpcoming, money, MON, parseD, rel, t12, TODAY,
@@ -50,29 +51,25 @@ function PetPhoto({ pet, h }: { pet: Pet; h: number }) {
 }
 
 function PetCard({ pet, compact }: { pet: Pet; compact?: boolean }) {
-  const nav = useNav(); const { db } = useApp(); const st = petStatus(db, pet);
+  const nav = useNav(); const { db } = useApp(); const h = petHealth(db, pet);
+  const next = careNodes(db, pet.id, { past: 0, future: 1 }).find(n => n.state === 'next');
   return (
-    <Pressable onPress={() => nav.navigate('PetDetail', { id: pet.id })} accessibilityRole="button" accessibilityLabel={`${pet.name}, ${st.label}`}
-      style={(s: PState) => [o.petCard, compact && { width: 160 }, s.hovered && { borderColor: colors.accentMid, transform: [{ translateY: -2 }] }, s.pressed && { opacity: 0.9 }]}>
-      <View style={[{ position: 'relative' }, pet.status !== 'active' ? { opacity: 0.5 } : undefined]}>
-        <PetPhoto pet={pet} h={compact ? 116 : 180} />
-        {/* Status dot badge overlaid on photo */}
-        {pet.status === 'active' && st.tone === 'ok' && (
-          <View style={{ position: 'absolute', top: 10, right: 10, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.ok, borderWidth: 2, borderColor: '#fff' }} />
-        )}
-        {pet.status === 'active' && (st.tone === 'warn' || st.tone === 'bad') && (
-          <View style={{ position: 'absolute', top: 8, right: 8, paddingHorizontal: 7, height: 20, borderRadius: 10, backgroundColor: st.tone === 'bad' ? colors.bad : colors.warn, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#fff' }}>
-            <Text style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: '700', color: '#fff' }} numberOfLines={1}>{st.label}</Text>
-          </View>
-        )}
+    <Pressable onPress={() => nav.navigate('PetDetail', { id: pet.id })} accessibilityRole="button" accessibilityLabel={`${pet.name}, ${h.label}`}
+      style={(s: PState) => [o.petCard, compact && { width: 160 }, s.hovered && { borderColor: colors.lineStrong }, s.pressed && { opacity: 0.9 }]}>
+      <View style={pet.status !== 'active' ? { opacity: 0.5 } : undefined}>
+        <PetPhoto pet={pet} h={compact ? 116 : 200} />
       </View>
-      <View style={{ padding: compact ? 12 : 14, gap: 3, backgroundColor: '#FFFCF9' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <Text style={[type.h3, { flexShrink: 1 }, !compact && { fontSize: 15.5 }]} numberOfLines={1}>{pet.name}</Text>
+      <View style={{ padding: compact ? 12 : 16, gap: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={[o.petName, compact && { fontSize: 17 }]} numberOfLines={1}>{pet.name}</Text>
           <SexMark sex={pet.sex} size={13} />
         </View>
-        <Text style={[type.small, { fontSize: compact ? 12 : 12.5 }]} numberOfLines={1}>{pet.breed} · {ageOf(pet.birth)}</Text>
-        {!compact && <View style={{ marginTop: 6 }}><Pill text={st.label} tone={st.tone} chip /></View>}
+        <Text style={[type.small, { fontSize: compact ? 12 : 13 }]} numberOfLines={1}>{pet.breed}, {ageOf(pet.birth)}</Text>
+        {!compact && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+          <RingGlyph health={h.key} size={13} />
+          <Text style={{ fontFamily: FONT, fontSize: 13, fontWeight: '600', color: HEALTH_COLOR[h.key], flexShrink: 1 }} numberOfLines={1}>{h.label}</Text>
+        </View>}
+        {!compact && next && <Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={1}>Next: {next.label}, {fmtD(next.date)}</Text>}
       </View>
     </Pressable>
   );
@@ -182,15 +179,15 @@ export function OwnerBills() {
 
   return (
     <Screen title="Bills" back={false} big tabbed sub="Bills from your visits, payments and receipts.">
-      <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
-        <View style={{ backgroundColor: colors.accentDeep, padding: wide ? 20 : 18, flexDirection: wide ? 'row' : 'column', gap: wide ? 32 : 4, alignItems: wide ? 'center' : 'flex-start' }}>
+      <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+        <View style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line, padding: wide ? 20 : 18, flexDirection: wide ? 'row' : 'column', gap: wide ? 32 : 4, alignItems: wide ? 'center' : 'flex-start' }}>
           <View style={{ flex: wide ? 1 : undefined, gap: 2 }}>
-            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.58)', textTransform: 'uppercase', letterSpacing: 0.7 }}>Balance due</Text>
-            <Text style={{ fontFamily: FONT, fontSize: 32, fontWeight: '700', color: '#fff', letterSpacing: -1 }}>{money(due)}</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.ink2 }}>Balance due</Text>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 40, fontWeight: '600', color: colors.ink, letterSpacing: -1 }}>{money(due)}</Text>
           </View>
-          <View style={wide ? { flexDirection: 'row', gap: 32, paddingLeft: 32, borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.18)' } : { flexDirection: 'row', gap: 32, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.14)', width: '100%' }}>
-            <View style={{ gap: 1 }}><Text style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Being checked</Text><Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.88)' }}>{money(checking)}</Text></View>
-            <View style={{ gap: 1 }}><Text style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Paid so far</Text><Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.88)' }}>{money(paidTotal)}</Text></View>
+          <View style={wide ? { flexDirection: 'row', gap: 32, paddingLeft: 32, borderLeftWidth: 1, borderLeftColor: colors.line } : { flexDirection: 'row', gap: 32, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.line, width: '100%' }}>
+            <View style={{ gap: 1 }}><Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink2 }}>Being checked</Text><Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '700', color: colors.ink }}>{money(checking)}</Text></View>
+            <View style={{ gap: 1 }}><Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink2 }}>Paid so far</Text><Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '700', color: colors.ink }}>{money(paidTotal)}</Text></View>
           </View>
         </View>
         <View style={{ backgroundColor: colors.surface, paddingHorizontal: 18, paddingVertical: 12 }}>
@@ -291,8 +288,9 @@ const o = StyleSheet.create({
   dateDay: { fontFamily: FONT, fontSize: 22, lineHeight: 26, fontWeight: '700', color: '#fff' },
 
   // Pet cards
-  petCard: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', ...shadow },
-  addCard: { alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.teal, backgroundColor: colors.tileTeal },
+  petCard: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
+  addCard: { alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.lineStrong, backgroundColor: 'transparent' },
+  petName: { fontFamily: DISPLAY, fontSize: 21, lineHeight: 25, fontWeight: '600', color: colors.ink, letterSpacing: -0.4, flexShrink: 1 },
   petRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 16 },
   visit: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
   balance: { fontFamily: FONT, fontSize: 30, lineHeight: 36, fontWeight: '700', color: colors.ink, letterSpacing: -0.8 },

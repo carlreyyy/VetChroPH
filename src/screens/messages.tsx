@@ -72,7 +72,7 @@ export function OwnerChat() {
             <Text style={type.h3} numberOfLines={1}>{db.clinic.name}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><View style={[ms.online, !open && { backgroundColor: colors.ink3 }]} /><Text style={[type.small, { fontSize: 12.5 }]} numberOfLines={1}>{open ? 'Open now · replies during clinic hours' : 'Closed · we reply when the clinic opens'}</Text></View>
           </View>
-          <Pressable onPress={() => Linking.openURL(`tel:${db.clinic.mobile.replace(/\s/g, '')}`)} accessibilityRole="button" accessibilityLabel="Call the clinic" style={(st: PState) => [ms.call, st.hovered && { backgroundColor: '#D1FAE5' }]}><Icon name="phone" size={18} color={colors.emerald} /></Pressable>
+          <Pressable onPress={() => Linking.openURL(`tel:${db.clinic.mobile.replace(/\s/g, '')}`)} accessibilityRole="button" accessibilityLabel="Call the clinic" style={(st: PState) => [ms.call, st.hovered && { backgroundColor: colors.hover }]}><Icon name="phone" size={18} color={colors.accentDeep} /></Pressable>
         </View>
         <Thread ownerId={user!.ownerId!} tabbed />
       </View>
@@ -109,7 +109,7 @@ export function Inbox() {
     const o = cur ? sel.owner(db, cur) : undefined;
     const item = (id: string, name: string, sub: string, unread = 0, when?: number) => (
       <Pressable key={id} onPress={() => setPicked(id)} accessibilityRole="button" accessibilityLabel={`Conversation with ${name}`} accessibilityState={{ selected: id === cur }}
-        style={(st: PState) => [ms.thread, { backgroundColor: id === cur ? colors.tileEmerald : hoverBg(st) }]}>
+        style={(st: PState) => [ms.thread, { backgroundColor: id === cur ? colors.accentSoft : hoverBg(st) }]}>
         <Avatar name={name} size={40} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -142,7 +142,7 @@ export function Inbox() {
                   <Text style={type.h3} numberOfLines={1}>{o.name}</Text>
                   <T.Small numberOfLines={1}>{o.phone} · {sel.petsOf(db, o.id).filter(x => x.status === 'active').map(x => x.name).join(', ') || 'No pets'}</T.Small>
                 </View>
-                <Pressable onPress={() => nav.navigate('OwnerDetail', { id: o.id })} accessibilityRole="button" style={(st: PState) => [ms.link, st.hovered && { backgroundColor: colors.tileEmerald }]}><Text style={{ fontFamily: FONT, color: colors.emerald, fontWeight: '600', fontSize: 13.5 }}>Owner record</Text></Pressable>
+                <Pressable onPress={() => nav.navigate('OwnerDetail', { id: o.id })} accessibilityRole="button" style={(st: PState) => [ms.link, st.hovered && { backgroundColor: colors.accentSoft }]}><Text style={{ fontFamily: FONT, color: colors.accentDeep, fontWeight: '600', fontSize: 13.5 }}>Owner record</Text></Pressable>
               </View>
               <Thread key={o.id} ownerId={o.id} />
             </> : <Empty icon="chat" title="Pick a conversation" />}
@@ -178,14 +178,14 @@ const ms = StyleSheet.create({
   sender: { fontFamily: FONT, fontSize: 12, fontWeight: '600', color: colors.ink2, marginLeft: 2 },
   dayPill: { alignSelf: 'center', backgroundColor: colors.subtle, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginTop: 14, marginBottom: 2 },
   dayText: { fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.ink2 },
-  call: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.tileEmerald, alignItems: 'center', justifyContent: 'center' },
+  call: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
   bubble: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18 },
-  own: { backgroundColor: colors.emerald, borderBottomRightRadius: 4 },
+  own: { backgroundColor: colors.accentDeep, borderBottomRightRadius: 4 },
   other: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderBottomLeftRadius: 4 },
   time: { fontSize: 11, color: colors.ink3, marginHorizontal: 2 },
   bar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.surface },
   input: { fontFamily: FONT, flex: 1, minHeight: 44, maxHeight: 110, borderRadius: 22, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.subtle, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, fontSize: 15, color: colors.ink },
-  send: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.emerald, alignItems: 'center', justifyContent: 'center' },
+  send: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accentDeep, alignItems: 'center', justifyContent: 'center' },
   split: { flex: 1, flexDirection: 'row', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 16, overflow: 'hidden', marginBottom: 24 },
   list: { width: 340, borderRightWidth: 1, borderRightColor: colors.line },
   thread: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.line },

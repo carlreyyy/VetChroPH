@@ -4,9 +4,8 @@
 // The side column replaces KPI boxes with plain sentences: what needs a hand, and which pets are due.
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Btn, LinkBtn, Screen, Skeleton, Stack, useFirstLoad } from '../components/ui';
-import { Icon, IconName } from '../components/Icon';
 import { PetAvatar } from '../components/PetArt';
-import { HealthRing, StageLine } from '../components/care';
+import { HealthRing, LedgerRow, StageLine } from '../components/care';
 import { Cols, PState, useBP } from '../components/responsive';
 import { HomeHeader } from './common';
 import { useDueList } from './clinic';
@@ -88,18 +87,6 @@ function NowMarker() {
   );
 }
 
-function NeedRow({ n, label, icon, onPress }: { n: number; label: string; icon: IconName; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${n} ${label}`}
-      style={(st: PState) => [q.need, st.hovered && { backgroundColor: colors.hover }]}>
-      <Text style={[q.needN, n === 0 && { color: colors.ink3 }]}>{n}</Text>
-      <Text style={[type.body, { flex: 1, color: n ? colors.ink : colors.ink2 }]}>{label}</Text>
-      {n > 0 && <View style={q.needDot} />}
-      <Icon name={icon} size={18} color={colors.ink3} />
-    </Pressable>
-  );
-}
-
 export function StaffHome() {
   const nav = useNav(); const { db, user } = useApp(); const due = useDueList();
   const loading = useFirstLoad('staffHome'); const { mobile, desktop } = useBP();
@@ -167,9 +154,9 @@ export function StaffHome() {
     <View style={[q.side, !desktop && q.sideStacked]}>
       <View style={{ gap: 4 }}>
         <Text style={q.sideTitle} accessibilityRole="header">Needs a hand</Text>
-        <NeedRow n={verify} label={verify === 1 ? 'payment to verify' : 'payments to verify'} icon="wallet" onPress={() => nav.navigate('Main', { screen: 'Billing' } as never)} />
-        <NeedRow n={unread} label={unread === 1 ? 'unread message' : 'unread messages'} icon="chat" onPress={() => nav.navigate('Main', { screen: 'Messages' } as never)} />
-        <NeedRow n={due.overdue.length} label={due.overdue.length === 1 ? 'overdue follow-up' : 'overdue follow-ups'} icon="bell" onPress={() => nav.navigate('CareMonitor')} />
+        <LedgerRow alert n={verify} label={verify === 1 ? 'payment to verify' : 'payments to verify'} icon="wallet" onPress={() => nav.navigate('Main', { screen: 'Billing' } as never)} />
+        <LedgerRow alert n={unread} label={unread === 1 ? 'unread message' : 'unread messages'} icon="chat" onPress={() => nav.navigate('Main', { screen: 'Messages' } as never)} />
+        <LedgerRow alert n={due.overdue.length} label={due.overdue.length === 1 ? 'overdue follow-up' : 'overdue follow-ups'} icon="bell" onPress={() => nav.navigate('CareMonitor')} />
       </View>
       {dueRows.length > 0 && (
         <View style={{ gap: 4 }}>

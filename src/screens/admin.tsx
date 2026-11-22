@@ -4,161 +4,193 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../components/Icon';
-import { Avatar, Banner, Btn, Card, Check, Chips, Empty, Field, Group, Pill, QuickActions, Row, Screen, Section, Seg, Stack, Stat, StatGrid, T, Tabs, Toggle, useFirstLoad } from '../components/ui';
+import { Avatar, Banner, Btn, Card, Check, Chips, Empty, Field, Group, LinkBtn, Pill, Row, Screen, Section, Seg, SegControl, Stack, T, Tabs, Toggle, useFirstLoad } from '../components/ui';
+import { CollectionBars, HealthRing, LedgerRow } from '../components/care';
 import { Sheet, useConfirm } from '../components/overlays';
 import { QrArt } from '../components/PetArt';
 import { PetAvatar } from '../components/PetArt';
-import { Greeting, HomeHeader, ROLE_LABEL } from './common';
+import { HomeHeader, ROLE_LABEL } from './common';
 import { DashSkeleton, ScheduleTable, useDueList } from './clinic';
 import { Cell, Cols, DataTable, useBP } from '../components/responsive';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, shadow, type, FONT } from '../theme';
+import { colors, radius, shadow, type, FONT, DISPLAY } from '../theme';
 import type { DayHours, PayAccount, Role, Service } from '../types';
-import { APPT, D, DOWL, MON, ago, billBalance, billState, billTotal, byDateTime, diff, fmtD, fmtDS, hourLabel, isEmail, isPhone, money, parseD, t12 } from '../utils/format';
+import { APPT, D, DOW, DOWL, MON, ago, billBalance, billState, billTotal, byDateTime, diff, fmtD, fmtDS, hourLabel, isEmail, isPhone, money, parseD, t12 } from '../utils/format';
 
 const paidIn = (db: ReturnType<typeof useApp>['db'], test: (d: string) => boolean) =>
   db.bills.flatMap(b => b.payments).filter(p => p.status === 'confirmed' && test(p.date)).reduce((s2, p) => s2 + p.amount, 0);
 const sameMonth = (d: string, ref = D(0)) => d.slice(0, 7) === ref.slice(0, 7);
 
+/** Administrator overview: a quiet control room. Money first, then what needs the owner's eye, then the team. */
 export function AdminHome() {
   const nav = useNav(); const { db, user } = useApp(); const due = useDueList();
   const today = db.appts.filter(a => diff(a.date) === 0 && a.status !== 'cancelled').sort(byDateTime);
   const verify = db.bills.filter(b => billState(b) === 'pending');
   const unread = sel.unreadMsgs(db, user!);
-  const unpaid = db.bills.filter(b => billState(b) === 'unpaid').reduce((s2, b) => s2 + billBalance(b), 0);
+  const unpaidBills = db.bills.filter(b => billState(b) === 'unpaid');
+  const unpaid = unpaidBills.reduce((s2, b) => s2 + billBalance(b), 0);
   const staffActs = db.activity.filter(a => db.users.some(u => u.name === a.who && u.role === 'staff')).slice(0, 4);
-  const loading = useFirstLoad('adminHome'); const { wide } = useBP();
-  const money_ = (
-    <Pressable onPress={() => nav.navigate('Main', { screen: 'Reports' } as never)} accessibilityRole="button" accessibilityLabel="Revenue — view reports"
-      style={({ pressed }: any) => [{ borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, opacity: pressed ? 0.9 : 1 }]}>
-      {/* Navy revenue header */}
-      <View style={{ backgroundColor: colors.accentDeep, padding: 18, flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.58)', textTransform: 'uppercase', letterSpacing: 0.7 }}>Collected today</Text>
-          <Text style={{ fontFamily: FONT, fontSize: 28, fontWeight: '700', color: '#fff', letterSpacing: -0.8, marginTop: 2 }}>{money(paidIn(db, d => diff(d) === 0))}</Text>
-        </View>
-        <View style={{ alignItems: 'flex-end', paddingTop: 2 }}>
-          <Text style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,0.58)' }}>This month</Text>
-          <Text style={{ fontFamily: FONT, fontSize: 20, fontWeight: '700', color: 'rgba(255,255,255,0.88)', marginTop: 3 }}>{money(paidIn(db, d => sameMonth(d)))}</Text>
-        </View>
+  const staff = db.users.filter(u => u.role === 'staff' && u.status === 'active');
+  const loading = useFirstLoad('adminHome'); const { desktop, mobile } = useBP();
+  const days = Array.from({ length: 7 }, (_, i) => D(i - 6));
+  const week = days.map(d => paidIn(db, x => x === d));
+  const todayIn = week[6]; const month = paidIn(db, d => sameMonth(d));
+  const avg = week.slice(0, 6).reduce((a, b) => a + b, 0) / 6;
+  const trend = avg === 0 ? '' : todayIn >= avg ? `That's above the past week's daily average of ${money(Math.round(avg))}.` : `The past week averaged ${money(Math.round(avg))} a day.`;
+  const doneN = today.filter(a => a.status === 'completed').length;
+  const d0 = parseD(D(0));
+
+  const header = (
+    <View style={[{ gap: 20 }, desktop && { flexDirection: 'row', alignItems: 'flex-end', gap: 32 }]}>
+      <View style={{ flex: desktop ? 1 : undefined, minWidth: 0, gap: 10 }}>
+        <Text style={ad.date}>{DOWL[d0.getDay()]}, {MON[d0.getMonth()]} {d0.getDate()}</Text>
+        <Text style={[ad.headline, mobile && { fontSize: 36, lineHeight: 38, letterSpacing: -1.3 }]} accessibilityRole="header">
+          {money(todayIn)} collected today.{'\n'}<Text style={{ color: unpaid ? colors.ink : colors.ink3 }}>{money(unpaid)} still unpaid.</Text>
+        </Text>
+        <Text style={[type.body, { color: colors.ink2 }]}>{today.length} visits on today's schedule, {doneN} done. {month ? `${money(month)} collected this month.` : ''}</Text>
       </View>
-      {/* Unpaid row */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 12, backgroundColor: colors.surface }}>
-        <Text style={type.small}>Unpaid bills</Text>
-        <Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '700', color: unpaid > 0 ? colors.bad : colors.ok }}>{money(unpaid)}</Text>
-      </View>
-    </Pressable>
+      <Btn label="Open reports" icon="chart" kind="line" onPress={() => nav.navigate('Main', { screen: 'Reports' } as never)} style={mobile ? { alignSelf: 'flex-start' } : undefined} />
+    </View>
   );
-  const shortcuts = <QuickActions items={[
-    ['Messages', 'chat', () => nav.navigate('Inbox'), unread, colors.teal, colors.tileTeal],
-    ['Billing', 'wallet', () => nav.navigate('BillingList'), verify.length, colors.warmOrange, colors.tileOrange],
-    ['Due list', 'bell', () => nav.navigate('CareMonitor'), 0, colors.teal, colors.tileTeal],
-    ['Activity', 'history', () => nav.navigate('ActivityLog'), 0, colors.teal, colors.tileTeal],
-  ]} />;
-  const activity = (
-    <Section title="Staff activity" action="Activity log" onAction={() => nav.navigate('ActivityLog')}>
-      <Group>{staffActs.map(a => <Row key={a.id} left={<Avatar name={a.who} size={38} />} title={a.text} sub={`${a.who} · ${ago(a.at)}`} />)}</Group>
+
+  const chart = (
+    <View style={ad.panel}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <Text style={ad.h2} accessibilityRole="header">Collections, last 7 days</Text>
+        <Text style={type.small}>Confirmed payments only</Text>
+      </View>
+      <CollectionBars values={week} labels={days.map((d, i) => i === 6 ? 'Today' : DOW[parseD(d).getDay()])} format={v => `₱${(v / 1000).toFixed(1)}k`} height={mobile ? 90 : 110} />
+      {!!trend && <Text style={type.small}>{trend}</Text>}
+    </View>
+  );
+
+  const needs = (
+    <View style={{ gap: 4 }}>
+      <Text style={ad.h2} accessibilityRole="header">Needs your eye</Text>
+      <LedgerRow alert n={verify.length} label={verify.length === 1 ? 'payment waiting for verification' : 'payments waiting for verification'} icon="wallet" onPress={() => nav.navigate('BillingList')} />
+      <LedgerRow alert n={due.overdue.length} label={due.overdue.length === 1 ? 'pet overdue for care' : 'pets overdue for care'} icon="bell" onPress={() => nav.navigate('CareMonitor')} />
+      <LedgerRow alert n={unread} label={unread === 1 ? 'unread message from an owner' : 'unread messages from owners'} icon="chat" onPress={() => nav.navigate('Inbox')} />
+      <LedgerRow n={unpaidBills.length} label={unpaidBills.length === 1 ? 'bill still unpaid' : 'bills still unpaid'} icon="receipt" onPress={() => nav.navigate('BillingList')} />
+    </View>
+  );
+
+  const team = (
+    <View style={{ gap: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <Text style={ad.h2} accessibilityRole="header">The team today</Text>
+        <LinkBtn label="Activity log" onPress={() => nav.navigate('ActivityLog')} />
+      </View>
+      {staff.map(u => {
+        const handled = db.appts.filter(a => diff(a.date) === 0 && a.handledBy === u.name).length;
+        const checked = db.bills.flatMap(b => b.payments).filter(p => diff(p.date) === 0 && p.verifiedBy === u.name).length;
+        return (
+          <View key={u.id} style={ad.person}>
+            <Avatar name={u.name} size={36} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={type.h3} numberOfLines={1}>{u.name}</Text>
+              <Text style={type.small} numberOfLines={1}>{handled} {handled === 1 ? 'visit' : 'visits'} handled, {checked} {checked === 1 ? 'payment' : 'payments'} checked</Text>
+            </View>
+          </View>
+        );
+      })}
+      {staffActs.length > 0 && <View style={{ marginTop: 12, gap: 10 }}>
+        {staffActs.map(a => (
+          <View key={a.id} style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={ad.tick} />
+            <Text style={[type.small, { flex: 1 }]}><Text style={{ color: colors.ink, fontWeight: '500' }}>{a.who.split(' ')[0]}</Text> {a.text.charAt(0).toLowerCase() + a.text.slice(1)}, {ago(a.at)}</Text>
+          </View>
+        ))}
+      </View>}
+    </View>
+  );
+
+  const schedule = (
+    <Section title="Today's schedule" action="Full schedule" onAction={() => nav.navigate('Main', { screen: 'Appointments' } as never)}>
+      {today.length === 0 ? <Empty icon="calendar" title="No appointments today" /> : mobile ? (
+        <Group>{today.map(a => { const p = sel.pet(db, a.petId)!; return (
+          <Row key={a.id} left={<PetAvatar pet={p} size={40} />} title={`${t12(a.time)}  ${p.name}`} sub={`${a.service}${a.handledBy ? `, ${a.handledBy}` : ''}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />
+        ); })}</Group>
+      ) : <ScheduleTable list={today} showStaff />}
     </Section>
   );
-  if (loading) return <Screen hideHeader tabbed><HomeHeader /><DashSkeleton /></Screen>;
+
+  if (loading) return <Screen hideHeader tabbed>{mobile && <HomeHeader />}<DashSkeleton /></Screen>;
   return (
     <Screen hideHeader tabbed>
-      <HomeHeader sub={`Administrator · ${fmtD(D(0))}`} action={<Btn label="View reports" icon="chart" kind="line" onPress={() => nav.navigate('Main', { screen: 'Reports' } as never)} />} />
-      <Greeting sub="Here is how the clinic is doing today." />
-      <StatGrid>
-        <Stat value={today.length} label="Appointments today" icon="calendar" tileColor={colors.teal} tileBg={colors.tileTeal} onPress={() => nav.navigate('Main', { screen: 'Appointments' } as never)} />
-        <Stat value={verify.length} label="Payments to verify" icon="wallet" tileColor={verify.length > 0 ? undefined : colors.warmOrange} tileBg={verify.length > 0 ? undefined : colors.tileOrange} alert={verify.length > 0} onPress={() => nav.navigate('BillingList')} />
-        <Stat value={due.overdue.length} label="Overdue follow-ups" icon="alert" tileColor={due.overdue.length > 0 ? undefined : colors.teal} tileBg={due.overdue.length > 0 ? undefined : colors.tileTeal} alert={due.overdue.length > 0} onPress={() => nav.navigate('CareMonitor')} />
-        <Stat value={unread} label="Unread messages" icon="chat" tileColor={unread > 0 ? undefined : colors.teal} tileBg={unread > 0 ? undefined : colors.tileTeal} alert={unread > 0} onPress={() => nav.navigate('Inbox')} />
-      </StatGrid>
-      {wide ? (
-        <Cols ratio={[2, 1]} stackBelow="desktop">
-          <>
-            <Section title="Today's schedule" action="Full schedule" onAction={() => nav.navigate('Main', { screen: 'Appointments' } as never)}>
-              {today.length === 0 ? <Empty icon="calendar" title="No appointments today" /> : <ScheduleTable list={today} />}
-            </Section>
-            {activity}
-          </>
-          <>
-            {money_}
-            <Section title="Shortcuts">{shortcuts}</Section>
-          </>
+      {mobile && <HomeHeader />}
+      {header}
+      {desktop ? (
+        <Cols ratio={[1.9, 1]} gap={48}>
+          <>{chart}{schedule}</>
+          <View style={ad.side}>{needs}{team}</View>
         </Cols>
-      ) : <>
-        {money_}
-        {shortcuts}
-        <Section title="Today's schedule" action="Schedule" onAction={() => nav.navigate('Main', { screen: 'Appointments' } as never)}>
-          {today.length === 0 ? <T.Small>No appointments today.</T.Small> : (
-            <Group>{today.slice(0, 5).map(a => { const p = sel.pet(db, a.petId)!; return (
-              <Row key={a.id} left={<PetAvatar pet={p} size={40} />} title={`${t12(a.time)} · ${p.name}`} sub={`${a.service}${a.handledBy ? ` · ${a.handledBy}` : ''}`} right={<Pill text={APPT[a.status][0]} tone={APPT[a.status][1]} badge />} onPress={() => nav.navigate('ApptDetail', { id: a.id })} />
-            ); })}</Group>
-          )}
-        </Section>
-        {activity}
-      </>}
+      ) : <>{chart}{needs}{schedule}{team}</>}
     </Screen>
   );
 }
 
 /** Consultation D21: daily and monthly collections, due and overdue vaccines (and other follow-ups), unpaid bills. */
 export function Reports() {
-  const nav = useNav(); const { db } = useApp(); const due = useDueList();
+  const nav = useNav(); const { db } = useApp(); const due = useDueList(); const { mobile } = useBP();
   const [range, setRange] = useState<'daily' | 'monthly'>('daily');
   const daily = range === 'daily';
   const days = Array.from({ length: 7 }, (_, i) => D(i - 6));
   const months = Array.from({ length: 6 }, (_, i) => { const d = parseD(D(0)); d.setDate(1); d.setMonth(d.getMonth() - (5 - i)); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; });
   const bars = daily ? days.map(d => paidIn(db, x => x === d)) : months.map(m => paidIn(db, x => x.slice(0, 7) === m));
-  const labels = daily ? days.map((d, i) => i === 6 ? 'Today' : fmtDS(d).split(' ')[1]) : months.map(m => MON[Number(m.slice(5)) - 1]);
-  const max = Math.max(...bars, 1);
+  const labels = daily ? days.map((d, i) => i === 6 ? 'Today' : DOW[parseD(d).getDay()]) : months.map((m, i) => i === 5 ? 'This month' : MON[Number(m.slice(5)) - 1]);
   const headline = daily ? paidIn(db, d => diff(d) === 0) : paidIn(db, d => sameMonth(d));
   const inRange = (d: string) => daily ? diff(d) === 0 : sameMonth(d);
   const appts = db.appts.filter(a => inRange(a.date) && diff(a.date) <= 0);
   const unpaidBills = db.bills.filter(b => billState(b) === 'unpaid');
   const staff = db.users.filter(u => u.role === 'staff' && u.status === 'active');
   const vax = [...due.overdue, ...due.soon].filter(x => x.f.kind !== 'Recheck');
+  const completed = appts.filter(a => a.status === 'completed').length;
+  const lost = appts.filter(a => ['cancelled', 'missed'].includes(a.status)).length;
   return (
     <Screen title="Reports" back={false} big tabbed sub="Collections, visits, due vaccines and unpaid bills.">
-      <View style={{ maxWidth: 360 }}><Tabs options={[['daily', 'Daily'], ['monthly', 'Monthly']]} value={range} onChange={setRange} /></View>
-      <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
-        <View style={{ backgroundColor: colors.accentDeep, paddingHorizontal: 18, paddingVertical: 16 }}>
-          <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.58)', textTransform: 'uppercase', letterSpacing: 0.7 }}>{daily ? 'Collected today' : `Collected in ${MON[parseD(D(0)).getMonth()]}`}</Text>
-          <Text style={{ fontFamily: FONT, fontSize: 30, fontWeight: '700', color: '#fff', letterSpacing: -1, marginTop: 2 }}>{money(headline)}</Text>
+      <SegControl options={[['daily', 'Daily'], ['monthly', 'Monthly']]} value={range} onChange={setRange} />
+      <View style={ad.panel}>
+        <View style={{ gap: 4 }}>
+          <Text style={type.small}>{daily ? 'Collected today' : `Collected in ${MON[parseD(D(0)).getMonth()]}`}</Text>
+          <Text style={[ad.big, mobile && { fontSize: 40, lineHeight: 42 }]}>{money(headline)}</Text>
         </View>
-        <View style={{ backgroundColor: colors.surface, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 12, gap: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 132, gap: 8 }}>
-            {bars.map((v, i) => (
-              <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 6, height: '100%' }}>
-                <Text style={{ fontFamily: FONT, fontSize: 10.5, color: colors.ink2, fontWeight: '700' }}>{v ? `${(v / 1000).toFixed(1)}k` : ''}</Text>
-                <View style={{ width: '100%', maxWidth: 30, height: Math.max(4, (v / max) * 92), borderRadius: 7, backgroundColor: i === bars.length - 1 ? colors.teal : '#C5D2E8' }} />
-                <Text style={{ fontFamily: FONT, fontSize: 11, color: colors.ink2 }}>{labels[i]}</Text>
-              </View>
-            ))}
-          </View>
-          <T.Small>{daily ? 'Last 7 days' : 'Last 6 months'} · confirmed payments only</T.Small>
-        </View>
+        <CollectionBars values={bars} labels={labels} format={v => `₱${(v / 1000).toFixed(1)}k`} height={mobile ? 100 : 140} />
+        <Text style={type.small}>{daily ? 'Last 7 days' : 'Last 6 months'}, confirmed payments only.</Text>
       </View>
-      <StatGrid>
-        <Stat value={appts.filter(a => a.status === 'completed').length} label={daily ? 'Visits completed today' : 'Visits completed this month'} icon="check" tileColor={colors.emerald} tileBg={colors.tileEmerald} />
-        <Stat value={appts.filter(a => ['cancelled', 'missed'].includes(a.status)).length} label="Cancelled or missed" icon="x" tileColor={colors.ink2} tileBg={colors.subtle} />
-        <Stat value={vax.length} label="Vaccines and deworming due" icon="syringe" tileColor={vax.some(x => x.s.key === 'overdue') ? undefined : colors.violet} tileBg={vax.some(x => x.s.key === 'overdue') ? undefined : colors.tileViolet} alert={vax.some(x => x.s.key === 'overdue')} onPress={() => nav.navigate('CareMonitor')} />
-        <Stat value={money(unpaidBills.reduce((s2, b) => s2 + billBalance(b), 0))} label={`Unpaid in ${unpaidBills.length} bill${unpaidBills.length === 1 ? '' : 's'}`} icon="receipt" tileColor={colors.warmOrange} tileBg={colors.tileOrange} onPress={() => nav.navigate('BillingList')} />
-      </StatGrid>
-      <Cols ratio={[1, 1]} stackBelow="desktop">
-      <Section title="Due and overdue vaccines and deworming" action="All follow-ups" onAction={() => nav.navigate('CareMonitor')}>
-        {vax.length === 0 ? <T.Small>Nothing due in the next 7 days.</T.Small> : <Group>{vax.map(({ f, pet, s: st }) => <Row key={f.id} left={<PetAvatar pet={pet} size={38} />} title={`${pet.name} · ${f.reason}`} sub={`${sel.owner(db, pet.ownerId)!.name} · ${fmtD(f.date)}`} right={<Pill text={st.label} tone={st.tone} />} onPress={() => nav.navigate('PetDetail', { id: pet.id, tab: 'follow' })} />)}</Group>}
-      </Section>
-      <Section title="Unpaid bills" action="Billing" onAction={() => nav.navigate('BillingList')}>
-        {unpaidBills.length === 0 ? <T.Small>No unpaid bills.</T.Small> : <Group>{unpaidBills.map(b => <Row key={b.id} icon="receipt" title={`${sel.pet(db, b.petId)!.name} · ${sel.owner(db, b.ownerId)!.name}`} sub={`${fmtD(b.date)} · total ${money(billTotal(b))}`} right={<Text style={[type.h3, { color: colors.bad }]}>{money(billBalance(b))}</Text>} onPress={() => nav.navigate('BillDetail', { id: b.id })} />)}</Group>}
-      </Section>
+      <Cols ratio={[1, 1]} stackBelow="desktop" gap={40}>
+        <View style={{ gap: 4 }}>
+          <Text style={ad.h2} accessibilityRole="header">{daily ? 'Today' : 'This month'} in numbers</Text>
+          <LedgerRow n={completed} label={completed === 1 ? 'visit completed' : 'visits completed'} tone={colors.ok} />
+          <LedgerRow n={lost} label="cancelled or missed" />
+          <LedgerRow alert n={vax.length} label="vaccines and deworming due or overdue" icon="syringe" onPress={() => nav.navigate('CareMonitor')} />
+          <LedgerRow n={money(unpaidBills.reduce((s2, b) => s2 + billBalance(b), 0))} label={`unpaid in ${unpaidBills.length} bill${unpaidBills.length === 1 ? '' : 's'}`} icon="receipt" onPress={() => nav.navigate('BillingList')} />
+        </View>
+        <View style={{ gap: 4 }}>
+          <Text style={ad.h2} accessibilityRole="header">Staff oversight</Text>
+          {staff.map(u => {
+            const handled = db.appts.filter(a => inRange(a.date) && a.handledBy === u.name).length;
+            const verified = db.bills.flatMap(b => b.payments).filter(p => inRange(p.date) && p.verifiedBy === u.name).length;
+            return (
+              <View key={u.id} style={ad.person}>
+                <Avatar name={u.name} size={36} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={type.h3}>{u.name}</Text>
+                  <Text style={type.small}>{handled} appointments handled, {verified} payments recorded or checked</Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
       </Cols>
-      <Section title="Staff oversight">
-        <Group>{staff.map(u => {
-          const handled = db.appts.filter(a => inRange(a.date) && a.handledBy === u.name).length;
-          const verified = db.bills.flatMap(b => b.payments).filter(p => inRange(p.date) && p.verifiedBy === u.name).length;
-          return <Row key={u.id} left={<Avatar name={u.name} size={38} />} title={u.name} sub={`${handled} appointments handled · ${verified} payments recorded or checked`} />;
-        })}</Group>
-      </Section>
+      <Cols ratio={[1, 1]} stackBelow="desktop" gap={40}>
+        <Section title="Vaccines and deworming due" action="All follow-ups" onAction={() => nav.navigate('CareMonitor')}>
+          {vax.length === 0 ? <T.Small>Nothing due in the next 7 days.</T.Small> : <Group>{vax.map(({ f, pet, s: st }) => <Row key={f.id} left={<HealthRing pet={pet} health={st.key === 'overdue' ? 'overdue' : 'soon'} size={40} ring={2.5} />} title={`${pet.name}, ${f.reason}`} sub={`${sel.owner(db, pet.ownerId)!.name}, due ${fmtD(f.date)}`} right={<Pill text={st.label} tone={st.tone} />} onPress={() => nav.navigate('PetDetail', { id: pet.id, tab: 'follow' })} />)}</Group>}
+        </Section>
+        <Section title="Unpaid bills" action="Billing" onAction={() => nav.navigate('BillingList')}>
+          {unpaidBills.length === 0 ? <T.Small>No unpaid bills.</T.Small> : <Group>{unpaidBills.map(b => <Row key={b.id} left={<PetAvatar pet={sel.pet(db, b.petId)!} size={40} />} title={`${sel.pet(db, b.petId)!.name}, ${sel.owner(db, b.ownerId)!.name}`} sub={`${fmtD(b.date)}, total ${money(billTotal(b))}`} right={<Text style={[type.h3, { color: colors.bad, fontVariant: ['tabular-nums'] }]}>{money(billBalance(b))}</Text>} onPress={() => nav.navigate('BillDetail', { id: b.id })} />)}</Group>}
+        </Section>
+      </Cols>
     </Screen>
   );
 }
@@ -438,3 +470,14 @@ export function ActivityLog() {
 }
 
 const hs = StyleSheet.create({ step: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' } });
+
+const ad = StyleSheet.create({
+  date:     { fontFamily: FONT, fontSize: 15, fontWeight: '500', color: colors.accent },
+  headline: { fontFamily: DISPLAY, fontSize: 52, lineHeight: 54, fontWeight: '600', color: colors.ink, letterSpacing: -2, fontVariant: ['tabular-nums'] },
+  big:      { fontFamily: DISPLAY, fontSize: 56, lineHeight: 58, fontWeight: '600', color: colors.ink, letterSpacing: -2, fontVariant: ['tabular-nums'] },
+  h2:       { fontFamily: DISPLAY, fontSize: 21, lineHeight: 26, fontWeight: '600', color: colors.ink, letterSpacing: -0.4, marginBottom: 4 },
+  panel:    { gap: 16, paddingVertical: 20, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line },
+  side:     { gap: 36, paddingLeft: 32, borderLeftWidth: 1, borderLeftColor: colors.line },
+  person:   { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, borderBottomWidth: 1, borderBottomColor: colors.line },
+  tick:     { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.blue, marginTop: 7 },
+});

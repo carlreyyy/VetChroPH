@@ -12,7 +12,7 @@ import { Icon } from '../components/Icon';
 import { PetAvatar, QrArt } from '../components/PetArt';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, shadow, type, FONT } from '../theme';
+import { colors, radius, shadow, type, FONT, DISPLAY } from '../theme';
 import type { BillItem, PayAccount } from '../types';
 import { BILL, billBalance, billPaid, billState, billTotal, diff, fmtD, fmtDY, money } from '../utils/format';
 
@@ -36,14 +36,14 @@ export function BillDetail() {
   return (
     <Screen title="Bill" footer={footer}>
       {/* Premium bill hero card */}
-      <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
-        <View style={{ backgroundColor: colors.accentDeep, padding: 16, flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-          <View style={{ width: 52, height: 52, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="receipt" size={24} color="#fff" strokeWidth={1.9} />
+      <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+        <View style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line, padding: 16, flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 13, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="receipt" size={24} color={colors.accent} strokeWidth={1.9} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ fontFamily: FONT, fontSize: 24, fontWeight: '700', color: '#fff', letterSpacing: -0.6 }}>{money(billTotal(b))}</Text>
-            <Text style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.68)' }}>{fmtDY(b.date)}{clinic ? ` · ${owner.name}` : ''}</Text>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 32, fontWeight: '600', color: colors.ink, letterSpacing: -0.6 }}>{money(billTotal(b))}</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 13, color: colors.ink2 }}>{fmtDY(b.date)}{clinic ? ` · ${owner.name}` : ''}</Text>
           </View>
           <Pill text={BILL[st][0]} tone={BILL[st][1]} badge />
         </View>
@@ -122,14 +122,14 @@ export function PayBill() {
   };
   return (
     <Screen title="Pay bill" sub="Pay with an e-wallet or bank transfer, then send your proof of payment." footer={<Btn label="Submit payment proof" icon="upload" style={{ flex: 1 }} onPress={submit} />}>
-      <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
-        <View style={{ backgroundColor: colors.accentDeep, padding: 18, flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-          <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="wallet" size={24} color="#fff" strokeWidth={1.9} />
+      <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+        <View style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line, padding: 18, flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="wallet" size={24} color={colors.accent} strokeWidth={1.9} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.58)', textTransform: 'uppercase', letterSpacing: 0.7 }}>Amount due</Text>
-            <Text style={{ fontFamily: FONT, fontSize: 30, fontWeight: '700', color: '#fff', letterSpacing: -0.8 }}>{money(bal)}</Text>
+            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.ink2 }}>Amount due</Text>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 38, fontWeight: '600', color: colors.ink, letterSpacing: -0.8 }}>{money(bal)}</Text>
           </View>
         </View>
         <View style={{ backgroundColor: colors.surface, paddingHorizontal: 18, paddingVertical: 12 }}>
@@ -140,8 +140,8 @@ export function PayBill() {
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {accounts.map(x => { const on = x.id === accId; return (
             <Pressable key={x.id} onPress={() => { setAccId(x.id); setF({ ...f, proof: '' }); }} style={[bl.method, on && bl.methodOn]} accessibilityRole="radio" accessibilityLabel={x.provider} accessibilityState={{ selected: on }}>
-              {on && <View style={bl.methodCheck}><Icon name="check" size={10} color={colors.warmOrange} strokeWidth={3.2} /></View>}
-              <Icon name={KIND_ICON[x.kind]} size={24} color={on ? '#fff' : colors.warmOrange} />
+              {on && <View style={bl.methodCheck}><Icon name="check" size={10} color={colors.accentDeep} strokeWidth={3.2} /></View>}
+              <Icon name={KIND_ICON[x.kind]} size={24} color={on ? '#fff' : colors.accent} />
               <Text style={[type.h3, { fontSize: 13.5, textAlign: 'center' }, on && { color: '#fff' }]} numberOfLines={1}>{x.kind === 'Bank transfer' ? 'Bank transfer' : x.provider}</Text>
             </Pressable>
           ); })}
@@ -300,7 +300,7 @@ const bl = StyleSheet.create({
   steps: { gap: 12, padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
   method: { flex: 1, height: 80, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, padding: 8, gap: 6, alignItems: 'center', justifyContent: 'center', ...shadow },
   methodCheck: { position: 'absolute', top: 6, right: 6, width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  methodOn: { backgroundColor: colors.warmOrange, borderColor: colors.warmOrange },
+  methodOn: { backgroundColor: colors.accentDeep, borderColor: colors.accentDeep },
   step: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.warmOrange, alignItems: 'center', justifyContent: 'center', marginTop: -1 },
   drop: { borderWidth: 1, borderStyle: 'dashed', borderColor: colors.lineStrong, borderRadius: radius.lg, padding: 18, alignItems: 'center', gap: 4, backgroundColor: colors.surface },
   dash: { borderBottomWidth: 1, borderStyle: 'dashed', borderColor: colors.line },

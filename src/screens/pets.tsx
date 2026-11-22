@@ -16,8 +16,9 @@ import { Banner, Btn, Card, Chips, Empty, Field, Group, Hint, IconBtn, Pill, Row
 import { Sheet, useConfirm } from '../components/overlays';
 import { PetArt, PetAvatar, coatsFor } from '../components/PetArt';
 import { useApp, sel } from '../store/AppStore';
+import { CareLine, careNodes, HEALTH_COLOR, petHealth, RingGlyph } from '../components/care';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, shadow, type, FONT } from '../theme';
+import { colors, radius, shadow, type, FONT, DISPLAY } from '../theme';
 import type { FollowKind, Pet, Species } from '../types';
 import { D, FOLLOW_ICON, ago, ageOf, cap, diff, fmtD, fmtDS, fmtDY, followStatus, parseD } from '../utils/format';
 
@@ -77,6 +78,16 @@ export function PetDetail() {
           {clinic && pet.status === 'active' && <Btn label="Mark as inactive or deceased" kind="line" onPress={() => setSheet('status')} />}
           {clinic && pet.status !== 'active' && <Btn label="Mark as active again" kind="line" onPress={() => act.setPetStatus(pet.id, 'active')} />}
 </>;
+  const health = petHealth(db, pet);
+  const careBand = pet.status === 'active' ? (
+    <View style={pd.care}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <RingGlyph health={health.key} size={16} />
+        <Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '600', color: HEALTH_COLOR[health.key] }}>{health.label}</Text>
+      </View>
+      <CareLine nodes={careNodes(db, pet.id, { past: 3, future: 3 })} />
+    </View>
+  ) : null;
   const historyBlock = <>
           {visits.length === 0 ? <Empty icon="clip" title="No visits yet" sub="Consultation records appear here after each visit." /> : (
             <Group>
@@ -152,6 +163,7 @@ export function PetDetail() {
             </View>
           </View>
           <>
+            {careBand}
             <Tabs options={[['history', 'History'], ['follow', 'Reminders', openF.filter(f => diff(f.date) < 0).length], ['docs', 'Files']]} value={wTab} onChange={setTab} />
             {wTab === 'history' && historyBlock}{wTab === 'follow' && followBlock}{wTab === 'docs' && docsBlock}
           </>
@@ -179,6 +191,7 @@ export function PetDetail() {
             <Text style={[type.small, { fontSize: 14 }]}>{pet.breed} · {ageOf(pet.birth)} · {pet.weight} kg</Text>
             <View style={{ marginTop: 4 }}><Pill chip text={pet.status === 'active' ? 'Active' : pet.status === 'deceased' ? 'Deceased' : 'Inactive'} tone={pet.status === 'active' ? 'ok' : ''} /></View>
           </View>
+        {careBand}
         <Tabs options={[['info', 'Info'], ['history', 'History'], ['follow', 'Reminders', openF.filter(f => diff(f.date) < 0).length], ['docs', 'Files']]} value={tab} onChange={setTab} />
         {tab === 'info' && infoBlock}{tab === 'history' && historyBlock}{tab === 'follow' && followBlock}{tab === 'docs' && docsBlock}
 
@@ -315,12 +328,12 @@ export function VisitDetail() {
   const follows = db.followups.filter(f => f.petId === pet.id && f.status === 'open');
   return (
     <Screen title="Visit record" right={user!.role === 'admin' ? <Btn label="Edit" icon="edit" small kind="line" onPress={() => nav.navigate('ConsultForm', { petId: pet.id, visitId: v.id })} /> : undefined}>
-      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center', padding: 16, backgroundColor: colors.accentDeep, borderRadius: 14, overflow: 'hidden', ...shadow }}>
+      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center', padding: 16, backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.line }}>
         <PetAvatar pet={pet} size={48} square />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontFamily: FONT, fontSize: 17, fontWeight: '700', color: '#fff', letterSpacing: -0.3 }} numberOfLines={1}>{pet.name}</Text>
-          <Text style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.68)' }}>{fmtDY(v.date)} · {v.vet}</Text>
-          {!!v.diagnosis && <Text style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.86)', marginTop: 1 }} numberOfLines={1}>{v.diagnosis}</Text>}
+          <Text style={{ fontFamily: FONT, fontSize: 17, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 }} numberOfLines={1}>{pet.name}</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 13, color: colors.ink2 }}>{fmtDY(v.date)} · {v.vet}</Text>
+          {!!v.diagnosis && <Text style={{ fontFamily: FONT, fontSize: 13, color: colors.ink, marginTop: 1 }} numberOfLines={1}>{v.diagnosis}</Text>}
         </View>
       </View>
       {!v.diagnosis && <Banner tone="warn" icon="clock" title="Waiting for the veterinarian" sub={`${v.enteredBy || 'Staff'} entered the reason for visit. The veterinarian completes the rest.`} />}
@@ -395,6 +408,7 @@ export function ConsultForm() {
 }
 
 const pd = StyleSheet.create({
+  care: { gap: 16, paddingVertical: 18, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line },
   hero: { backgroundColor: colors.subtle, overflow: 'hidden' },
   heroBtns: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between' },
   round: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.94)', borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
@@ -414,7 +428,7 @@ const pd = StyleSheet.create({
   footer: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   visit: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
   dateBox: { width: 46, height: 50, borderRadius: 10, backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center' },
-  dateMon: { fontFamily: FONT, fontSize: 11, fontWeight: '600', color: colors.ink2, textTransform: 'uppercase', letterSpacing: 0.4 },
+  dateMon: { fontFamily: FONT, fontSize: 12, fontWeight: '500', color: colors.ink2 },
   dateDay: { fontFamily: FONT, fontSize: 18, fontWeight: '700', color: colors.ink, marginTop: -1 },
   drop: { borderWidth: 1, borderStyle: 'dashed', borderColor: colors.lineStrong, borderRadius: 12, padding: 20, alignItems: 'center', gap: 4, backgroundColor: colors.surface },
 });

@@ -7,7 +7,7 @@ import { BrandTile } from '../components/Brand';
 import { Icon, IconName } from '../components/Icon';
 import { useApp } from '../store/AppStore';
 import { useNav } from '../navigation/nav';
-import { colors, shadow, type, Tone, FONT } from '../theme';
+import { colors, shadow, type, Tone, FONT, DISPLAY } from '../theme';
 import { ago, fmtD, D, firstName, greeting, isEmail, isPhone, parseD } from '../utils/format';
 import { DEFAULT_PREFS } from '../data/seed';
 import { Cols, useBP } from '../components/responsive';
@@ -24,7 +24,7 @@ export function HomeHeader({ sub, action }: { sub?: string; action?: React.React
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
           <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.teal }} />
-          <Text style={{ fontFamily: FONT, fontSize: 11, fontWeight: '600', color: colors.ink3, letterSpacing: 0.8, textTransform: 'uppercase' }}>{fmtD(D(0))}</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '500', color: colors.accent }}>{fmtD(D(0))}</Text>
         </View>
         <Text style={{ fontFamily: FONT, fontSize: 28, lineHeight: 34, fontWeight: '700', color: colors.ink, letterSpacing: -0.6 }} numberOfLines={1} accessibilityRole="header">{greeting()}, {firstName(user!.name)}</Text>
         {sub && <Text style={[type.small, { fontSize: 14, marginTop: 4, color: colors.ink2 }]}>{sub}</Text>}
@@ -140,16 +140,16 @@ export function Profile() {
   const { wide } = useBP();
   const edit = () => { setErr({}); setF({ name: user!.name, phone: user!.phone, email: user!.email, address: ownerRec?.address || '' }); setEditOpen(true); };
   const card = (
-    <View style={{ borderRadius: 16, overflow: 'hidden', ...shadow }}>
-      {/* Navy hero top */}
-      <View style={{ backgroundColor: colors.accentDeep, padding: 20, flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+    <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+      {/* Identity */}
+      <View style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.line, padding: 20, flexDirection: 'row', gap: 16, alignItems: 'center' }}>
         <Avatar name={user!.name} size={64} />
         <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
-          <Text style={{ fontFamily: FONT, fontSize: 20, lineHeight: 26, fontWeight: '700', color: '#fff', letterSpacing: -0.4 }} numberOfLines={1}>{user!.name}</Text>
-          <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'flex-start' }}>
-            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>{ROLE_LABEL[user!.role]}</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink, letterSpacing: -0.4 }} numberOfLines={1}>{user!.name}</Text>
+          <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 6, backgroundColor: colors.accentSoft, alignSelf: 'flex-start' }}>
+            <Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '600', color: colors.ink }}>{ROLE_LABEL[user!.role]}</Text>
           </View>
-          {ownerRec && <Text style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.52)' }}>client since {parseD(ownerRec.since).getFullYear()}</Text>}
+          {ownerRec && <Text style={{ fontFamily: FONT, fontSize: 12, color: colors.ink2 }}>client since {parseD(ownerRec.since).getFullYear()}</Text>}
         </View>
       </View>
 

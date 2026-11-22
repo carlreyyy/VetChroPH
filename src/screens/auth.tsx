@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Banner, Btn, Check, CodeInput, Field, LinkBtn, Screen, T } from '../components/ui';
+import { Banner, Btn, Check, CodeInput, Field, LinkBtn } from '../components/ui';
 import { SCENES } from '../data/photos';
 import { Icon, IconName } from '../components/Icon';
 import { Logo } from '../components/Brand';
@@ -306,6 +306,18 @@ export function Login() {
 }
 
 /* ─── Sign up ─── */
+/** Thin progress rule for multi-step auth flows: done steps in blue, the current one in navy. */
+function Steps({ n, at, labels }: { n: number; at: number; labels: string[] }) {
+  return (
+    <View style={{ gap: 8 }} accessible accessibilityLabel={`Step ${at + 1} of ${n}: ${labels[at]}`}>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {Array.from({ length: n }).map((_, i) => <View key={i} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: i < at ? colors.blue : i === at ? colors.accentDeep : colors.line }} />)}
+      </View>
+      <Text style={type.small}>Step {at + 1} of {n}: {labels[at]}</Text>
+    </View>
+  );
+}
+
 export function SignUp() {
   const nav = useNav(); const { act } = useApp();
   const [f, setF] = useState({ name: '', phone: '', email: '', pw: '', consent: false });
@@ -314,7 +326,7 @@ export function SignUp() {
   const submit = () => {
     const e: Record<string, string> = {};
     if (!f.name.trim()) e.name = 'Enter your full name';
-    if (!isPhone(f.phone)) e.phone = 'Use a PH mobile number, e.g. 0917 555 0142';
+    if (!isPhone(f.phone)) e.phone = 'Use a PH mobile number, for example 0917 555 0142';
     if (!isEmail(f.email)) e.email = 'Enter a valid email address';
     if (f.pw.length < 8) e.pw = 'Use at least 8 characters';
     if (!f.consent) e.consent = 'Accept the privacy notice to continue';
@@ -324,18 +336,22 @@ export function SignUp() {
     nav.navigate('VerifyCode', { name: f.name, email: f.email, pw: f.pw, phone: f.phone });
   };
   return (
-    <Screen title="Create account" footer={<Btn label="Continue" full style={{ flex: 1 }} onPress={submit} />}>
-      <View style={{ gap: 6 }}>
-        <Text style={w.title}>Sign up as a pet owner</Text>
-        <Text style={[type.body, { color: colors.ink2 }]}>We will send a code to your mobile number to confirm it.</Text>
+    <AuthPage title="Create your account" sub="For pet owners. Clinic staff accounts are set up by the administrator.">
+      <Steps n={2} at={0} labels={['your details', 'confirm your mobile number']} />
+      <View style={{ gap: 18 }}>
+        <Field label="Full name" icon="user" placeholder="Maria Santos" autoComplete="name" value={f.name} onChangeText={v => set('name', v)} error={err.name} />
+        <Field label="Mobile number" icon="phone" placeholder="0917 555 0142" keyboardType="phone-pad" autoComplete="tel" value={f.phone} onChangeText={v => set('phone', v)} error={err.phone} hint="We'll text a code here. You can also log in with it." />
+        <Field label="Email" icon="mail" placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoComplete="email" value={f.email} onChangeText={v => set('email', v)} error={err.email} />
+        <Field label="Password" icon="lock" placeholder="At least 8 characters" secure autoComplete="new-password" value={f.pw} onChangeText={v => set('pw', v)} error={err.pw} onSubmitEditing={submit} />
+        <Check value={f.consent} onChange={() => set('consent', !f.consent)} error={err.consent}
+          label="I agree to the privacy notice. The clinic keeps my details and my pets' records for clinic use only (Data Privacy Act, RA 10173)." />
       </View>
-      <Field label="Full name" icon="user" placeholder="Maria Santos" value={f.name} onChangeText={v => set('name', v)} error={err.name} />
-      <Field label="Mobile number" icon="phone" placeholder="0917 555 0142" keyboardType="phone-pad" value={f.phone} onChangeText={v => set('phone', v)} error={err.phone} hint="You can log in with a code sent to this number." />
-      <Field label="Email" icon="mail" placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" value={f.email} onChangeText={v => set('email', v)} error={err.email} />
-      <Field label="Password" icon="lock" placeholder="At least 8 characters" secure value={f.pw} onChangeText={v => set('pw', v)} error={err.pw} />
-      <Check value={f.consent} onChange={() => set('consent', !f.consent)} error={err.consent}
-        label="I agree to the privacy notice. The clinic keeps my details and my pets' records for clinic use only (Data Privacy Act, RA 10173)." />
-    </Screen>
+      <Btn label="Continue" iconRight="chevR" full onPress={submit} style={{ height: 52 }} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <Text style={type.small}>Already have an account?</Text>
+        <LinkBtn label="Log in" icon={false} onPress={() => nav.navigate('Login')} />
+      </View>
+    </AuthPage>
   );
 }
 
@@ -343,14 +359,17 @@ export function SignUp() {
 export function VerifyCode() {
   const { act, toast } = useApp(); const p = useParams<{ name: string; email: string; pw: string; phone: string }>();
   const [code, setCode] = useState(''); const [err, setErr] = useState('');
-  const submit = () => { if (code.trim() !== DEMO_CODE) return setErr('That code is not right. Check and try again.'); act.signup({ name: p.name!, email: p.email!, pw: p.pw!, phone: p.phone! }); };
+  const verify = (c: string) => { if (c.trim() !== DEMO_CODE) return setErr('That code is not right. Check it and try again.'); act.signup({ name: p.name!, email: p.email!, pw: p.pw!, phone: p.phone! }); };
   return (
-    <Screen title="Verify your number" footer={<Btn label="Verify and create account" full style={{ flex: 1 }} onPress={submit} />}>
-      <Banner icon="shield" title="Enter the code we sent" sub={`A 6-digit code was sent to ${p.phone}.`} />
-      <CodeInput value={code} onChange={v => { setCode(v); setErr(''); }} error={err} autoFocus />
-      <Text style={type.small}>Demo code: {DEMO_CODE}. No real SMS is sent.</Text>
-      <LinkBtn label="Send a new code" icon={false} onPress={() => toast(`A new code was sent (demo: ${DEMO_CODE})`)} />
-    </Screen>
+    <AuthPage title="Check your phone" sub={`Enter the 6-digit code we sent to ${p.phone || 'your mobile number'}.`}>
+      <Steps n={2} at={1} labels={['your details', 'confirm your mobile number']} />
+      <CodeInput value={code} onChange={v => { setCode(v); setErr(''); if (v.length === 6) verify(v); }} error={err} autoFocus />
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+        <Text style={type.small}>Demo code: {DEMO_CODE}. No SMS is sent.</Text>
+        <LinkBtn label="Send a new code" icon={false} onPress={() => toast(`A new code was sent (demo: ${DEMO_CODE})`)} />
+      </View>
+      <Btn label="Verify and create account" full onPress={() => code.length === 6 ? verify(code) : setErr('Enter all 6 digits')} style={{ height: 52 }} />
+    </AuthPage>
   );
 }
 
@@ -360,24 +379,24 @@ export function ResetPassword() {
   const [step, setStep] = useState(0); const [phone, setPhone] = useState(''); const [code, setCode] = useState(''); const [pw, setPw] = useState('');
   const [err, setErr] = useState('');
   const next = () => {
-    if (step === 0) { if (!isPhone(phone)) return setErr('Use a PH mobile number, e.g. 0917 555 0142'); setErr(''); setStep(1); return; }
-    if (step === 1) { if (code !== DEMO_CODE) return setErr('That code is not right'); setErr(''); setStep(2); return; }
+    if (step === 0) { if (!isPhone(phone)) return setErr('Use a PH mobile number, for example 0917 555 0142'); setErr(''); setStep(1); return; }
+    if (step === 1) { if (code !== DEMO_CODE) return setErr('That code is not right. Check it and try again.'); setErr(''); setStep(2); return; }
     if (pw.length < 8) return setErr('Use at least 8 characters');
     const m = act.resetPassword(phone, pw); if (m) return setErr(m);
     nav.goBack();
   };
+  const subs = ['Enter the mobile number on your account. We will text you a 6-digit code.', `Enter the code we sent to ${phone}.`, 'Choose a new password with at least 8 characters.'];
   return (
-    <Screen title="Reset password" footer={<Btn label={['Send code', 'Check code', 'Save new password'][step]} full style={{ flex: 1 }} onPress={next} />}>
-      <View style={{ flexDirection: 'row', gap: 6 }}>
-        {[0, 1, 2].map(i => <View key={i} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: i < step ? colors.blue : i === step ? colors.accentDeep : colors.line }} />)}
-      </View>
-      {step === 0 && <><T.Body muted>Enter the mobile number on your account. We will send a 6-digit code.</T.Body>
-        <Field label="Mobile number" icon="phone" keyboardType="phone-pad" placeholder="0917 555 0142" value={phone} onChangeText={v => { setPhone(v); setErr(''); }} error={err} /></>}
-      {step === 1 && <><T.Body muted>Enter the code sent to {phone}.</T.Body>
+    <AuthPage title="Reset password" sub={subs[step]}>
+      <Steps n={3} at={step} labels={['your mobile number', 'the code', 'a new password']} />
+      {step === 0 && <Field label="Mobile number" icon="phone" keyboardType="phone-pad" placeholder="0917 555 0142" value={phone} onChangeText={v => { setPhone(v); setErr(''); }} error={err} onSubmitEditing={next} />}
+      {step === 1 && <View style={{ gap: 10 }}>
         <CodeInput value={code} onChange={v => { setCode(v); setErr(''); }} error={err} autoFocus />
-        <Text style={type.small}>Demo code: {DEMO_CODE}</Text></>}
-      {step === 2 && <Field label="New password" icon="lock" secure placeholder="At least 8 characters" value={pw} onChangeText={v => { setPw(v); setErr(''); }} error={err} />}
-    </Screen>
+        <Text style={type.small}>Demo code: {DEMO_CODE}. No SMS is sent.</Text>
+      </View>}
+      {step === 2 && <Field label="New password" icon="lock" secure placeholder="At least 8 characters" autoComplete="new-password" value={pw} onChangeText={v => { setPw(v); setErr(''); }} error={err} onSubmitEditing={next} />}
+      <Btn label={['Send code', 'Check code', 'Save new password'][step]} full onPress={next} style={{ height: 52 }} />
+    </AuthPage>
   );
 }
 

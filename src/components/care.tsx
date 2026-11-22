@@ -6,11 +6,12 @@
 // Also here: HealthRing (a pet photo wrapped in its status ring: whole = up to date, half = due soon,
 // broken = overdue) and the helpers that turn store data into care-line nodes.
 import React from 'react';
-import { Image, StyleSheet, Text, View, ViewStyle, StyleProp } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View, ViewStyle, StyleProp } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, FONT, DISPLAY } from '../theme';
 import { PET_PHOTOS } from '../data/photos';
-import { Icon } from './Icon';
+import { Icon, IconName } from './Icon';
+import type { PState } from './responsive';
 import type { DB, Pet } from '../types';
 import { diff, fmtDS, followStatus, isUpcoming, t12 } from '../utils/format';
 
@@ -75,7 +76,8 @@ export function careNodes(db: DB, petId: string, { past = 2, future = 2 } = {}):
     .map<CareNode>(f => ({ key: f.id, date: f.date, label: f.reason, state: 'overdue' }));
   const appts = db.appts.filter(a => a.petId === petId && isUpcoming(a) && diff(a.date) >= 0)
     .map<CareNode>(a => ({ key: a.id, date: a.date, time: a.time, label: a.service, state: 'later' }));
-  const due = open.filter(f => diff(f.date) >= 0).map<CareNode>(f => ({ key: f.id, date: f.date, label: f.reason, state: 'later' }));
+  // A reminder that already has a booking on the same day is shown once, as the booking.
+  const due = open.filter(f => diff(f.date) >= 0 && !appts.some(x => x.date === f.date)).map<CareNode>(f => ({ key: f.id, date: f.date, label: f.reason, state: 'later' }));
   const ahead = [...appts, ...due].sort((a, b) => a.date.localeCompare(b.date)).slice(0, future);
   if (ahead[0]) ahead[0] = { ...ahead[0], state: 'next' };
   return [...visits, ...overdue, ...ahead];
@@ -173,7 +175,55 @@ export function Figure({ n, label, tone, size = 34 }: { n: number | string; labe
   );
 }
 
+/**
+ * A number and the sentence it belongs to, as one tappable ruled row. Used instead of KPI boxes:
+ * "2 payments to verify", "4 overdue follow-ups". A red dot marks rows that need action.
+ */
+export function LedgerRow({ n, label, icon, onPress, alert, tone }: { n: number | string; label: string; icon?: IconName; onPress?: () => void; alert?: boolean; tone?: string }) {
+  const zero = n === 0;
+  const body = (
+    <>
+      <Text style={[cl.ledN, zero && { color: colors.ink3 }, tone ? { color: tone } : null]} numberOfLines={1}>{n}</Text>
+      <Text style={[cl.ledLabel, zero && { color: colors.ink2 }]}>{label}</Text>
+      {alert && !zero && <View style={cl.ledDot} />}
+      {icon && <Icon name={icon} size={18} color={colors.ink3} />}
+    </>
+  );
+  return onPress
+    ? <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${n} ${label}`}
+        style={(st: PState) => [cl.ledger, st.hovered && { backgroundColor: colors.hover }]}>{body}</Pressable>
+    : <View style={cl.ledger} accessible accessibilityLabel={`${n} ${label}`}>{body}</View>;
+}
+
+/** Simple bar chart for collections. The last bar is "now" (calamansi); the rest are clinic blue. */
+export function CollectionBars({ values, labels, height = 120, format }: { values: number[]; labels: string[]; height?: number; format: (n: number) => string }) {
+  const max = Math.max(...values, 1);
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: height + 40 }} accessibilityRole={'image' as never}
+      accessibilityLabel={values.map((v, i) => `${labels[i]}: ${format(v)}`).join(', ')}>
+      {values.map((v, i) => {
+        const last = i === values.length - 1;
+        return (
+          <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 6, height: '100%' }}>
+            <Text style={[cl.barVal, last && { color: colors.ink, fontWeight: '600' }]} numberOfLines={1}>{v ? format(v) : ''}</Text>
+            <View style={{ width: '100%', maxWidth: 44, height: Math.max(3, (v / max) * height), borderRadius: 4,
+              backgroundColor: last ? colors.now : colors.blue, opacity: last ? 1 : 0.55 + 0.45 * (v / max),
+              borderWidth: last ? 1.5 : 0, borderColor: colors.accentDeep }} />
+            <Text style={[cl.barLab, last && { color: colors.ink, fontWeight: '600' }]} numberOfLines={1}>{labels[i]}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 const cl = StyleSheet.create({
+  ledger:   { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 54, paddingHorizontal: 8, marginHorizontal: -8, borderRadius: 8, borderBottomWidth: 1, borderBottomColor: colors.line },
+  ledN:     { fontFamily: DISPLAY, fontSize: 28, lineHeight: 32, fontWeight: '600', color: colors.ink, minWidth: 36, fontVariant: ['tabular-nums'], letterSpacing: -0.8 },
+  ledLabel: { flex: 1, fontFamily: FONT, fontSize: 15, lineHeight: 21, color: colors.ink },
+  ledDot:   { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dot },
+  barVal:   { fontFamily: FONT, fontSize: 11.5, color: colors.ink2, fontVariant: ['tabular-nums'] },
+  barLab:   { fontFamily: FONT, fontSize: 12, color: colors.ink2 },
   rail:   { position: 'absolute', top: 8.5, borderTopWidth: 1.5 },
   dashed: { borderStyle: 'dashed' },
   dot:    { width: 10, height: 10, borderRadius: 5 },

@@ -3,7 +3,7 @@
 // time, cancel with a reason, check the client in, or mark a no-show (which adds a note to the owner record, D10).
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Avatar, Banner, Btn, Card, Chips, Divider, Empty, Field, FieldError, Group, Hint, IconTile, KV, Pill, Row, Screen, Section, Seg, Stack, T } from '../components/ui';
+import { Avatar, Banner, Btn, Card, Chips, Divider, Empty, Field, FieldError, Group, Hint, IconTile, KV, Pill, Row, Screen, Section, Seg, Stack, T, SegControl } from '../components/ui';
 import { Sheet, useConfirm } from '../components/overlays';
 import { PetAvatar } from '../components/PetArt';
 import { Cols, PState, useBP } from '../components/responsive';
@@ -11,7 +11,7 @@ import { ScheduleTable } from './clinic';
 import { Icon, IconName } from '../components/Icon';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
-import { colors, radius, shadow, space, type, FONT } from '../theme';
+import { colors, radius, shadow, space, type, FONT, DISPLAY } from '../theme';
 import type { Appt } from '../types';
 import { APPT, D, DOW, MON, byDateTime, diff, fmtD, fmtDS, isUpcoming, money, normPhone, parseD, rel, t12, ymd } from '../utils/format';
 
@@ -321,8 +321,8 @@ export function ApptDetail() {
       <View style={ad.hero}>
         <View style={ad.heroTop}>
           <View style={ad.dateTile}>
-            <Text style={ad.dateMon}>{MON[parseD(a.date).getMonth()]}</Text>
             <Text style={ad.dateDay}>{parseD(a.date).getDate()}</Text>
+            <Text style={ad.dateMon}>{MON[parseD(a.date).getMonth()]}</Text>
           </View>
           <View style={{ flex: 1, gap: 3 }}>
             <Text style={ad.heroSvc} numberOfLines={1}>{a.service}</Text>
@@ -435,19 +435,17 @@ export function ClinicAppts() {
       </Pressable>}
       <Btn label={wide ? 'New appointment' : 'New'} icon="plus" small={!wide} onPress={() => nav.navigate('Book', { staff: '1' })} />
     </View>}>
-      {admin && <Card>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <T.H3>Appointment monitoring</T.H3>
-          <View style={{ flexDirection: 'row', gap: 4, backgroundColor: colors.subtle, padding: 3, borderRadius: 12 }}>
-            {(['day', 'week'] as const).map(r => <Pressable key={r} onPress={() => setRange(r)} style={{ paddingHorizontal: 12, height: 30, justifyContent: 'center', borderRadius: 10, backgroundColor: range === r ? colors.surface : 'transparent' }}><Text style={{ fontWeight: '700', fontSize: 12.5, color: range === r ? colors.ink : colors.ink2 }}>{r === 'day' ? 'Today' : 'Last 7 days'}</Text></Pressable>)}
-          </View>
+      {admin && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 16, paddingVertical: 14, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line }}>
+          <SegControl options={[['day', 'Today'], ['week', 'Last 7 days']]} value={range} onChange={setRange} />
+          <Text style={[type.body, { flex: 1, minWidth: 260, color: colors.ink2 }]}>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: '600', color: colors.ink }}>{count(['confirmed', 'checked_in', 'completed', 'resched'])}</Text> booked,{'  '}
+            <Text style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: '600', color: colors.ok }}>{count(['completed'])}</Text> completed,{'  '}
+            <Text style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: '600', color: colors.ink }}>{count(['cancelled'])}</Text> cancelled,{'  '}
+            <Text style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: '600', color: count(['missed']) ? colors.bad : colors.ink }}>{count(['missed'])}</Text> missed
+          </Text>
         </View>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {([['Confirmed', ['confirmed', 'checked_in', 'completed', 'resched'], colors.teal], ['Completed', ['completed'], colors.ok], ['Cancelled', ['cancelled'], colors.ink2], ['Missed', ['missed'], colors.bad]] as const).map(([l, st, c]) => (
-            <View key={l} style={{ flex: 1, alignItems: 'center', gap: 2 }}><Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '700', color: c }}>{count([...st])}</Text><Text style={[type.small, { fontSize: 12 }]}>{l}</Text></View>
-          ))}
-        </View>
-      </Card>}
+      )}
       {wide ? (view === 'cal' ? (
         <Cols ratio={[380, 1]}>
           <MonthCalendar value={day} onChange={setDay} />
@@ -563,12 +561,12 @@ const ca = StyleSheet.create({
   timeText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: colors.ink },
 });
 const ad = StyleSheet.create({
-  hero:     { borderRadius: 16, overflow: 'hidden', ...shadow },
-  heroTop:  { backgroundColor: colors.accentDeep, padding: 16, flexDirection: 'row', gap: 14, alignItems: 'center' },
-  dateTile: { width: 52, height: 58, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center', gap: 1 },
-  dateMon:  { fontFamily: FONT, fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' },
-  dateDay:  { fontFamily: FONT, fontSize: 22, fontWeight: '700', color: '#fff' },
-  heroSvc:  { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: -0.3 },
-  heroTime: { fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.7)' },
-  heroPet:  { backgroundColor: colors.surface, padding: 14, flexDirection: 'row', gap: 12, alignItems: 'center' },
+  hero:     { borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
+  heroTop:  { padding: 18, flexDirection: 'row', gap: 16, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.line },
+  dateTile: { width: 56, alignItems: 'flex-start', justifyContent: 'center' },
+  dateMon:  { fontFamily: FONT, fontSize: 13, fontWeight: '500', color: colors.ink2 },
+  dateDay:  { fontFamily: DISPLAY, fontSize: 36, lineHeight: 38, fontWeight: '600', color: colors.ink, letterSpacing: -1.2, fontVariant: ['tabular-nums'] },
+  heroSvc:  { fontFamily: DISPLAY, fontSize: 22, lineHeight: 26, fontWeight: '600', color: colors.ink, letterSpacing: -0.5 },
+  heroTime: { fontFamily: FONT, fontSize: 14, color: colors.ink2 },
+  heroPet:  { padding: 14, flexDirection: 'row', gap: 12, alignItems: 'center' },
 });
