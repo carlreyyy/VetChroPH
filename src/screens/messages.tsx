@@ -171,7 +171,7 @@ export function Inbox() {
 
 const ms = StyleSheet.create({
   who: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.line, backgroundColor: colors.surface },
-  frame: { flex: 1, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line, borderRadius: 16, overflow: 'hidden', marginBottom: 24 },
+  frame: { flex: 1, backgroundColor: colors.tint, borderWidth: 1, borderColor: colors.line, borderRadius: 16, overflow: 'hidden', marginBottom: 24 },
   clinicTag: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   online: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.ok },
   bubbleWrap: { gap: 3 },

@@ -425,7 +425,7 @@ const w = StyleSheet.create({
   demoName:   { fontFamily: FONT, fontSize: 13.5, fontWeight: '400', color: colors.ink2 },
   demoEmail:  { fontFamily: FONT, fontSize: 12.5, color: colors.ink3, marginTop: 2 },
   demoGo:     { fontFamily: FONT, fontSize: 13.5, fontWeight: '600', color: colors.accent },
-  demoFoot:   { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.bg },
+  demoFoot:   { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.tint },
   mono:       { fontFamily: FONT, fontWeight: '600', color: colors.ink, fontVariant: ['tabular-nums'] },
   reset:      { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 10, borderRadius: 6 },
 });

@@ -1,18 +1,19 @@
 // Design tokens v5: "The Care Line" (2026 redesign).
-// Warm linen paper, navy ink, clinic blue for anything you can act on, and one living accent (calamansi) that only
+// Clean white pages, navy ink, clinic blue for anything you can act on, and one living accent (calamansi) that only
 // marks "now": today on a care line, the current queue slot, the selected item. Depth comes from tone and hairlines,
 // not shadows. Bricolage Grotesque carries headlines; Geist carries text and numbers.
 export const FONT = 'Geist';
 export const DISPLAY = 'Bricolage Grotesque';
 
 export const colors = {
-  // Surfaces: paper on linen, separated by hairlines
-  bg: '#F3F2EE',          // linen: the page
-  surface: '#FBFAF7',     // paper: raised areas, inputs
-  subtle: '#ECEAE4',      // pressed / quiet fills
-  hover: '#E7E5DE',
-  line: '#E2DFD7',        // hairline rule
-  lineStrong: '#CBC7BC',  // input borders, stronger rules
+  // Surfaces: white pages; cards and inputs are set apart by hairlines, quiet panels by a cool tint
+  bg: '#FFFFFF',          // the page
+  surface: '#FFFFFF',     // raised areas, inputs (always with a hairline border)
+  tint: '#F6F8FA',        // quiet panels: chat area, footers, sidebar
+  subtle: '#EFF2F6',      // pressed / quiet fills, chips
+  hover: '#EDF1F6',
+  line: '#E1E5EB',        // hairline rule
+  lineStrong: '#C3CAD4',  // input borders, stronger rules
 
   // Ink: navy-black text, AA on linen and paper
   ink: '#13213B',
@@ -48,12 +49,12 @@ export const colors = {
   scrim: 'rgba(19,33,59,0.42)',
 };
 
-// Staff and admin sidebar: a deeper tone of the same paper, not a navy slab.
+// Staff and admin sidebar: a cool light tint beside the white page, not a navy slab.
 export const sidebar = {
-  bg: '#E9E7E0',
-  border: '#DCD9D0',
+  bg: '#F6F8FA',
+  border: '#E1E5EB',
   itemHover: 'rgba(19,33,59,0.05)',
-  itemActive: '#FBFAF7',
+  itemActive: '#E3EBF4',
   itemActiveBorder: '#D4E157',
   text: '#4C576B',
   textActive: '#13213B',
