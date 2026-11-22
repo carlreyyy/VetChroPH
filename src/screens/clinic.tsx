@@ -1,12 +1,14 @@
 // Clinic-side screens used by Staff and the Administrator: daily dashboard, patients, owner record, due and overdue list.
 import { useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
-import { Avatar, Banner, Btn, Card, Empty, Field, Group, IconBtn, Pill, QuickActions, Row, Screen, Section, Skeleton, Stack, Stat, StatGrid, T, Tabs, useFirstLoad } from '../components/ui';
+import { Avatar, Banner, Btn, Card, Chips, Empty, Field, Group, Hint, IconBtn, Pill, QuickActions, Row, Screen, Section, Skeleton, Stack, Stat, StatGrid, T, Tabs, useFirstLoad } from '../components/ui';
 import { Sheet } from '../components/overlays';
 import { PetAvatar } from '../components/PetArt';
 import { Greeting, HomeHeader } from './common';
 import { Cell, Cols, DataTable, useBP } from '../components/responsive';
-import type { Appt } from '../types';
+import type { Appt, Doc } from '../types';
+import { FileThumb, FileViewer } from '../components/files';
+import { isPdf, RULES_ANY } from '../utils/files';
 import { useApp, sel } from '../store/AppStore';
 import { useNav, useParams } from '../navigation/nav';
 import { colors, shadow, type, FONT, DISPLAY } from '../theme';
@@ -62,6 +64,7 @@ export function Patients() {
         <View style={wide ? { width: 340 } : undefined}><Tabs options={[['pets', `Pets (${pets.length})`], ['owners', `Owners (${owners.length})`]]} value={tab} onChange={setTab} /></View>
         <Field icon="search" placeholder="Search name or mobile number" value={q} onChangeText={setQ} style={wide ? { flex: 1, maxWidth: 420, marginLeft: 'auto' } : undefined} />
       </View>
+      {!wide && <Group><Row icon="file" title="Documents" sub={`${db.docs.length} uploaded files · lab results, vaccine cards, photos`} onPress={() => nav.navigate('Documents')} /></Group>}
       {wide ? (tab === 'pets'
         ? <DataTable rows={pets} keyOf={p => p.id} onRowPress={p => nav.navigate('PetDetail', { id: p.id })} rowLabel={p => p.name} empty={<Empty icon="search" title="No pets found" />}
             columns={[
@@ -183,6 +186,47 @@ export function CareMonitor() {
           ); })}
         </Stack>
       )}
+    </Screen>
+  );
+}
+
+/**
+ * Objective 2: every file uploaded by owners and the clinic, across all pets. Filter by type, search by pet, owner
+ * or file name, tap to open. Staff and the administrator only.
+ */
+export function Documents() {
+  const nav = useNav(); const { db } = useApp(); const { wide } = useBP();
+  const [q, setQ] = useState(''); const [f, setF] = useState('all'); const [view, setView] = useState<Doc | null>(null);
+  const s = q.trim().toLowerCase();
+  const owners = new Set(db.owners.map(o => o.name));
+  const FILTERS: [string, string, number?][] = [
+    ['all', 'All', db.docs.length],
+    ['lab', 'Lab results', db.docs.filter(d => d.kind === 'Laboratory result').length],
+    ['vacc', 'Vaccine cards', db.docs.filter(d => d.kind === 'Vaccination card').length],
+    ['pdf', 'PDF', db.docs.filter(d => isPdf(d)).length],
+    ['img', 'Images', db.docs.filter(d => !isPdf(d)).length],
+    ['owner', 'From owners', db.docs.filter(d => owners.has(d.by)).length],
+  ];
+  const keep = (d: Doc) => f === 'all' || (f === 'lab' && d.kind === 'Laboratory result') || (f === 'vacc' && d.kind === 'Vaccination card')
+    || (f === 'pdf' && isPdf(d)) || (f === 'img' && !isPdf(d)) || (f === 'owner' && owners.has(d.by));
+  const list = db.docs.filter(d => {
+    if (!keep(d)) return false; if (!s) return true;
+    const p = sel.pet(db, d.petId); const o = p && sel.owner(db, p.ownerId);
+    return [d.name, d.kind, p?.name, o?.name].some(x => x?.toLowerCase().includes(s));
+  }).sort((a, b) => b.date.localeCompare(a.date));
+  return (
+    <Screen title="Documents" sub="Files uploaded by pet owners and the clinic, for every pet.">
+      <Hint icon="shield">{`${RULES_ANY}. Owners see only their own pets' files.`}</Hint>
+      <Field icon="search" placeholder="Search pet, owner or file name" value={q} onChangeText={setQ} style={wide ? { maxWidth: 420 } : undefined} />
+      <Chips options={FILTERS} value={f} onChange={setF} />
+      {list.length === 0 ? <Empty icon="file" title="No files found" sub="Try another filter or search." /> : (
+        <Group>{list.map(d => { const p = sel.pet(db, d.petId)!; const o = sel.owner(db, p.ownerId)!; return (
+          <Row key={d.id} left={<FileThumb file={d} />} title={d.name} subLines={2} onPress={() => setView(d)}
+            sub={`${p.name} · ${o.name}\n${d.kind} · ${d.size} · ${fmtD(d.date)} · ${d.by}`}
+            action={<IconBtn name="paw" size={17} label={`Open ${p.name}'s profile`} onPress={() => nav.navigate('PetDetail', { id: p.id, tab: 'docs' })} />} />
+        ); })}</Group>
+      )}
+      <FileViewer file={view} meta={view ? `${view.kind} · ${sel.pet(db, view.petId)?.name}` : undefined} onClose={() => setView(null)} />
     </Screen>
   );
 }

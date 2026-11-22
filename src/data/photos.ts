@@ -40,3 +40,19 @@ export const SCENES = {
   clinic: require('../../assets/photos/clinic.jpg') as ImageSourcePropType,
   heroDog: require('../../assets/photos/hero_dog.png') as ImageSourcePropType,
 };
+
+/** Sample files used by the demo documents, chat photos and payment proofs. PDFs use an image of their first page. */
+export const SAMPLE_FILES: Record<string, ImageSourcePropType> = {
+  vaccCard: require('../../assets/samples/vaccination-card.jpg'),
+  labPage: require('../../assets/samples/lab-result-page.png'),
+  ewalletProof: require('../../assets/samples/ewallet-proof.png'),
+  bankProof: require('../../assets/samples/bank-proof.png'),
+  bingoEar: require('../../assets/photos/p1.jpg'),
+};
+
+/** A pet's photo: the one uploaded for it, else the sample photo. `cover` picks the wide header version. */
+export function petPhoto(pet: { id?: string; photo?: string }, cover?: boolean): ImageSourcePropType | undefined {
+  if (pet.photo) return { uri: pet.photo };
+  if (!pet.id) return undefined;
+  return (cover ? PET_COVERS : PET_PHOTOS)[pet.id];
+}

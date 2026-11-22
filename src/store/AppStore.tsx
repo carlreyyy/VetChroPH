@@ -1,7 +1,7 @@
 // Local mock store. Every screen reads data and calls actions through useApp().
 // To connect a backend later, replace the bodies of these actions with API calls; screens do not need to change.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import type { Appt, Bill, BillItem, DB, FollowUp, Notif, Owner, PayAccount, PayMethod, Pet, Role, Service, User, Visit } from '../types';
+import type { Appt, Bill, BillItem, DB, FileRef, FollowUp, Notif, Owner, PayAccount, PayMethod, Pet, Role, Service, User, Visit } from '../types';
 import { seedDB, DEFAULT_PREFS } from '../data/seed';
 import { ACTIVE, D, diff, fmtD, money, normPhone, pad, parseD, t12, ymd } from '../utils/format';
 
@@ -12,7 +12,7 @@ const uid = (p: string) => `${p}${++_id}`;
 export const DEMO_CODE = '123456';
 
 /* ----- browser session (web only): data lives in this browser's storage, nothing is sent anywhere ----- */
-const KEY = 'vetchroph.session.v1';
+const KEY = 'vetchroph.session.v2';
 const store = () => { try { return typeof window !== 'undefined' && window.localStorage ? window.localStorage : null; } catch { return null; } };
 function loadSession(): { db: DB; user: User | null } | null {
   try {
@@ -22,8 +22,14 @@ function loadSession(): { db: DB; user: User | null } | null {
     return { db: s.db, user: s.db.users.find(u => u.id === s.userId) || null };
   } catch { return null; }
 }
+/** Picked files are kept as data URIs in the browser. Large ones are left out of saved data so storage does not fill up. */
+const BIG_FILE = 1_500_000;
 function saveSession(db: DB, user: User | null) {
-  try { store()?.setItem(KEY, JSON.stringify({ day: ymd(new Date()), db, userId: user?.id || null })); } catch { /* storage full or blocked: keep working in memory */ }
+  const body = (limit: number) => JSON.stringify({ day: ymd(new Date()), db, userId: user?.id || null },
+    (k, v) => ((k === 'uri' || k === 'photo' || k === 'qrUri') && typeof v === 'string' && v.length > limit ? undefined : v));
+  try { store()?.setItem(KEY, body(BIG_FILE)); } catch {
+    try { store()?.setItem(KEY, body(0)); } catch { /* storage full or blocked: keep working in memory */ }
+  }
 }
 /** Clears saved demo data and reloads the page with fresh sample data. */
 export function resetDemoData() {
@@ -100,11 +106,12 @@ function buildActions(db: DB, getUser: () => User | null, setUser: (u: User | nu
     markAllRead() { (db.notifs[a.inboxKey()] || []).forEach(n => (n.unread = false)); done('All notifications marked as read'); },
 
     /* ----- messaging (consultation D20). Real-time delivery needs the backend; here messages update instantly in memory. ----- */
-    sendMessage(ownerId: string, text: string) {
+    sendMessage(ownerId: string, text: string, file?: FileRef) {
       const u = me(); const fromOwner = u.role === 'owner';
-      (db.messages[ownerId] ||= []).push({ id: uid('m'), at: Date.now(), from: fromOwner ? 'owner' : 'clinic', by: u.name, text: text.trim(), read: false });
-      if (fromOwner) notifyClinic({ title: 'New message', body: `${u.name}: ${text.trim().slice(0, 80)}`, icon: 'chat', tone: '', link: { screen: 'Chat', params: { ownerId } } });
-      else tellOwner(ownerId, { title: 'New message from the clinic', body: text.trim().slice(0, 90), icon: 'chat', tone: '', link: { screen: 'Chat' } });
+      (db.messages[ownerId] ||= []).push({ id: uid('m'), at: Date.now(), from: fromOwner ? 'owner' : 'clinic', by: u.name, text: text.trim(), read: false, file });
+      const preview = text.trim() || (file ? `Sent a file: ${file.name}` : '');
+      if (fromOwner) notifyClinic({ title: 'New message', body: `${u.name}: ${preview.slice(0, 80)}`, icon: 'chat', tone: '', link: { screen: 'Chat', params: { ownerId } } });
+      else tellOwner(ownerId, { title: 'New message from the clinic', body: preview.slice(0, 90), icon: 'chat', tone: '', link: { screen: 'Chat' } });
       bump();
     },
     /** Marks the other side's messages in a thread as read. */
@@ -124,12 +131,16 @@ function buildActions(db: DB, getUser: () => User | null, setUser: (u: User | nu
     updateOwner(id: string, f: Partial<Owner>) { Object.assign(owner(id), f); log(`Updated owner ${owner(id).name}`); done('Owner details saved'); },
     addStaffNote(ownerId: string, text: string) { owner(ownerId).notes.unshift({ id: uid('sn'), at: Date.now(), by: me().name, text }); done('Note added'); },
     findOwnerByPhone: (p: string) => db.owners.find(o => normPhone(o.phone) === normPhone(p)),
-    addDoc(petId: string, kind: string, name: string, size?: string) {
-      db.docs.unshift({ id: uid('d'), petId, name, kind, size: size || `${(Math.random() * 1.5 + 0.2).toFixed(1)} MB`, date: D(0), by: me().name });
+    /** Objective 2: saves an uploaded file on the pet's record, optionally attached to one visit. */
+    addDoc(petId: string, kind: string, file: FileRef, visitId?: string) {
+      db.docs.unshift({ ...file, id: uid('d'), petId, kind, date: D(0), by: me().name, visitId });
+      log(`Uploaded ${file.name} (${kind.toLowerCase()}) for ${pet(petId).name}`);
       if (me().role === 'owner') notifyClinic({ title: 'New file uploaded', body: `${me().name} added a ${kind.toLowerCase()} for ${pet(petId).name}.`, icon: 'file', tone: '', link: { screen: 'PetDetail', params: { id: petId, tab: 'docs' } } });
+      else tellOwner(pet(petId).ownerId, { title: 'New file from the clinic', body: `${kind} for ${pet(petId).name}: ${file.name}`, icon: 'file', tone: '', link: { screen: 'PetDetail', params: { id: petId, tab: 'docs' } } });
       done('File uploaded');
     },
-    removeDoc(id: string) { db.docs = db.docs.filter(d => d.id !== id); done('File removed'); },
+    removeDoc(id: string) { const d = db.docs.find(x => x.id === id); db.docs = db.docs.filter(x => x.id !== id); if (d) log(`Removed file ${d.name}`); done('File removed'); },
+    setPetPhoto(petId: string, uri: string) { pet(petId).photo = uri; log(`Changed the photo of ${pet(petId).name}`); done('Photo updated'); },
 
     /* ----- appointments ----- */
     slotsFor(date: string, exceptId?: string): Slot[] | null {
@@ -237,9 +248,9 @@ function buildActions(db: DB, getUser: () => User | null, setUser: (u: User | nu
       tellOwner(b.ownerId, { title: 'Payment recorded', body: `${money(amount)} cash payment for ${pet(b.petId).name}. Receipt issued.`, icon: 'check', tone: 'ok', link: { screen: 'Receipt', params: { id: b.id } } });
       log(`Recorded ${money(amount)} cash for ${pet(b.petId).name}`); done('Cash payment recorded. Receipt issued.');
     },
-    submitProof(billId: string, method: PayMethod, ref: string, proof: string) {
+    submitProof(billId: string, method: PayMethod, ref: string, proofFile: FileRef) {
       const b = db.bills.find(x => x.id === billId)!; const amount = b.items.reduce((s, i) => s + i.price * i.qty, 0);
-      b.payments.push({ id: uid('y'), method, amount, ref, proof, status: 'pending', date: D(0), by: me().name });
+      b.payments.push({ id: uid('y'), method, amount, ref, proof: proofFile.name, proofFile, status: 'pending', date: D(0), by: me().name });
       notifyClinic({ title: 'Payment proof submitted', body: `${pet(b.petId).name} (${me().name}) sent ${money(amount)} by ${method}. Check the clinic account.`, icon: 'banknote', tone: 'warn', link: { screen: 'BillDetail', params: { id: b.id } } });
       done('Proof sent. The clinic will check it.');
     },

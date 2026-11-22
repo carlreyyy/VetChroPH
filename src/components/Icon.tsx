@@ -4,7 +4,7 @@ import {
   Camera, FileText, Upload, Trash2, Pencil, Syringe, Pill, Stethoscope, ClipboardList, Receipt, QrCode,
   ShieldCheck, Info, TriangleAlert, LogOut, Settings, Tag, Repeat, Building2, Navigation, Image, Copy,
   History, Ellipsis, KeyRound, Download, Thermometer, UserPlus, Banknote, Activity, Scale,
-  LogIn, Mars, Venus, MessageCircle, SendHorizontal, NotebookPen, List, CalendarDays, Landmark, Smartphone, HeartPulse, StickyNote, Tablet,
+  LogIn, Mars, Venus, Paperclip, MessageCircle, SendHorizontal, NotebookPen, List, CalendarDays, Landmark, Smartphone, HeartPulse, StickyNote, Tablet,
 } from 'lucide-react-native';
 import { colors } from '../theme';
 
@@ -18,7 +18,7 @@ const MAP = {
   building: Building2, nav: Navigation, image: Image, copy: Copy, history: History, more: Ellipsis, key: KeyRound,
   download: Download, temp: Thermometer, userplus: UserPlus, banknote: Banknote, activity: Activity, scale: Scale,
   login: LogIn, male: Mars, female: Venus, chat: MessageCircle, send: SendHorizontal, note: NotebookPen, list: List, calgrid: CalendarDays, bank: Landmark,
-  phoneapp: Smartphone, heart: HeartPulse, sticky: StickyNote, tablet: Tablet,
+  clip2: Paperclip, phoneapp: Smartphone, heart: HeartPulse, sticky: StickyNote, tablet: Tablet,
 };
 export type IconName = keyof typeof MAP;
 

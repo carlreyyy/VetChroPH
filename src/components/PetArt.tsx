@@ -1,7 +1,7 @@
 // Simple original pet illustrations (ported from the HTML prototype) so pet screens are not just initials.
 import React from 'react';
 import { Image, View } from 'react-native';
-import { PET_PHOTOS } from '../data/photos';
+import { petPhoto } from '../data/photos';
 import { Icon } from './Icon';
 import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 import type { Pet } from '../types';
@@ -65,8 +65,8 @@ export function PetArt({ species, coat, size = 120 }: { species: string; coat: s
 }
 
 /** Pet photo (circle or rounded square). Pets without a photo get a neutral placeholder with a paw. */
-export function PetAvatar({ pet, size = 44, square }: { pet: { id?: string; species: string; coat?: string }; size?: number; square?: boolean }) {
-  const src = pet.id ? PET_PHOTOS[pet.id] : undefined;
+export function PetAvatar({ pet, size = 44, square }: { pet: { id?: string; species: string; coat?: string; photo?: string }; size?: number; square?: boolean }) {
+  const src = petPhoto(pet);
   const r = square ? Math.min(14, size * 0.24) : size / 2;
   if (src) return <Image source={src} accessibilityIgnoresInvertColors style={{ width: size, height: size, borderRadius: r, backgroundColor: colors.subtle }} />;
   return (
@@ -76,7 +76,13 @@ export function PetAvatar({ pet, size = 44, square }: { pet: { id?: string; spec
   );
 }
 
-/** Placeholder QR pattern. In the real app this is the clinic's uploaded QR image. */
+/** The clinic's payment QR: the image the administrator uploaded, or a sample pattern. */
+export function ClinicQr({ acc, size = 176 }: { acc: { qrSeed: number; qrUri?: string }; size?: number }) {
+  if (acc.qrUri) return <Image source={{ uri: acc.qrUri }} style={{ width: size, height: size }} resizeMode="contain" accessibilityLabel="Payment QR code" />;
+  return <QrArt size={size} seed={acc.qrSeed} />;
+}
+
+/** Sample QR pattern used until the administrator uploads the clinic's own QR image. */
 export function QrArt({ size = 176, seed = 7 }: { size?: number; seed?: number }) {
   const n = 25; let s = seed * 9301 + 49297; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
   const inF = (x: number, y: number) => (x < 8 && y < 8) || (x >= n - 8 && y < 8) || (x < 8 && y >= n - 8);

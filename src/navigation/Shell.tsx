@@ -37,6 +37,7 @@ function useItems(role: Role): [string, Item[]][] {
     { key: 'Messages', label: 'Messages', icon: 'chat', tab: true, badge: unread },
     { key: 'Billing', label: 'Billing', icon: 'wallet', tab: true, badge: verify },
     { key: 'CareMonitor', label: 'Due list', icon: 'bell' },
+    { key: 'Documents', label: 'Documents', icon: 'file' },
   ]]];
   return [
     ['', [
@@ -46,6 +47,7 @@ function useItems(role: Role): [string, Item[]][] {
       { key: 'Inbox', label: 'Messages', icon: 'chat', badge: unread },
       { key: 'BillingList', label: 'Billing', icon: 'wallet', badge: verify },
       { key: 'CareMonitor', label: 'Due list', icon: 'bell' },
+      { key: 'Documents', label: 'Documents', icon: 'file' },
       { key: 'Reports', label: 'Reports', icon: 'chart', tab: true },
     ]],
     ['Administration', [

@@ -8,7 +8,7 @@ export const TITLES: Record<string, string> = {
   Reports: 'Reports', Setup: 'Setup', Notifications: 'Notifications', Profile: 'Profile and settings', NotifSettings: 'Notification settings',
   PetDetail: 'Pet profile', PetForm: 'Pet details', VisitDetail: 'Visit record', Book: 'Book an appointment', BookSuccess: 'Appointment confirmed',
   ApptDetail: 'Appointment', BillDetail: 'Bill', Receipt: 'Receipt', ClinicInfo: 'Clinic', Chat: 'Conversation', PayBill: 'Pay bill',
-  ConsultForm: 'Consultation', OwnerDetail: 'Owner record', CareMonitor: 'Due and overdue', BillingList: 'Billing',
+  ConsultForm: 'Consultation', OwnerDetail: 'Owner record', CareMonitor: 'Due and overdue', Documents: 'Documents', BillingList: 'Billing',
   CreateBill: 'New bill', Inbox: 'Messages', Users: 'Users and staff', UserForm: 'Account', ClinicProfile: 'Clinic profile', Services: 'Services and prices',
   Hours: 'Hours and time slots', Reminders: 'Reminder settings', PaymentSetup: 'Payment accounts', ActivityLog: 'Activity log',
 };
@@ -46,6 +46,7 @@ export const linking: LinkingOptions<RootList> = {
       ConsultForm: 'consultation',
       OwnerDetail: 'owners/:id',
       CareMonitor: 'due-list',
+      Documents: 'documents',
       BillingList: 'billing/all',
       CreateBill: 'billing/new',
       Inbox: 'inbox',

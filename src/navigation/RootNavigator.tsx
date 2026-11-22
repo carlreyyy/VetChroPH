@@ -17,7 +17,7 @@ import { TAB_BAR_H } from '../components/ui';
 import { PetDetail, PetForm, VisitDetail, ConsultForm } from '../screens/pets';
 import { Book, BookSuccess, ApptDetail, ClinicAppts } from '../screens/appointments';
 import { BillDetail, PayBill, Receipt, Billing, CreateBill } from '../screens/billing';
-import { Patients, OwnerDetail, CareMonitor } from '../screens/clinic';
+import { Patients, OwnerDetail, CareMonitor, Documents } from '../screens/clinic';
 import { StaffHome } from '../screens/staffHome';
 import { Inbox, Chat, OwnerChat } from '../screens/messages';
 import { AdminHome, Reports, Setup, Users, UserForm, ClinicProfile, Services, Hours, Reminders, PaymentSetup, ActivityLog } from '../screens/admin';
@@ -112,6 +112,7 @@ export function RootNavigator() {
           <Stack.Screen name="ConsultForm" component={ConsultForm} />
           <Stack.Screen name="OwnerDetail" component={OwnerDetail} />
           <Stack.Screen name="CareMonitor" component={CareMonitor} />
+          <Stack.Screen name="Documents" component={Documents} />
           <Stack.Screen name="BillingList" component={Billing} />
           <Stack.Screen name="CreateBill" component={CreateBill} />
           <Stack.Screen name="Inbox" component={Inbox} />

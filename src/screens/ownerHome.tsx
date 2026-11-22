@@ -10,7 +10,7 @@ import { CareLine, careNodes, HealthRing, HEALTH_COLOR, petHealth, RingGlyph } f
 import { Cols, PState, useBP } from '../components/responsive';
 import { useApp, sel } from '../store/AppStore';
 import { useNav } from '../navigation/nav';
-import { PET_PHOTOS } from '../data/photos';
+import { petPhoto } from '../data/photos';
 import { colors, type, FONT, DISPLAY } from '../theme';
 import type { Clinic, Pet } from '../types';
 import { ageOf, billBalance, billState, byDateTime, DOW, diff, firstName, followStatus, greeting, hourLabel, isUpcoming, money, MON, parseD, rel, t12, TODAY } from '../utils/format';
@@ -53,7 +53,7 @@ function PetChooser({ pets, value, onChange, onAdd }: { pets: Pet[]; value: stri
 /** The selected pet as a portrait with its care line. */
 function PetSpread({ pet }: { pet: Pet }) {
   const nav = useNav(); const { db } = useApp(); const { mobile, desktop } = useBP();
-  const h = petHealth(db, pet); const src = PET_PHOTOS[pet.id];
+  const h = petHealth(db, pet); const src = petPhoto(pet);
   const photo = (
     <View style={[hm.photo, mobile ? { width: '100%', aspectRatio: 16 / 11 } : { width: desktop ? 300 : 240, height: desktop ? 340 : 280 }]}>
       {src ? <Image source={src} resizeMode="cover" style={{ width: '100%', height: '100%' }} accessibilityLabel={`Photo of ${pet.name}`} />

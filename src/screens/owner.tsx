@@ -11,7 +11,7 @@ import { useApp, sel } from '../store/AppStore';
 import { useNav } from '../navigation/nav';
 import { callClinic, openDirections } from './ownerHome';
 import { careNodes, HEALTH_COLOR, petHealth, RingGlyph } from '../components/care';
-import { PET_PHOTOS, SCENES } from '../data/photos';
+import { SCENES, petPhoto } from '../data/photos';
 import { colors, radius, shadow, space, type, Tone, FONT, DISPLAY } from '../theme';
 import type { Clinic, DB, Pet } from '../types';
 import {
@@ -44,7 +44,7 @@ function DateTile({ date, size = 'md' }: { date: string; size?: 'sm' | 'md' }) {
 }
 
 function PetPhoto({ pet, h }: { pet: Pet; h: number }) {
-  const src = PET_PHOTOS[pet.id];
+  const src = petPhoto(pet);
   return src
     ? <Image source={src} style={{ width: '100%', height: h, backgroundColor: colors.subtle }} resizeMode="cover" accessibilityLabel={`Photo of ${pet.name}`} />
     : <View style={{ width: '100%', height: h, backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center' }}><Icon name="paw" size={32} color={colors.accent} /></View>;
