@@ -16,9 +16,35 @@
       "description": "VetChroPH: veterinary clinic management for pet owners, clinic staff and the administrator."
     },
     "backgroundColor": "#F8FAFC",
-    "description": "VetChroPH responsive web application (frontend prototype): veterinary clinic management for pet owners, clinic staff and the administrator.",
+    "description": "VetChroPH: veterinary clinic management app for pet owners, clinic staff and the administrator (Android).",
     "platforms": [
+      "android",
       "web"
+    ],
+    "orientation": "portrait",
+    "android": {
+      "package": "ph.vetchroph.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8FAFC"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "VetChroPH uses your photos so you can upload pet photos, documents and payment proof.",
+          "cameraPermission": "VetChroPH uses the camera so you can take pet photos and photos of documents."
+        }
+      ],
+      "expo-document-picker"
     ]
   }
 }
