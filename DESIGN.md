@@ -452,7 +452,7 @@ Inner element radius = outer radius − padding. If a photo sits inside a card w
 | Messages / Inbox | `message-square` (mapped as `chat`) |
 | Bills (owner) | `receipt` |
 | Billing (staff/admin) | `wallet` |
-| Reports / Charts | `bar-chart` |
+| Statistics / Charts | `bar-chart` |
 | Setup / Settings | `sliders` |
 | Users & Staff | `users` |
 | Activity Log | `history` |
@@ -928,11 +928,10 @@ No numbered markers — the fill/border state communicates progress.
 - Staff activity: last 4 actions, `ago()` timestamps.
 - Shortcuts: `QuickActions` group for Messages, Billing, Due list, Activity.
 
-**Reports:**
-- Daily / Monthly toggle (`SegControl`).
-- Bar chart: collections per day/month.
-- Summary table: total collected, total appointments, top services.
-- Due/overdue summary.
+**Statistics** (tab was "Reports"; route `/reports` is unchanged, only the label changes). Full spec in §10.
+- Period toggle: Today / 7 days / This month / Last month / Year (`SegControl`).
+- Headline: net profit for the period, with change versus the previous period.
+- Sections: Profit and loss, Revenue, Receivables, Visits and patients, Care follow-ups, Payments (gateway), Staff.
 
 **Setup:**
 - Left sub-nav on desktop (Categories: Clinic, Services, Hours, Reminders, Payment). Becomes a list picker on phone.
@@ -994,7 +993,7 @@ All items from the brief preserved:
 - Back/forward and direct URL navigation unchanged.
 - Real file pickers.
 - Role-based navigation.
-- No new business features.
+- No new business features, except the client-approved online payments (§9) and Statistics with expenses (§10).
 - No new dependencies without explanation.
 
 **Font dependency:** `expo-font` is already in the Expo SDK — no new package. Web font via Google Fonts CDN link in `index.html`. React Native font loading via `useFonts` in App entry.
@@ -1021,3 +1020,162 @@ All items from the brief preserved:
 6. **Phone polish** — test at 360px, touch target pass, bottom sheet behavior, sticky action bars
 
 TypeCheck (`npm run typecheck`) passes after each phase.
+
+## 9. Payment gateway audit (PayMongo)
+
+**Client requirement:** the clinic needs real online payments, not only a QR code and a screenshot upload. Proposed gateway: **PayMongo** (PH; GCash, Maya, cards, GrabPay, QR Ph, online banking).
+
+### 9.1 Current state (what is being replaced)
+- §Pay bill: GCash / Maya / Bank tiles, then a static QR, then a manual screenshot upload. Status goes Unpaid → Checking payment → Paid.
+- §Staff Billing, "To verify" tab: staff manually Confirm or Reject a proof thumbnail and reference number.
+- `src/types.ts`: `PayMethod = 'Cash' | 'GCash' | 'Other e-wallet' | 'Bank transfer'`. `Payment` holds a manual `ref`, `proof` and `proofFile`. `PayAccount` holds `qrSeed` and `qrUri`.
+- The app is client-only: `localStorage` is the only store and there is no backend.
+
+### 9.2 Conflicts with this document
+| Section | Current rule | Required change |
+|---|---|---|
+| §6 Non-negotiables | "No new business features" | Record online payment as a client-approved feature. |
+| §6 Non-negotiables | "No new dependencies without explanation" | Explain the backend and API dependency (see 9.4). |
+| §6 Non-negotiables | "`localStorage` persistence unchanged" | Payment status must come from the gateway. `localStorage` can only cache it. |
+| §Pay bill | Static QR + manual upload | Hosted PayMongo checkout, or a dynamic QR Ph per bill. |
+| §Staff Billing | Staff verify every proof | Paid status is set by a webhook. Staff keep a manual path for cash and bank transfer only. |
+| §Admin Overview KPI "payments to verify" | Counts uploaded proofs | Count only the manual-verify queue. Add "Failed / expired". |
+| §Admin Setup > Payment | Manages QR accounts | Manage gateway settings (enabled methods, test or live mode) and keep the manual accounts. |
+
+### 9.3 Design changes
+**Pay bill (owner):**
+- Amount stays as the `display` token. Method tiles become: GCash, Maya, Card, QR Ph, Bank (manual).
+- Online methods: the primary CTA "Pay ₱X" opens the PayMongo checkout (redirect on web, in-app browser on native). On return, show a processing state, then success or failure.
+- Manual methods (Bank, Cash): keep the existing QR, `KV` details and `FileDropzone` flow.
+- `Pill` states: Unpaid → Processing → Paid, plus Failed, Expired and Refunded. Failed and Expired show a "Try again" action. Every state needs a text label, not color alone.
+- Return routes (`/billing/:id/success` and `/cancelled`) are new. This is an exception to "every route unchanged" and must be approved.
+
+**Staff and Admin:**
+- Bill detail shows the gateway reference, method, fee and net amount, and the webhook timestamp.
+- Billing tabs: To verify (manual only) / Unpaid / Paid. Add a Refund action behind a confirmation dialog, restricted to Admin.
+- Statistics: add gateway fees and net collected. Add a reconciliation view (gateway vs. recorded). See §10.
+- Activity log records payment events with the actor shown as "System (PayMongo)".
+
+### 9.4 Technical requirements
+- **A backend is required.** The PayMongo secret key must never ship in the Expo or web bundle. Use serverless functions (the project already deploys on Vercel):
+  - `POST /api/payments/create`: creates a Checkout Session or Payment Intent for a bill.
+  - `POST /api/payments/webhook`: verifies the signature and marks the bill Paid, Failed or Refunded. It must be idempotent.
+  - `GET /api/payments/:billId`: returns the status.
+- A database is required. `localStorage` cannot be the source of truth for money. The bills and payments records need to be server-side.
+- Extend `Payment` with `provider: 'paymongo' | 'manual'`, `providerRef`, `status`, `fee` and `paidAt`. Extend `PayMethod` with `'Maya' | 'Card' | 'QR Ph'`.
+- Environment variables: `PAYMONGO_SECRET_KEY`, `PAYMONGO_WEBHOOK_SECRET`. The public key may be exposed to the client. Keep test and live keys separate.
+- Amounts are sent in centavos (₱500.00 = 50000). Currency is PHP.
+- Do not store card data. Use hosted checkout only, so the app stays out of PCI scope.
+
+### 9.5 Open questions for the client
+1. Which methods are required at launch (GCash, Maya, cards, QR Ph)?
+2. Who bears the gateway fees: the clinic or the owner?
+3. Is there a PayMongo business account, and has it been verified?
+4. Are refunds and partial payments needed?
+5. Should manual QR and bank transfer stay as a fallback?
+6. Are receipts to be emailed automatically?
+
+### 9.6 Implementation phases (additions to §8)
+7. **Backend and data** — serverless API, database, webhook, types update.
+8. **Owner Pay flow** — method tiles, checkout redirect, result states, return routes.
+9. **Staff and Admin** — bill detail fields, refund, Statistics and KPI changes, Setup > Payment.
+10. **Test** — PayMongo test mode, webhook replay, failed and expired cases, phone check at 360px.
+
+### 9.7 Current build: simulated gateway
+No backend exists yet, so payments are simulated behind a service. The result must read as a real system.
+
+- All payment calls go through `src/services/paymentService.ts` (`pay()`, `refund()`). It returns realistic responses after a short delay. Swapping in PayMongo later changes only that file.
+- Balances and transactions live in `localStorage`. No card or wallet credentials are collected.
+- No "Demo" label, banner or watermark in the UI.
+- Production wording and states: Unpaid → Processing → Paid, plus Failed, Expired, Refunded.
+- Every payment gets a reference (e.g. `VCP-20261127-000123`), timestamps, fee and net amount.
+- Show a receipt after success, and a payment history on owner and staff billing.
+- Simulate latency and occasional failure or expiry so the "Try again" paths can be shown.
+- Payment events go in the Activity log, actor "System (PayMongo)".
+- Real provider later (PayMongo or Xendit): needs a backend, because secret keys must never sit in the frontend (§9.4).
+
+---
+
+## 10. Statistics (Admin)
+
+**Problem:** the old Reports screen showed only "collected today" or "collected this month". An owner of a clinic cannot judge the business from cash collected alone. Statistics follows the standard clinic and small-business reporting set: profit and loss, revenue breakdown, receivables, volume and retention.
+
+### 10.1 Period and comparison
+- Periods: Today, 7 days, This month, Last month, Year to date.
+- Every headline number shows change versus the previous equal period (▲ / ▼ with %, plus text, never color alone).
+- Money uses `money()`. Percentages are one decimal. Empty periods show "No data yet", not zero charts.
+
+### 10.2 Profit and loss (new)
+Cash basis, because the app records payments, not invoices accrued.
+
+| Line | Definition |
+|---|---|
+| Gross revenue | Confirmed payments in the period |
+| − Refunds | Payments refunded in the period |
+| − Gateway fees | Sum of `fee` on online payments |
+| **Net revenue** | Gross − refunds − fees |
+| − Cost of goods | Expenses in categories Medicines and vaccines, Supplies |
+| **Gross profit** | Net revenue − cost of goods |
+| Gross margin | Gross profit ÷ net revenue |
+| − Operating expenses | Salaries, Rent, Utilities, Equipment, Marketing, Other |
+| **Net profit (loss)** | Gross profit − operating expenses |
+| Net margin | Net profit ÷ net revenue |
+
+- A loss is shown in `danger text` with the label "Net loss". Never a bare negative number.
+- Layout: a statement table (label left, amount right, subtotals bold, hairline above totals) beside a revenue vs. expenses bar chart.
+
+**Expenses (new data):** `Expense { id, date, category, amount, note, by }`. Categories: Medicines and vaccines, Supplies, Salaries, Rent, Utilities, Equipment, Marketing, Other. Admin adds and removes expenses from Statistics ("Add expense" sheet). Logged in the Activity log.
+
+### 10.3 Revenue
+- Revenue trend (bars) for the period.
+- Revenue by service and by category (horizontal bars, share %).
+- Revenue by payment method (Cash, GCash, Maya, Card, QR Ph, Bank).
+- Average bill value, number of bills paid.
+
+### 10.4 Receivables
+- Total outstanding, count of unpaid bills, collection rate (collected ÷ billed).
+- Aging buckets: 0–7, 8–30, 31+ days.
+
+### 10.5 Visits and patients
+- Visits completed, cancelled, missed. No-show rate (missed ÷ booked).
+- New patients and new owners in the period.
+- Returning owners (2 or more visits), repeat rate.
+- Busiest weekdays and hours.
+
+### 10.6 Care follow-ups
+- Vaccines and deworming due and overdue (links to Due list).
+- Follow-up completion rate (done on time ÷ due).
+
+### 10.7 Payments (gateway)
+- Gross online, fees, net, failed or expired attempts, reconciliation (§9.3).
+
+### 10.8 Staff
+- Visits handled and payments checked per staff member.
+
+### 10.9 Rules
+- Every figure is derived from existing records. Nothing is typed in except expenses.
+- Phone: sections stack, statement table stays two columns, charts at 100px height.
+- Each section has a text summary line so charts are not the only carrier of meaning.
+- Open question for the client: confirm expense categories, and whether salaries are tracked per person.
+
+### 10.10 Readability and trends (planned)
+Feedback: the Statistics screen is accurate but hard to follow for non-accountants. Terms like "gross margin" and "cash basis" are jargon, and most sections are tables or bars.
+
+**Plain-language layer**
+- Add a "At a glance" card at the top with 4 big numbers: Money in, Money out, Profit (or Loss), Unpaid. Each shows ▲/▼ versus the previous period.
+- Add a one-sentence summary per section, e.g. "You earned ₱42,000 and spent ₱30,500, so you kept ₱11,500."
+- Replace jargon with plain labels and an ⓘ tap-for-meaning: Gross revenue → "Money received", Cost of goods → "Medicines and supplies used", Net margin → "Profit per ₱100 earned".
+- Add a "How to read this" help sheet on the screen header.
+
+**More charts**
+- Line graph: revenue vs. expenses over time, with profit as a third line.
+- Line graph: new patients and visits per week or month.
+- Donut: revenue by payment method and expenses by category.
+- Sparkline inside each headline number.
+- Receivables aging as stacked bars (0–7, 8–30, 31+ days).
+- Weekday × hour heatmap for busy times.
+
+**Rules**
+- Max one chart per question. Always show a text summary next to it.
+- Lines and bars need labels and values, never color alone.
+- Empty periods show "No data yet".

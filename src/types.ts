@@ -44,12 +44,27 @@ export interface Appt {
   handledBy?: string;
 }
 export interface BillItem { name: string; price: number; qty: number }
-export type PayMethod = 'Cash' | 'GCash' | 'Other e-wallet' | 'Bank transfer';
+export type PayMethod = 'Cash' | 'GCash' | 'Maya' | 'Card' | 'QR Ph' | 'Other e-wallet' | 'Bank transfer';
+/** Methods paid through the online gateway. The rest are checked by hand. */
+export type OnlineMethod = 'GCash' | 'Maya' | 'Card' | 'QR Ph';
+/**
+ * pending = manual proof waiting for staff. processing, failed, expired and refunded come from the gateway.
+ */
+export type PayStatus = 'pending' | 'processing' | 'confirmed' | 'rejected' | 'failed' | 'expired' | 'refunded';
 export interface Payment {
   id: string; method: PayMethod; amount: number; ref: string; proof: string;
-  status: 'pending' | 'confirmed' | 'rejected'; date: string; by: string; verifiedBy?: string; reason?: string;
+  status: PayStatus; date: string; by: string; verifiedBy?: string; reason?: string;
   /** The uploaded proof-of-payment screenshot. */
   proofFile?: FileRef;
+  /** 'paymongo' for online payments, 'manual' for cash and proof uploads. Missing means manual. */
+  provider?: 'paymongo' | 'manual';
+  /** Gateway reference, for example pay_xxxx. */
+  providerRef?: string;
+  /** Gateway fee, and what the clinic receives after the fee. Pesos. */
+  fee?: number; net?: number;
+  /** When the payment was started, and when the gateway reported the final result (webhook time). */
+  createdAt?: number; paidAt?: number;
+  refundedAt?: number; refundedBy?: string;
 }
 export interface Bill {
   id: string; petId: string; ownerId: string; apptId: string | null; date: string; items: BillItem[]; payments: Payment[];
@@ -72,7 +87,10 @@ export interface Activity { id: string; at: number; who: string; text: string }
 export interface DayHours { open: boolean; from: number; to: number }
 /** Payment accounts the clinic accepts (consultation D12: GCash QR, other e-wallet QR, bank transfer). */
 export interface PayAccount { id: string; kind: Exclude<PayMethod, 'Cash'>; provider: string; accountName: string; number: string; on: boolean; qrSeed: number; /** The clinic's own QR image, uploaded by the administrator. */ qrUri?: string }
+/** Online payment settings managed by the administrator. */
+export interface GatewaySettings { mode: 'test' | 'live'; methods: Record<OnlineMethod, boolean> }
 export interface Clinic {
+  gateway?: GatewaySettings;
   name: string; address: string; phone: string; mobile: string; email: string; about: string;
   lat: number; lng: number; payUpdated: string; accounts: PayAccount[];
 }
@@ -81,7 +99,12 @@ export interface Settings {
   slotMinutes: number; lunch: [number, number]; cancelCutoffHours: number; bookAheadDays: number;
   days: Record<number, DayHours>; reminders: Reminder[]; channels: { push: boolean; sms: boolean; email: boolean };
 }
+/** Money the clinic spends. Needed for the profit and loss statement. */
+export type ExpenseCategory = 'Medicines and vaccines' | 'Supplies' | 'Salaries' | 'Rent' | 'Utilities' | 'Equipment' | 'Marketing' | 'Other';
+export interface Expense { id: string; date: string; category: ExpenseCategory; amount: number; note: string; by: string }
 export interface DB {
+  /** Missing in sessions saved before Statistics existed. */
+  expenses?: Expense[];
   clinic: Clinic; settings: Settings; users: User[]; owners: Owner[]; pets: Pet[]; visits: Visit[]; notes: ProgressNote[];
   followups: FollowUp[]; appts: Appt[]; bills: Bill[]; docs: Doc[]; services: Service[];
   notifs: Record<string, Notif[]>; activity: Activity[]; messages: Record<string, Msg[]>;

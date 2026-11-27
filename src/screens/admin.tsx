@@ -13,11 +13,12 @@ import { HomeHeader, ROLE_LABEL } from './common';
 import { DashSkeleton, ScheduleTable, useDueList } from './clinic';
 import { Cell, Cols, DataTable, useBP } from '../components/responsive';
 import { pickFile } from '../utils/files';
-import { useApp, sel } from '../store/AppStore';
+import { useApp, sel, gatewayOf } from '../store/AppStore';
+import { ONLINE_METHODS, METHOD_LABEL, METHOD_SUB, FEE_PCT, FEE_FIXED } from '../services/paymentService';
 import { useNav, useParams } from '../navigation/nav';
 import { colors, radius, shadow, type, FONT, DISPLAY } from '../theme';
 import type { DayHours, PayAccount, Role, Service } from '../types';
-import { APPT, D, DOW, DOWL, MON, ago, billBalance, billState, billTotal, byDateTime, diff, fmtD, fmtDS, hourLabel, isEmail, isPhone, money, parseD, t12 } from '../utils/format';
+import { APPT, D, DOW, DOWL, MON, ago, allPayments, billBalance, billState, billTotal, byDateTime, fmtDT, isOnlinePay, isOwing, payStatus, diff, fmtD, fmtDS, hourLabel, isEmail, isPhone, money, parseD, t12 } from '../utils/format';
 
 const paidIn = (db: ReturnType<typeof useApp>['db'], test: (d: string) => boolean) =>
   db.bills.flatMap(b => b.payments).filter(p => p.status === 'confirmed' && test(p.date)).reduce((s2, p) => s2 + p.amount, 0);
@@ -29,7 +30,8 @@ export function AdminHome() {
   const today = db.appts.filter(a => diff(a.date) === 0 && a.status !== 'cancelled').sort(byDateTime);
   const verify = db.bills.filter(b => billState(b) === 'pending');
   const unread = sel.unreadMsgs(db, user!);
-  const unpaidBills = db.bills.filter(b => billState(b) === 'unpaid');
+  const unpaidBills = db.bills.filter(b => isOwing(billState(b)));
+  const failed = db.bills.filter(b => ['failed', 'expired'].includes(billState(b)));
   const unpaid = unpaidBills.reduce((s2, b) => s2 + billBalance(b), 0);
   const staffActs = db.activity.filter(a => db.users.some(u => u.name === a.who && u.role === 'staff')).slice(0, 4);
   const staff = db.users.filter(u => u.role === 'staff' && u.status === 'active');
@@ -51,7 +53,7 @@ export function AdminHome() {
         </Text>
         <Text style={[type.body, { color: colors.ink2 }]}>{today.length} visits on today's schedule, {doneN} done. {month ? `${money(month)} collected this month.` : ''}</Text>
       </View>
-      <Btn label="Open reports" icon="chart" kind="line" onPress={() => nav.navigate('Main', { screen: 'Reports' } as never)} style={mobile ? { alignSelf: 'flex-start' } : undefined} />
+      <Btn label="Open statistics" icon="chart" kind="line" onPress={() => nav.navigate('Main', { screen: 'Reports' } as never)} style={mobile ? { alignSelf: 'flex-start' } : undefined} />
     </View>
   );
 
@@ -69,7 +71,8 @@ export function AdminHome() {
   const needs = (
     <View style={{ gap: 4 }}>
       <Text style={ad.h2} accessibilityRole="header">Needs your eye</Text>
-      <LedgerRow alert n={verify.length} label={verify.length === 1 ? 'payment waiting for verification' : 'payments waiting for verification'} icon="wallet" onPress={() => nav.navigate('BillingList')} />
+      <LedgerRow alert n={verify.length} label={verify.length === 1 ? 'transfer waiting for verification' : 'transfers waiting for verification'} icon="wallet" onPress={() => nav.navigate('BillingList')} />
+      <LedgerRow alert n={failed.length} label={failed.length === 1 ? 'online payment failed or expired' : 'online payments failed or expired'} icon="alert" onPress={() => nav.navigate('BillingList')} />
       <LedgerRow alert n={due.overdue.length} label={due.overdue.length === 1 ? 'pet overdue for care' : 'pets overdue for care'} icon="bell" onPress={() => nav.navigate('CareMonitor')} />
       <LedgerRow alert n={unread} label={unread === 1 ? 'unread message from an owner' : 'unread messages from owners'} icon="chat" onPress={() => nav.navigate('Inbox')} />
       <LedgerRow n={unpaidBills.length} label={unpaidBills.length === 1 ? 'bill still unpaid' : 'bills still unpaid'} icon="receipt" onPress={() => nav.navigate('BillingList')} />
@@ -131,71 +134,6 @@ export function AdminHome() {
   );
 }
 
-/** Consultation D21: daily and monthly collections, due and overdue vaccines (and other follow-ups), unpaid bills. */
-export function Reports() {
-  const nav = useNav(); const { db } = useApp(); const due = useDueList(); const { mobile } = useBP();
-  const [range, setRange] = useState<'daily' | 'monthly'>('daily');
-  const daily = range === 'daily';
-  const days = Array.from({ length: 7 }, (_, i) => D(i - 6));
-  const months = Array.from({ length: 6 }, (_, i) => { const d = parseD(D(0)); d.setDate(1); d.setMonth(d.getMonth() - (5 - i)); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; });
-  const bars = daily ? days.map(d => paidIn(db, x => x === d)) : months.map(m => paidIn(db, x => x.slice(0, 7) === m));
-  const labels = daily ? days.map((d, i) => i === 6 ? 'Today' : DOW[parseD(d).getDay()]) : months.map((m, i) => i === 5 ? 'This month' : MON[Number(m.slice(5)) - 1]);
-  const headline = daily ? paidIn(db, d => diff(d) === 0) : paidIn(db, d => sameMonth(d));
-  const inRange = (d: string) => daily ? diff(d) === 0 : sameMonth(d);
-  const appts = db.appts.filter(a => inRange(a.date) && diff(a.date) <= 0);
-  const unpaidBills = db.bills.filter(b => billState(b) === 'unpaid');
-  const staff = db.users.filter(u => u.role === 'staff' && u.status === 'active');
-  const vax = [...due.overdue, ...due.soon].filter(x => x.f.kind !== 'Recheck');
-  const completed = appts.filter(a => a.status === 'completed').length;
-  const lost = appts.filter(a => ['cancelled', 'missed'].includes(a.status)).length;
-  return (
-    <Screen title="Reports" back={false} big tabbed sub="Collections, visits, due vaccines and unpaid bills.">
-      <SegControl options={[['daily', 'Daily'], ['monthly', 'Monthly']]} value={range} onChange={setRange} />
-      <View style={ad.panel}>
-        <View style={{ gap: 4 }}>
-          <Text style={type.small}>{daily ? 'Collected today' : `Collected in ${MON[parseD(D(0)).getMonth()]}`}</Text>
-          <Text style={[ad.big, mobile && { fontSize: 40, lineHeight: 42 }]}>{money(headline)}</Text>
-        </View>
-        <CollectionBars values={bars} labels={labels} format={v => `₱${(v / 1000).toFixed(1)}k`} height={mobile ? 100 : 140} />
-        <Text style={type.small}>{daily ? 'Last 7 days' : 'Last 6 months'}, confirmed payments only.</Text>
-      </View>
-      <Cols ratio={[1, 1]} stackBelow="desktop" gap={40}>
-        <View style={{ gap: 4 }}>
-          <Text style={ad.h2} accessibilityRole="header">{daily ? 'Today' : 'This month'} in numbers</Text>
-          <LedgerRow n={completed} label={completed === 1 ? 'visit completed' : 'visits completed'} tone={colors.ok} />
-          <LedgerRow n={lost} label="cancelled or missed" />
-          <LedgerRow alert n={vax.length} label="vaccines and deworming due or overdue" icon="syringe" onPress={() => nav.navigate('CareMonitor')} />
-          <LedgerRow n={money(unpaidBills.reduce((s2, b) => s2 + billBalance(b), 0))} label={`unpaid in ${unpaidBills.length} bill${unpaidBills.length === 1 ? '' : 's'}`} icon="receipt" onPress={() => nav.navigate('BillingList')} />
-        </View>
-        <View style={{ gap: 4 }}>
-          <Text style={ad.h2} accessibilityRole="header">Staff oversight</Text>
-          {staff.map(u => {
-            const handled = db.appts.filter(a => inRange(a.date) && a.handledBy === u.name).length;
-            const verified = db.bills.flatMap(b => b.payments).filter(p => inRange(p.date) && p.verifiedBy === u.name).length;
-            return (
-              <View key={u.id} style={ad.person}>
-                <Avatar name={u.name} size={36} />
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={type.h3}>{u.name}</Text>
-                  <Text style={type.small}>{handled} appointments handled, {verified} payments recorded or checked</Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      </Cols>
-      <Cols ratio={[1, 1]} stackBelow="desktop" gap={40}>
-        <Section title="Vaccines and deworming due" action="All follow-ups" onAction={() => nav.navigate('CareMonitor')}>
-          {vax.length === 0 ? <T.Small>Nothing due in the next 7 days.</T.Small> : <Group>{vax.map(({ f, pet, s: st }) => <Row key={f.id} left={<HealthRing pet={pet} health={st.key === 'overdue' ? 'overdue' : 'soon'} size={40} ring={2.5} />} title={`${pet.name}, ${f.reason}`} sub={`${sel.owner(db, pet.ownerId)!.name}, due ${fmtD(f.date)}`} right={<Pill text={st.label} tone={st.tone} />} onPress={() => nav.navigate('PetDetail', { id: pet.id, tab: 'follow' })} />)}</Group>}
-        </Section>
-        <Section title="Unpaid bills" action="Billing" onAction={() => nav.navigate('BillingList')}>
-          {unpaidBills.length === 0 ? <T.Small>No unpaid bills.</T.Small> : <Group>{unpaidBills.map(b => <Row key={b.id} left={<PetAvatar pet={sel.pet(db, b.petId)!} size={40} />} title={`${sel.pet(db, b.petId)!.name}, ${sel.owner(db, b.ownerId)!.name}`} sub={`${fmtD(b.date)}, total ${money(billTotal(b))}`} right={<Text style={[type.h3, { color: colors.bad, fontVariant: ['tabular-nums'] }]}>{money(billBalance(b))}</Text>} onPress={() => nav.navigate('BillDetail', { id: b.id })} />)}</Group>}
-        </Section>
-      </Cols>
-    </Screen>
-  );
-}
-
 export function Setup() {
   const nav = useNav(); const { user, db, act } = useApp(); const confirm = useConfirm();
   const unread = (db.notifs[act.inboxKey()] || []).filter(n => n.unread).length;
@@ -216,7 +154,7 @@ export function Setup() {
           <Row icon="tag" title="Services and prices" sub={`${db.services.filter(s => s.active).length} active services`} onPress={go('Services')} />
           <Row icon="clock" title="Clinic hours and time slots" sub={`${db.settings.slotMinutes}-minute slots · cancel up to ${db.settings.cancelCutoffHours} h before`} onPress={go('Hours')} />
           <Row icon="bell" title="Reminder settings" sub="Timing and channels (phone alert, SMS, email)" onPress={go('Reminders')} />
-          <Row icon="qr" title="Payment accounts" sub={`${db.clinic.accounts.filter(a => a.on).map(a => a.provider).join(', ')} · updated ${fmtD(db.clinic.payUpdated)}`} onPress={go('PaymentSetup')} />
+          <Row icon="qr" title="Online payments and accounts" sub={`${gatewayOf(db).mode === 'live' ? 'Live' : 'Test'} mode · ${ONLINE_METHODS.filter(m => gatewayOf(db).methods[m]).join(', ') || 'No online methods'} · ${db.clinic.accounts.filter(a => a.on).length} manual accounts`} subLines={2} onPress={go('PaymentSetup')} />
         </Group>
       </Section>
       </><>
@@ -428,20 +366,32 @@ export function Reminders() {
 
 /** Consultation D12/D13: GCash QR, another e-wallet QR, and bank transfer, on the clinic's business accounts. Administrator only. */
 export function PaymentSetup() {
-  const { db, act } = useApp(); const [edit, setEdit] = useState<PayAccount | null>(null); const [err, setErr] = useState<Record<string, string>>({});
+  const { db, act } = useApp(); const confirm = useConfirm(); const gw = gatewayOf(db); const [edit, setEdit] = useState<PayAccount | null>(null); const [err, setErr] = useState<Record<string, string>>({});
   const save = () => {
     const e: Record<string, string> = {}; if (!edit!.accountName.trim()) e.accountName = 'Enter the account name'; if (edit!.number.replace(/\D/g, '').length < 8) e.number = 'Enter the account or mobile number';
     if (Object.keys(e).length) return setErr(e);
     act.saveAccount(edit!); setEdit(null);
   };
   return (
-    <Screen title="Payment accounts">
+    <Screen title="Online payments and accounts">
+      <Section title="Online payments" sub="GCash, Maya, cards and QR Ph through PayMongo. Payments are confirmed automatically.">
+        <SegControl options={[['test', 'Test mode'], ['live', 'Live mode']]} value={gw.mode} onChange={m => m === gw.mode ? undefined : m === 'live'
+          ? confirm({ title: 'Switch to live mode?', body: 'Owners will be charged real money. Make sure the PayMongo business account is verified.', ok: 'Go live', tone: 'bad', icon: 'shield', onOk: () => act.saveGateway({ ...gw, mode: 'live' }) })
+          : act.saveGateway({ ...gw, mode: 'test' })} />
+        <Group>{ONLINE_METHODS.map(m => (
+          <Row key={m} icon={m === 'Card' ? 'card' : m === 'QR Ph' ? 'qr' : 'phoneapp'} title={METHOD_LABEL[m]} sub={`${METHOD_SUB[m]} · fee ${(FEE_PCT[m] * 100).toFixed(1)}%${FEE_FIXED[m] ? ` + ${money(FEE_FIXED[m])}` : ''}`} subLines={2}
+            right={<Toggle label={`${m} on`} value={gw.methods[m]} onChange={() => act.saveGateway({ ...gw, methods: { ...gw.methods, [m]: !gw.methods[m] } })} />} />
+        ))}</Group>
+        <T.Small>{gw.mode === 'test' ? 'Test mode: no real money moves. Use it to check the payment flow.' : 'Live mode: payments use real money.'}</T.Small>
+      </Section>
+      <Section title="Manual accounts" sub="Bank transfer and e-wallet QR for owners who send proof of payment.">
       <Banner tone="warn" icon="shield" title="Only the administrator can change these" sub="Owners pay to these accounts. Double-check them so the wrong QR or number is never shown." />
       <Group>{db.clinic.accounts.map(a => (
         <Row key={a.id} icon={a.kind === 'Bank transfer' ? 'bank' : 'qr'} title={`${a.provider} · ${a.kind === 'Bank transfer' ? 'Bank transfer' : 'QR'}`} sub={`${a.accountName}\n${a.number}`} subLines={2}
           onPress={() => { setErr({}); setEdit({ ...a }); }} right={<Toggle label={`${a.provider} on`} value={a.on} onChange={() => act.saveAccount({ ...a, on: !a.on })} />} />
       ))}</Group>
       <T.Small>Payments are checked by the administrator or staff against these accounts. Turn an account off to hide it from owners.</T.Small>
+      </Section>
       <Sheet visible={!!edit} onClose={() => setEdit(null)} title={edit ? `Edit ${edit.provider}` : ''} footer={<Btn label="Save account" style={{ flex: 1 }} onPress={save} />}>
         {edit && <>
           {edit.kind !== 'Bank transfer' && <Card style={{ alignItems: 'center', gap: 10, shadowOpacity: 0 }}>

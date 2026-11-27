@@ -1,7 +1,15 @@
 // Sample records for the prototype. Every date is relative to the day the app is opened.
 // Replace seedDB() with API calls when the backend is ready.
-import type { Appt, Bill, DB, FollowUp, NotifPrefs, Visit } from '../types';
-import { D } from '../utils/format';
+import type { Appt, Bill, DB, Expense, FollowUp, NotifPrefs, OnlineMethod, Payment, Visit } from '../types';
+import { D, parseD } from '../utils/format';
+import { feeFor } from '../services/paymentService';
+
+/** A finished online payment, as the gateway would have recorded it. `seq` makes the reference unique (VCP-YYYYMMDD-000001). */
+function onlinePay(id: string, method: OnlineMethod, amount: number, date: string, by: string, seq: number, extra: Partial<Payment> = {}): Payment {
+  const at = parseD(date).getTime() + (9 + (seq % 8)) * 36e5 + (seq % 50) * 6e4; const fee = feeFor(method, amount);
+  return { id, method, amount, ref: `VCP-${date.replace(/-/g, '')}-${String(seq).padStart(6, '0')}`, proof: '', status: 'confirmed', date, by, provider: 'paymongo',
+    providerRef: `pay_${(seq * 7919 + 104729).toString(36).padStart(8, '0')}x${seq}k`, fee, net: Math.round((amount - fee) * 100) / 100, createdAt: at, paidAt: at + 21_000, ...extra };
+}
 
 const hoursAgo = (h: number) => Date.now() - h * 36e5;
 const VET = 'Dr. Elena Ybañez';
@@ -15,6 +23,7 @@ export function seedDB(): DB {
       phone: '(032) 555 0188', mobile: '0917 555 0188', email: 'hello@sugbopetcare.example',
       about: 'A neighborhood clinic for dogs and cats. Booking ahead keeps waiting short.',
       lat: 10.3157, lng: 123.8854, payUpdated: D(-20),
+      gateway: { mode: 'test', methods: { GCash: true, Maya: true, Card: true, 'QR Ph': true } },
       accounts: [
         { id: 'pa1', kind: 'GCash', provider: 'GCash', accountName: 'Sugbo Pet Care Clinic', number: '0917 555 0188', on: true, qrSeed: 7 },
         { id: 'pa2', kind: 'Other e-wallet', provider: 'Maya', accountName: 'Sugbo Pet Care Clinic', number: '0917 555 0188', on: true, qrSeed: 13 },
@@ -81,6 +90,7 @@ export function seedDB(): DB {
       { id: 's8', name: 'Wound Care & Dressing', category: 'Procedures', price: 300, minutes: 20, active: true },
     ],
     notifs: {}, activity: [], messages: {},
+    expenses: [] as Expense[],
   };
 
   const V = (id: string, petId: string, date: string, complaint: string, findings: string, diagnosis: string, treatment: string, medication: string, weight: number): Visit =>
@@ -148,12 +158,12 @@ export function seedDB(): DB {
   const It = (name: string, price: number, qty = 1) => ({ name, price, qty });
   db.bills = [
     { id: 'b1', petId: 'p3', ownerId: 'o2', apptId: 'a10', date: D(0), items: [It('Wellness Check-up', 450), It('Deworming', 250)], payments: [{ id: 'y1', method: 'Cash', amount: 700, ref: '', proof: '', status: 'confirmed', date: D(0), by: 'Lea Ramirez', verifiedBy: 'Lea Ramirez' }] },
-    { id: 'b2', petId: 'p1', ownerId: 'o1', apptId: 'a3', date: D(-2), items: [It('General Consultation', 350), It('Minor Procedure', 500)], payments: [] },
+    { id: 'b2', petId: 'p1', ownerId: 'o1', apptId: 'a3', date: D(-2), items: [It('General Consultation', 350), It('Minor Procedure', 500)], payments: [onlinePay('y2', 'Maya', 850, D(-1), 'Maria Santos', 3, { status: 'failed', reason: 'Insufficient Maya balance', paidAt: parseD(D(-1)).getTime() + 11 * 36e5 })] },
     { id: 'b3', petId: 'p2', ownerId: 'o1', apptId: 'a4', date: D(-30), items: [It('General Consultation', 350), It('Wound Care & Dressing', 300)], payments: [{ id: 'y3', method: 'GCash', amount: 650, ref: '5102 441 902', proof: 'gcash-receipt.png', proofFile: { name: 'gcash-receipt.png', size: '310 KB', type: 'image', sample: 'ewalletProof' }, status: 'confirmed', date: D(-30), by: 'Maria Santos', verifiedBy: 'Lea Ramirez' }] },
     { id: 'b4', petId: 'p1', ownerId: 'o1', apptId: 'a5', date: D(-45), items: [It('Follow-up Check', 200)], payments: [{ id: 'y4', method: 'Cash', amount: 200, ref: '', proof: '', status: 'confirmed', date: D(-45), by: 'Lea Ramirez', verifiedBy: 'Lea Ramirez' }] },
     { id: 'b6', petId: 'p5', ownerId: 'o3', apptId: 'a18', date: D(-1), items: [It('General Consultation', 350), It('Anti-rabies Vaccine', 350)], payments: [{ id: 'y6', method: 'GCash', amount: 700, ref: '4821 903 117', proof: 'gcash-screenshot.png', proofFile: { name: 'gcash-screenshot.png', size: '420 KB', type: 'image', sample: 'ewalletProof' }, status: 'pending', date: D(-1), by: 'Ramon Gonzales' }] },
     { id: 'b7', petId: 'p6', ownerId: 'o4', apptId: 'a19', date: D(-2), items: [It('General Consultation', 350)], payments: [{ id: 'y7', method: 'Bank transfer', amount: 350, ref: 'BDO 3390 774 201', proof: 'bank-transfer.png', proofFile: { name: 'bank-transfer.png', size: '380 KB', type: 'image', sample: 'bankProof' }, status: 'pending', date: D(-2), by: 'Aileen Uy' }] },
-    { id: 'b9', petId: 'p9', ownerId: 'o6', apptId: 'a22', date: D(-3), items: [It('General Consultation', 350), It('Wound Care & Dressing', 300)], payments: [] },
+    { id: 'b9', petId: 'p9', ownerId: 'o6', apptId: 'a22', date: D(-3), items: [It('General Consultation', 350), It('Wound Care & Dressing', 300)], payments: [onlinePay('y9', 'QR Ph', 650, D(-2), 'Carlo Dela Peña', 4, { status: 'expired', reason: 'The checkout expired before the payment was completed', paidAt: parseD(D(-2)).getTime() + 15 * 36e5 })] },
     { id: 'b8', petId: 'p4', ownerId: 'o2', apptId: null, date: D(-70), items: [It('General Consultation', 350)], payments: [{ id: 'y8', method: 'Cash', amount: 350, ref: '', proof: '', status: 'confirmed', date: D(-70), by: 'Marco Pacaña', verifiedBy: 'Marco Pacaña' }] },
   ];
 
@@ -167,8 +177,8 @@ export function seedDB(): DB {
   // Past visits so monitoring and the daily and monthly reports have data: dense for 2 weeks, lighter for 5 months.
   const staff = ['Lea Ramirez', 'Marco Pacaña'], times = ['09:00', '10:00', '11:30', '14:00', '15:30'];
   const pool = db.pets.filter(p => ['p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9'].includes(p.id));
-  const methods = ['Cash', 'Cash', 'GCash', 'Cash', 'Other e-wallet', 'GCash', 'Bank transfer'] as const;
-  let k = 0;
+  const methods = ['Cash', 'GCash', 'Cash', 'Maya', 'Cash', 'Card', 'Bank transfer', 'GCash', 'QR Ph'] as const;
+  let k = 0, seq = 4, refunded = false;
   for (let d = 150; d >= 3; d--) {
     const n = d <= 14 ? 2 + (d % 3) : (d % 2) + 1;
     for (let i = 0; i < n; i++) {
@@ -179,8 +189,12 @@ export function seedDB(): DB {
       db.appts.push({ id, petId: p.id, ownerId: p.ownerId, service: s.name, date: D(-d), time: times[(k + i) % 5], status: st, reason: '', by: k % 4 === 0 ? 'staff' : 'owner', handledBy: staff[k % 2], note: st === 'missed' ? 'Did not arrive' : st === 'cancelled' ? 'Cancelled by owner' : undefined });
       if (st === 'completed') {
         const m = methods[k % methods.length];
-        db.bills.push({ id: 'hb' + k, petId: p.id, ownerId: p.ownerId, apptId: id, date: D(-d), items: [{ name: s.name, price: s.price, qty: 1 }],
-          payments: [{ id: 'hy' + k, method: m, amount: s.price, ref: m === 'Cash' ? '' : `5${100 + k} 3${10 + k} ${200 + k}`, proof: m === 'Cash' ? '' : 'payment-proof.png', status: 'confirmed', date: D(-d), by: staff[(k + 1) % 2], verifiedBy: staff[(k + 1) % 2] }] });
+        const ownerName = db.owners.find(o => o.id === p.ownerId)!.name;
+        const online = m === 'GCash' || m === 'Maya' || m === 'Card' || m === 'QR Ph';
+        const pay: Payment = online
+          ? onlinePay('hy' + k, m, s.price, D(-d), ownerName, ++seq, (!refunded && d < 40 && d > 20 && (refunded = true)) ? { status: 'refunded', refundedAt: parseD(D(-d)).getTime() + 30 * 36e5, refundedBy: VET } : {})
+          : { id: 'hy' + k, method: m, amount: s.price, ref: m === 'Cash' ? '' : `5${100 + k} 3${10 + k} ${200 + k}`, proof: m === 'Cash' ? '' : 'payment-proof.png', status: 'confirmed', date: D(-d), by: staff[(k + 1) % 2], verifiedBy: staff[(k + 1) % 2], provider: 'manual' };
+        db.bills.push({ id: 'hb' + k, petId: p.id, ownerId: p.ownerId, apptId: id, date: D(-d), items: [{ name: s.name, price: s.price, qty: 1 }], payments: [pay] });
       }
     }
   }
@@ -226,7 +240,19 @@ export function seedDB(): DB {
     ],
   };
 
+  // Recurring clinic costs, so Statistics can show profit and loss from the first launch.
+  const EXP: [number, Expense['category'], number, string][] = [
+    [-2, 'Medicines and vaccines', 3200, 'Vaccine restock'], [-4, 'Supplies', 850, 'Gloves, syringes, gauze'], [-9, 'Utilities', 2300, 'Electricity and water'],
+    [-12, 'Medicines and vaccines', 2100, 'Dewormers and antibiotics'], [-20, 'Salaries', 12000, 'Front desk assistant'], [-26, 'Rent', 8000, 'Clinic space'],
+    [-33, 'Marketing', 1500, 'Social media posts'], [-41, 'Medicines and vaccines', 4100, 'Vaccine restock'], [-47, 'Utilities', 2200, 'Electricity and water'],
+    [-55, 'Equipment', 5400, 'Weighing scale'], [-62, 'Rent', 8000, 'Clinic space'], [-70, 'Salaries', 12000, 'Front desk assistant'], [-95, 'Supplies', 1200, 'Cleaning supplies'],
+    [-110, 'Rent', 8000, 'Clinic space'], [-140, 'Rent', 8000, 'Clinic space'], [-150, 'Medicines and vaccines', 3800, 'Vaccine restock'],
+  ];
+  db.expenses = EXP.map(([d, category, amount, note], i) => ({ id: `x${i + 1}`, date: D(d), category, amount, note, by: VET }));
+
   db.activity = [
+    { id: 'l10', at: hoursAgo(26), who: 'System (PayMongo)', text: `₱850 Maya payment VCP-${D(-1).replace(/-/g, '')}-000003 for Bingo failed: Insufficient Maya balance` },
+    { id: 'l11', at: hoursAgo(44), who: 'System (PayMongo)', text: `₱650 QR Ph payment VCP-${D(-2).replace(/-/g, '')}-000004 for Kiko expired: The checkout expired before the payment was completed` },
     { id: 'l1', at: hoursAgo(1), who: 'Marco Pacaña', text: 'Suggested a new time for Max’s appointment' },
     { id: 'l2', at: hoursAgo(3), who: 'Lea Ramirez', text: 'Checked in Brutus' },
     { id: 'l3', at: hoursAgo(8), who: VET, text: 'Saved a consultation record for Luna' },

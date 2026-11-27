@@ -1,4 +1,4 @@
-import type { Appt, ApptStatus, Bill, FollowKind, FollowUp } from '../types';
+import type { Appt, ApptStatus, Bill, FollowKind, FollowUp, Payment } from '../types';
 import type { Tone } from '../theme';
 
 export const pad = (n: number) => String(n).padStart(2, '0');
@@ -68,11 +68,36 @@ export const billTotal = (b: Bill) => b.items.reduce((s, i) => s + i.qty * i.pri
 export const billPaid = (b: Bill) => b.payments.filter(p => p.status === 'confirmed').reduce((s, p) => s + p.amount, 0);
 export const billBalance = (b: Bill) => Math.max(0, billTotal(b) - billPaid(b));
 /** Consultation D14: bills are paid in full, so there is no partially-paid state. */
-export type BillState = 'paid' | 'pending' | 'unpaid';
+export type BillState = 'paid' | 'pending' | 'processing' | 'unpaid' | 'failed' | 'expired' | 'refunded';
 export function billState(b: Bill): BillState {
   if (billPaid(b) >= billTotal(b)) return 'paid';
-  return b.payments.some(p => p.status === 'pending') ? 'pending' : 'unpaid';
+  if (b.payments.some(p => p.status === 'pending')) return 'pending';
+  if (b.payments.some(p => p.status === 'processing')) return 'processing';
+  const last = b.payments[b.payments.length - 1];
+  if (last && (last.status === 'refunded' || last.status === 'failed' || last.status === 'expired')) return last.status;
+  return 'unpaid';
 }
+/** The owner still has to pay. Failed and expired attempts can be tried again. */
+export const isOwing = (st: BillState) => st === 'unpaid' || st === 'failed' || st === 'expired';
 export const BILL: Record<BillState, [string, Tone]> = {
-  paid: ['Paid', 'ok'], pending: ['Checking payment', 'warn'], unpaid: ['Unpaid', 'bad'],
+  paid: ['Paid', 'ok'], pending: ['Checking payment', 'warn'], processing: ['Processing', 'info'], unpaid: ['Unpaid', 'bad'],
+  failed: ['Failed', 'bad'], expired: ['Expired', 'warn'], refunded: ['Refunded', ''],
 };
+/** Label and tone of one payment line. Online payments say Paid, manual ones say Confirmed. */
+export function payStatus(p: Payment): [string, Tone] {
+  switch (p.status) {
+    case 'pending': return ['Waiting for check', 'warn'];
+    case 'processing': return ['Processing', 'info'];
+    case 'confirmed': return [p.provider === 'paymongo' ? 'Paid' : 'Confirmed', 'ok'];
+    case 'rejected': return ['Rejected', 'bad'];
+    case 'failed': return ['Failed', 'bad'];
+    case 'expired': return ['Expired', 'warn'];
+    case 'refunded': return ['Refunded', ''];
+  }
+}
+export const isOnlinePay = (p: Payment) => p.provider === 'paymongo';
+/** Date and time from a timestamp, for example Nov 27, 2026, 3:42 PM. */
+export const fmtDT = (ms: number) => { const d = new Date(ms); return `${MON[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}, ${t12(`${pad(d.getHours())}:${pad(d.getMinutes())}`)}`; };
+/** Every payment on every bill, newest first. */
+export const allPayments = (bills: Bill[]) => bills.flatMap(b => b.payments.map(p => ({ b, p })))
+  .sort((x, y) => (y.p.createdAt ?? parseD(y.p.date).getTime()) - (x.p.createdAt ?? parseD(x.p.date).getTime()));
