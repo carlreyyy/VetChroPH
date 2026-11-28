@@ -98,7 +98,7 @@ export function OwnerDetail() {
   const nav = useNav(); const { db, act } = useApp(); const { id } = useParams<{ id: string }>();
   const o = sel.owner(db, id!)!; const pets = sel.petsOf(db, o.id);
   const appts = db.appts.filter(a => a.ownerId === o.id).sort(byDateTime).reverse().slice(0, 5);
-  const bills = db.bills.filter(b => b.ownerId === o.id && billState(b) !== 'paid');
+  const bills = db.bills.filter(b => b.ownerId === o.id && !['paid', 'refunded'].includes(billState(b)));
   const [noteOpen, setNoteOpen] = useState(false); const [note, setNote] = useState(''); const [noteErr, setNoteErr] = useState('');
   const [edit, setEdit] = useState(false); const [f, setF] = useState({ name: o.name, phone: o.phone, email: o.email, address: o.address }); const [err, setErr] = useState<Record<string, string>>({});
   const save = () => {

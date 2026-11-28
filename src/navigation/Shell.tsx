@@ -48,7 +48,7 @@ function useItems(role: Role): [string, Item[]][] {
       { key: 'BillingList', label: 'Billing', icon: 'wallet', badge: verify },
       { key: 'CareMonitor', label: 'Due list', icon: 'bell' },
       { key: 'Documents', label: 'Documents', icon: 'file' },
-      { key: 'Reports', label: 'Reports', icon: 'chart', tab: true },
+      { key: 'Reports', label: 'Statistics', icon: 'chart', tab: true },
     ]],
     ['Administration', [
       { key: 'Setup', label: 'Setup', icon: 'sliders', tab: true },

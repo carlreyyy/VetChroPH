@@ -1,7 +1,8 @@
 // Local mock store. Every screen reads data and calls actions through useApp().
 // To connect a backend later, replace the bodies of these actions with API calls; screens do not need to change.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import type { Appt, Bill, BillItem, DB, FileRef, FollowUp, Notif, Owner, PayAccount, PayMethod, Pet, Role, Service, User, Visit } from '../types';
+import type { Appt, Bill, BillItem, DB, Expense, FileRef, FollowUp, GatewaySettings, Notif, Owner, PayAccount, PayMethod, Payment, Pet, Role, Service, User, Visit } from '../types';
+import { paymentService, type Checkout, type Outcome } from '../services/paymentService';
 import { seedDB, DEFAULT_PREFS } from '../data/seed';
 import { ACTIVE, D, diff, fmtD, money, normPhone, pad, parseD, t12, ymd } from '../utils/format';
 
@@ -12,7 +13,7 @@ const uid = (p: string) => `${p}${++_id}`;
 export const DEMO_CODE = '123456';
 
 /* ----- browser session (web only): data lives in this browser's storage, nothing is sent anywhere ----- */
-const KEY = 'vetchroph.session.v2';
+const KEY = 'vetchroph.session.v3';
 const store = () => { try { return typeof window !== 'undefined' && window.localStorage ? window.localStorage : null; } catch { return null; } };
 function loadSession(): { db: DB; user: User | null } | null {
   try {
@@ -37,6 +38,13 @@ export function resetDemoData() {
   if (typeof window !== 'undefined' && window.location) window.location.assign('/');
 }
 
+/** Actor shown in the activity log for events that come from the payment gateway. */
+export const GATEWAY_ACTOR = 'System (PayMongo)';
+export const DEFAULT_GATEWAY: GatewaySettings = { mode: 'test', methods: { GCash: true, Maya: true, Card: true, 'QR Ph': true } };
+export const gatewayOf = (db: DB): GatewaySettings => db.clinic.gateway || DEFAULT_GATEWAY;
+/** Payments already being settled in this session, so a payment is never settled twice. */
+const settling = new Set<string>();
+
 export interface Slot { t: string; off: boolean }
 type N = Omit<Notif, 'id' | 'at' | 'unread'>;
 
@@ -48,7 +56,8 @@ function buildActions(db: DB, getUser: () => User | null, setUser: (u: User | nu
   const notify = (to: string, n: N) => { (db.notifs[to] ||= []).unshift({ id: uid('n'), at: Date.now(), unread: true, ...n }); };
   const notifyClinic = (n: N) => { notify('staff', n); notify('admin', { ...n }); };
   const tellOwner = (ownerId: string, n: N) => notify('owner:' + ownerId, n);
-  const log = (text: string) => db.activity.unshift({ id: uid('l'), at: Date.now(), who: getUser()?.name || 'System', text });
+  const log = (text: string, who?: string) => db.activity.unshift({ id: uid('l'), at: Date.now(), who: who || getUser()?.name || 'System', text });
+  const bill = (id: string) => db.bills.find(x => x.id === id)!;
   const done = (msg?: string) => { bump(); if (msg) toast(msg); };
   const userByPhone = (p: string) => db.users.find(u => normPhone(u.phone) === normPhone(p));
 
@@ -239,18 +248,18 @@ function buildActions(db: DB, getUser: () => User | null, setUser: (u: User | nu
       const b: Bill = { id: uid('b'), petId, ownerId: p.ownerId, apptId, date: D(0), items, payments: [] };
       db.bills.unshift(b);
       const total = items.reduce((s, i) => s + i.price * i.qty, 0);
-      tellOwner(p.ownerId, { title: 'Bill ready', body: `${p.name}'s bill is ${money(total)}. Pay by GCash, e-wallet, bank transfer or at the clinic.`, icon: 'receipt', tone: '', link: { screen: 'BillDetail', params: { id: b.id } } });
+      tellOwner(p.ownerId, { title: 'Bill ready', body: `${p.name}'s bill is ${money(total)}. Pay online with GCash, Maya, card or QR Ph, by bank transfer, or at the clinic.`, icon: 'receipt', tone: '', link: { screen: 'BillDetail', params: { id: b.id } } });
       log(`Created a ${money(total)} bill for ${p.name}`); done('Bill created. Owner notified.'); return b;
     },
     recordCash(billId: string) {
       const b = db.bills.find(x => x.id === billId)!; const amount = b.items.reduce((s, i) => s + i.price * i.qty, 0);
-      b.payments.push({ id: uid('y'), method: 'Cash', amount, ref: '', proof: '', status: 'confirmed', date: D(0), by: me().name, verifiedBy: me().name });
+      b.payments.push({ id: uid('y'), method: 'Cash', amount, ref: '', proof: '', status: 'confirmed', date: D(0), by: me().name, verifiedBy: me().name, provider: 'manual', createdAt: Date.now(), paidAt: Date.now() });
       tellOwner(b.ownerId, { title: 'Payment recorded', body: `${money(amount)} cash payment for ${pet(b.petId).name}. Receipt issued.`, icon: 'check', tone: 'ok', link: { screen: 'Receipt', params: { id: b.id } } });
       log(`Recorded ${money(amount)} cash for ${pet(b.petId).name}`); done('Cash payment recorded. Receipt issued.');
     },
     submitProof(billId: string, method: PayMethod, ref: string, proofFile: FileRef) {
       const b = db.bills.find(x => x.id === billId)!; const amount = b.items.reduce((s, i) => s + i.price * i.qty, 0);
-      b.payments.push({ id: uid('y'), method, amount, ref, proof: proofFile.name, proofFile, status: 'pending', date: D(0), by: me().name });
+      b.payments.push({ id: uid('y'), method, amount, ref, proof: proofFile.name, proofFile, status: 'pending', date: D(0), by: me().name, provider: 'manual', createdAt: Date.now() });
       notifyClinic({ title: 'Payment proof submitted', body: `${pet(b.petId).name} (${me().name}) sent ${money(amount)} by ${method}. Check the clinic account.`, icon: 'banknote', tone: 'warn', link: { screen: 'BillDetail', params: { id: b.id } } });
       done('Proof sent. The clinic will check it.');
     },
@@ -263,6 +272,54 @@ function buildActions(db: DB, getUser: () => User | null, setUser: (u: User | nu
       log(`${ok ? 'Confirmed' : 'Rejected'} a ${money(y.amount)} ${y.method} payment for ${pet(b.petId).name}`);
       done(ok ? 'Payment confirmed. Receipt issued.' : 'Payment rejected. Owner notified.');
     },
+
+    /* ----- online payments (simulated gateway, see services/paymentService.ts) ----- */
+    usedRefs: () => db.bills.flatMap(x => x.payments.map(p => p.ref)),
+    /** The owner approved a checkout. The payment shows as Processing until the gateway reports the result. */
+    async payOnline(c: Checkout): Promise<Payment> {
+      const b = bill(c.billId); const who = me().name;
+      const y: Payment = { id: uid('y'), method: c.method, amount: c.amount, ref: c.ref, proof: '', status: 'processing', date: D(0), by: who, provider: 'paymongo', providerRef: c.sessionId, fee: c.fee, net: c.net, createdAt: Date.now() };
+      b.payments.push(y); bump();
+      log(`${money(c.amount)} ${c.method} payment ${c.ref} for ${pet(b.petId).name} is processing`, GATEWAY_ACTOR);
+      return a.settle(b.id, y.id, await paymentService.pay(c));
+    },
+    /** What the gateway's webhook would do: record the final result once, then tell the owner and the clinic. */
+    settle(billId: string, payId: string, o: Outcome): Payment {
+      const b = bill(billId); const y = b.payments.find(x => x.id === payId)!;
+      if (y.status !== 'processing' || settling.has(y.id)) return y;
+      settling.add(y.id);
+      const p = pet(b.petId), amt = money(y.amount);
+      Object.assign(y, { providerRef: o.providerRef, paidAt: o.paidAt, date: D(0) });
+      if (o.status === 'paid') {
+        y.status = 'confirmed';
+        tellOwner(b.ownerId, { title: 'Payment received', body: `Your ${amt} ${y.method} payment for ${p.name} went through. Reference ${y.ref}.`, icon: 'check', tone: 'ok', link: { screen: 'Receipt', params: { id: b.id } } });
+        notifyClinic({ title: 'Online payment received', body: `${amt} by ${y.method} for ${p.name} (${owner(b.ownerId).name}). Reference ${y.ref}.`, icon: 'wallet', tone: 'ok', link: { screen: 'BillDetail', params: { id: b.id } } });
+        log(`${amt} ${y.method} payment ${y.ref} for ${p.name} was paid`, GATEWAY_ACTOR);
+      } else {
+        y.status = o.status; y.reason = o.reason;
+        tellOwner(b.ownerId, { title: o.status === 'failed' ? 'Payment failed' : 'Payment expired', body: `Your ${amt} ${y.method} payment for ${p.name} did not go through. ${o.reason}. You were not charged. You can try again.`, icon: 'alert', tone: 'bad', link: { screen: 'BillDetail', params: { id: b.id } } });
+        log(`${amt} ${y.method} payment ${y.ref} for ${p.name} ${o.status === 'failed' ? 'failed' : 'expired'}: ${o.reason}`, GATEWAY_ACTOR);
+      }
+      settling.delete(y.id); bump(); return y;
+    },
+    /** After a refresh, a payment that was still processing is settled so it never stays stuck. */
+    resumePayments(): void {
+      db.bills.forEach(b => b.payments.filter(y => y.status === 'processing' && y.provider === 'paymongo' && !settling.has(y.id)).forEach(y => {
+        const c = { billId: b.id, method: y.method, amount: y.amount, fee: y.fee || 0, net: y.net || y.amount, ref: y.ref, sessionId: y.providerRef || '', createdAt: y.createdAt || Date.now(), expiresAt: 0 } as Checkout;
+        paymentService.pay(c, { fast: true }).then(o => a.settle(b.id, y.id, o));
+      }));
+    },
+    /** Administrator only. Online payments are refunded through the gateway. */
+    async refundPayment(billId: string, payId: string) {
+      const b = bill(billId); const y = b.payments.find(x => x.id === payId)!; const by = me().name;
+      if (me().role !== 'admin' || y.status !== 'confirmed') return;
+      if (y.provider === 'paymongo') await paymentService.refund();
+      Object.assign(y, { status: 'refunded', refundedAt: Date.now(), refundedBy: by });
+      tellOwner(b.ownerId, { title: 'Payment refunded', body: `${money(y.amount)} was refunded for ${pet(b.petId).name}${y.ref ? ` (${y.ref})` : ''}.`, icon: 'banknote', tone: '', link: { screen: 'BillDetail', params: { id: b.id } } });
+      log(`${money(y.amount)} ${y.method} payment${y.ref ? ` ${y.ref}` : ''} for ${pet(b.petId).name} was refunded, requested by ${by}`, y.provider === 'paymongo' ? GATEWAY_ACTOR : by);
+      done('Refund completed. Owner notified.');
+    },
+    saveGateway(g: GatewaySettings) { db.clinic.gateway = g; log(`Updated online payment settings (${g.mode} mode)`); done('Online payment settings saved'); },
 
     /* ----- administrator ----- */
     saveUser(f: { id?: string; name: string; role: Role; email: string; phone: string }) {
@@ -285,6 +342,14 @@ function buildActions(db: DB, getUser: () => User | null, setUser: (u: User | nu
       if (s.id) Object.assign(db.services.find(x => x.id === s.id)!, s);
       else db.services.push({ id: uid('s'), category: 'Consultation', price: 0, minutes: 30, active: true, ...s } as Service);
       log(`${s.id ? 'Updated' : 'Added'} service: ${s.name}`); done('Service saved');
+    },
+    addExpense(e: Omit<Expense, 'id' | 'by'>) {
+      (db.expenses ||= []).unshift({ id: uid('x'), by: me().name, ...e }); db.expenses.sort((p, q) => q.date.localeCompare(p.date));
+      log(`Recorded a ${money(e.amount)} expense: ${e.category}`); done('Expense saved');
+    },
+    removeExpense(id: string) {
+      const e = (db.expenses || []).find(x => x.id === id); if (!e) return;
+      db.expenses = db.expenses!.filter(x => x.id !== id); log(`Removed a ${money(e.amount)} expense: ${e.category}`); done('Expense removed');
     },
     saveHours(days: DB['settings']['days'], slotMinutes: number, cutoff: number) {
       Object.assign(db.settings, { days, slotMinutes, cancelCutoffHours: cutoff }); log('Updated clinic hours and time slots'); done('Clinic hours saved');
@@ -311,6 +376,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<User | null>(userRef.current);
   // Keep the demo data and the signed-in account when the browser is refreshed.
   useEffect(() => { saveSession(dbRef.current, user); }, [v, user]);
+  useEffect(() => { act.resumePayments(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [toastMsg, setToast] = useState<Ctx['toastMsg']>(null);
   const toast = useCallback((text: string, err = false) => setToast({ text, err, key: Date.now() }), []);
   const bump = useCallback(() => setV(x => x + 1), []);

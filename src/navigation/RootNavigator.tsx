@@ -16,11 +16,12 @@ import { useOwnerBadges } from './OwnerNav';
 import { TAB_BAR_H } from '../components/ui';
 import { PetDetail, PetForm, VisitDetail, ConsultForm } from '../screens/pets';
 import { Book, BookSuccess, ApptDetail, ClinicAppts } from '../screens/appointments';
-import { BillDetail, PayBill, Receipt, Billing, CreateBill } from '../screens/billing';
+import { BillDetail, PayBill, PayCheckout, PaySuccess, PayCancelled, Receipt, Billing, CreateBill } from '../screens/billing';
 import { Patients, OwnerDetail, CareMonitor, Documents } from '../screens/clinic';
 import { StaffHome } from '../screens/staffHome';
 import { Inbox, Chat, OwnerChat } from '../screens/messages';
-import { AdminHome, Reports, Setup, Users, UserForm, ClinicProfile, Services, Hours, Reminders, PaymentSetup, ActivityLog } from '../screens/admin';
+import { Statistics } from '../screens/statistics';
+import { AdminHome, Setup, Users, UserForm, ClinicProfile, Services, Hours, Reminders, PaymentSetup, ActivityLog } from '../screens/admin';
 
 const Stack = createNativeStackNavigator();
 // Auth pages share a split layout on desktops (brand panel + form). Defined once so screen identity stays stable.
@@ -34,7 +35,7 @@ type TabDef = [name: string, label: string, icon: IconName, component: React.Com
 const TABS: Record<Role, TabDef[]> = {
   owner: [['Home', 'Home', 'home', OwnerHome], ['Pets', 'Pets', 'paw', OwnerPets], ['Appointments', 'Visits', 'calendar', OwnerAppts], ['Messages', 'Messages', 'chat', OwnerChat], ['Bills', 'Bills', 'receipt', OwnerBills]],
   staff: [['Home', 'Today', 'home', StaffHome], ['Appointments', 'Schedule', 'calendar', ClinicAppts], ['Patients', 'Patients', 'paw', Patients], ['Messages', 'Messages', 'chat', Inbox], ['Billing', 'Billing', 'wallet', Billing]],
-  admin: [['Home', 'Overview', 'home', AdminHome], ['Appointments', 'Schedule', 'calendar', ClinicAppts], ['Patients', 'Patients', 'paw', Patients], ['Reports', 'Reports', 'chart', Reports], ['Setup', 'Setup', 'sliders', Setup]],
+  admin: [['Home', 'Overview', 'home', AdminHome], ['Appointments', 'Schedule', 'calendar', ClinicAppts], ['Patients', 'Patients', 'paw', Patients], ['Reports', 'Statistics', 'chart', Statistics], ['Setup', 'Setup', 'sliders', Setup]],
 };
 
 function TabBar({ state, navigation }: BottomTabBarProps) {
@@ -108,6 +109,9 @@ export function RootNavigator() {
           <Stack.Screen name="Chat" component={Chat} />
           {/* pet owner */}
           <Stack.Screen name="PayBill" component={PayBill} />
+          <Stack.Screen name="PayCheckout" component={PayCheckout} options={{ gestureEnabled: false }} />
+          <Stack.Screen name="PaySuccess" component={PaySuccess} options={{ animation: 'fade', gestureEnabled: false }} />
+          <Stack.Screen name="PayCancelled" component={PayCancelled} options={{ animation: 'fade', gestureEnabled: false }} />
           {/* clinic (staff and administrator) */}
           <Stack.Screen name="ConsultForm" component={ConsultForm} />
           <Stack.Screen name="OwnerDetail" component={OwnerDetail} />

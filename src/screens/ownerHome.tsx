@@ -13,7 +13,7 @@ import { useNav } from '../navigation/nav';
 import { petPhoto } from '../data/photos';
 import { colors, type, FONT, DISPLAY } from '../theme';
 import type { Clinic, Pet } from '../types';
-import { ageOf, billBalance, billState, byDateTime, DOW, diff, firstName, followStatus, greeting, hourLabel, isUpcoming, money, MON, parseD, rel, t12, TODAY } from '../utils/format';
+import { ageOf, billBalance, billState, isOwing, byDateTime, DOW, diff, firstName, followStatus, greeting, hourLabel, isUpcoming, money, MON, parseD, rel, t12, TODAY } from '../utils/format';
 
 export const callClinic = (mobile: string) => Linking.openURL(`tel:${mobile.replace(/\s/g, '')}`);
 export const openDirections = (c: Clinic) => {
@@ -104,7 +104,7 @@ export function OwnerHome() {
   const current = pets.find(p => p.id === picked) || pets[0];
   const upcoming = db.appts.filter(a => a.ownerId === oid && isUpcoming(a)).sort(byDateTime);
   const offers = upcoming.filter(a => a.status === 'resched');
-  const unpaid = db.bills.filter(b => b.ownerId === oid && billState(b) === 'unpaid');
+  const unpaid = db.bills.filter(b => b.ownerId === oid && isOwing(billState(b)));
   const due = unpaid.reduce((s, b) => s + billBalance(b), 0);
   const unread = sel.unreadMsgs(db, user!);
   const today = db.settings.days[TODAY.getDay()];

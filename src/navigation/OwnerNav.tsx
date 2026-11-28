@@ -15,7 +15,7 @@ import { Logo } from '../components/Brand';
 import { Icon, IconName } from '../components/Icon';
 import { useConfirm } from '../components/overlays';
 import { colors, shadowPop, type, FONT } from '../theme';
-import { billState } from '../utils/format';
+import { billState, isOwing } from '../utils/format';
 import type { RootList } from './linking';
 
 export const OWNER_TABS = ['Home', 'Pets', 'Appointments', 'Messages', 'Bills'] as const;
@@ -26,7 +26,7 @@ const BAR_H = 56;
 const SECTION: Record<string, string> = {
   PetDetail: 'Pets', PetForm: 'Pets', VisitDetail: 'Pets',
   ApptDetail: 'Appointments', Book: 'Appointments', BookSuccess: 'Appointments',
-  Chat: 'Messages', BillDetail: 'Bills', PayBill: 'Bills', Receipt: 'Bills',
+  Chat: 'Messages', BillDetail: 'Bills', PayBill: 'Bills', PayCheckout: 'Bills', PaySuccess: 'Bills', PayCancelled: 'Bills', Receipt: 'Bills',
 };
 
 /** Badge counts for the owner's sections, shared by the navbar and the bottom tab bar. */
@@ -36,7 +36,7 @@ export function useOwnerBadges() {
   return {
     Messages: user ? sel.unreadMsgs(db, user) : 0,
     Appointments: db.appts.filter(a => a.ownerId === oid && a.status === 'resched').length,
-    Bills: db.bills.filter(b => b.ownerId === oid && billState(b) === 'unpaid').length,
+    Bills: db.bills.filter(b => b.ownerId === oid && isOwing(billState(b))).length,
     notifs: (db.notifs[act.inboxKey()] || []).filter(n => n.unread).length,
   } as Record<string, number>;
 }

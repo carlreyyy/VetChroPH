@@ -38,10 +38,11 @@ export function HealthRing({ pet, health, size = 56, ring = 3 }: { pet: Pet; hea
   const src = petPhoto(pet);
   return (
     <View style={{ width: size, height: size }} accessible accessibilityLabel={`${pet.name}, ${health === 'ok' ? 'up to date' : health === 'soon' ? 'care due soon' : health === 'overdue' ? 'care overdue' : 'inactive'}`}>
-      <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
+      <Svg width={size} height={size} style={{ position: 'absolute', left: 0, top: 0 }}>
         <Circle cx={size / 2} cy={size / 2} r={r} stroke={colors.line} strokeWidth={ring} fill="none" />
-        <Circle cx={size / 2} cy={size / 2} r={r} stroke={HEALTH_COLOR[health]} strokeWidth={ring} fill="none"
-          strokeDasharray={dash} strokeLinecap={health === 'overdue' ? 'butt' : 'round'} rotation={-90} origin={`${size / 2}, ${size / 2}`} />
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={HEALTH_COLOR[health] ?? colors.lineStrong} strokeWidth={ring} fill="none"
+          {...(dash ? { strokeDasharray: dash } : {})} strokeLinecap={health === 'overdue' ? 'butt' : 'round'}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`} />
       </Svg>
       <View style={{ position: 'absolute', left: gap, top: gap, width: inner, height: inner, borderRadius: inner / 2, overflow: 'hidden', backgroundColor: colors.subtle, alignItems: 'center', justifyContent: 'center' }}>
         {src ? <Image source={src} style={{ width: inner, height: inner }} resizeMode="cover" accessibilityIgnoresInvertColors />
@@ -58,7 +59,7 @@ export function RingGlyph({ health, size = 12 }: { health: Health; size?: number
   return (
     <Svg width={size} height={size}>
       <Circle cx={size / 2} cy={size / 2} r={r} stroke={colors.line} strokeWidth={2} fill="none" />
-      <Circle cx={size / 2} cy={size / 2} r={r} stroke={HEALTH_COLOR[health]} strokeWidth={2} fill="none" strokeDasharray={dash} rotation={-90} origin={`${size / 2}, ${size / 2}`} />
+      <Circle cx={size / 2} cy={size / 2} r={r} stroke={HEALTH_COLOR[health] ?? colors.lineStrong} strokeWidth={2} fill="none" {...(dash ? { strokeDasharray: dash } : {})} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
     </Svg>
   );
 }
